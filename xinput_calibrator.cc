@@ -24,6 +24,8 @@
  *	Soren Hauberg (haub...@gmail.com)
  *	Tias Guns (ti..@ulyssis.org)
  *
+ * Version: 0.2.0
+ *
  * Make: g++ -Wall xinput_calibrator.cc `pkg-config --cflags --libs gtkmm-2.4` -o xinput_calibrator
  */
 
@@ -48,6 +50,10 @@
  *      sensors at the corners. So, what we do is we ask the user to press points that
  *      have been pushed a bit closer to the center, and then we extrapolate the
  *      parameters.
+ *
+ * In case of the usbtouchscreen kernel module, the new calibration data will be
+ * dynamically updated. In all other cases, the new xorg.conf values will be printed
+ * on stdout.
  */
 
 #include <cstring>
@@ -56,6 +62,9 @@
 #include <gtkmm/window.h>
 #include <gtkmm/drawingarea.h>
 #include <cairomm/context.h>
+
+#include <X11/Xlib.h>
+#include <X11/extensions/XInput.h>
 
 /* Number of points the user should click */
 const int num_points = 4;
@@ -101,7 +110,7 @@ const int click_threshold = 7;
 
 /* Timeout parameters */
 const int time_step = 100; /* 500 = 0.1 sec */
-const int max_time = 5000; /* 5000 = 5 sec */
+const int max_time = 15000; /* 5000 = 5 sec */
 
 /* Clock Appereance */
 const int clock_radius = 25;
@@ -245,6 +254,43 @@ void Calibrator::finish ()
               min_y, max_y,
               swap_xy,
               flip_x, flip_y);
+}
+
+/***************************
+ * Class for generic driver,
+ * outputs new Xorg values (on stdout for now)
+ ***************************/
+class CalibratorXorgPrint: public Calibrator
+{
+public:
+  CalibratorXorgPrint (const char*, int, int, int, int);
+
+  virtual void finish_data (int, int, int, int, int, int, int);
+};
+
+CalibratorXorgPrint::CalibratorXorgPrint (const char* drivername0, int min_x, int max_x, int min_y, int max_y)
+  : Calibrator (drivername0, min_x, max_x, min_y, max_y)
+{
+    printf ("Calibrating driver %s with min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
+                drivername, oldcalib_min_x, oldcalib_max_x, oldcalib_min_y, oldcalib_max_y);
+}
+
+void CalibratorXorgPrint::finish_data (
+    int min_x, int max_x, int min_y, int max_y, int swap_xy, int flip_x, int flip_y)
+{
+  /* We ignore flip_x and flip_y,
+   * the min/max values will already be flipped and drivers can handle this */
+
+  printf ("Suggested new values for xorg.conf:\n");
+  printf ("\tOption\t\"MinX\"\t\t\"%d\"\t# was \"%d\"\n",
+                min_x, oldcalib_min_x);
+  printf ("\tOption\t\"MaxX\"\t\t\"%d\"\t# was \"%d\"\n",
+                max_x, oldcalib_max_x);
+  printf ("\tOption\t\"MinY\"\t\t\"%d\"\t# was \"%d\"\n",
+                min_y, oldcalib_min_y);
+  printf ("\tOption\t\"MaxY\"\t\t\"%d\"\t# was \"%d\"\n",
+                max_y, oldcalib_max_y);
+  printf ("\tOption\t\"SwapXY\"\t\"%d\"\n", swap_xy);
 }
 
 
@@ -450,7 +496,79 @@ protected:
 CalibrationArea::CalibrationArea ()
   : num_clicks (0), time_elapsed (0)
 {
-  W = new CalibratorUsbts();
+  /* Not sure this is the right place for this, but here we go
+   * Get driver name and axis information from XInput */
+  {
+    int found = 0;
+    const char* drivername = "";
+    int min_x = 0, max_x = 0;
+    int min_y = 0, max_y = 0;
+
+    int ndevices;
+    Display  *display;
+    XDeviceInfoPtr list, slist;
+    XAnyClassPtr any;
+
+    if ((display = XOpenDisplay (0)) == NULL)
+    {
+        fprintf (stderr, "Error: No connection to Xserver - Terminating.\n");
+        quit(1);
+    }
+
+    slist=list=(XDeviceInfoPtr) XListInputDevices (display, &ndevices);
+    for (int i=0; i<ndevices; i++, list++)
+    {
+        if (list->use == IsXKeyboard || list->use == IsXPointer)
+            continue;
+
+        any = (XAnyClassPtr) (list->inputclassinfo);
+        for (int j=0; j<list->num_classes; j++)
+        {
+
+            if (any->c_class == ValuatorClass)
+            {
+                XValuatorInfoPtr V = (XValuatorInfoPtr) any;
+                XAxisInfoPtr ax = (XAxisInfoPtr) V->axes;
+
+                if (V->num_axes >= 2 &&
+                    !(ax[0].min_value == -1 && ax[0].max_value == -1) &&
+                    !(ax[1].min_value == -1 && ax[1].max_value == -1)) {
+                    /* a calibratable device (no mouse etc) */
+                    found++;
+                    drivername = list->name;
+                    min_x = ax[0].min_value;
+                    max_x = ax[0].max_value;
+                    min_y = ax[1].min_value;
+                    max_y = ax[1].max_value;
+                }
+
+            }
+
+            /*
+             * Increment 'any' to point to the next item in the linked
+             * list.  The length is in bytes, so 'any' must be cast to
+             * a character pointer before being incremented.
+             */
+            any = (XAnyClassPtr) ((char *) any + any->length);
+        }
+
+    }
+    XFreeDeviceList (slist);
+
+    if (found == 0) {
+        fprintf (stderr, "Error: No calibratable devices found.\n");
+        quit (1);
+    }
+    if (found > 1)
+        printf ("Warning: multiples calibratable devices found, calibrating last one (%s)\n", drivername);
+
+    /* Different driver, different backend behaviour (case sensitive ?) */
+    if (strcmp(drivername, "Usbtouchscreen") == 0)
+        W = new CalibratorUsbts();
+    else
+        W = new CalibratorXorgPrint(drivername,
+                    min_x, max_x, min_y, max_y);
+  }
 
   /* Listen for mouse events */
   add_events (Gdk::BUTTON_PRESS_MASK);
