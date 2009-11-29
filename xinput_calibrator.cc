@@ -66,6 +66,18 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>
 
+// begin EvDev includes
+#include <X11/Xatom.h>
+//#include <X11/Xutil.h>
+
+#ifndef EXIT_SUCCESS
+#define EXIT_SUCCESS 1
+#endif
+#ifndef EXIT_FAILURE
+#define EXIT_FAILURE 0
+#endif
+// end EvDev includes
+
 /* Number of points the user should click */
 const int num_points = 4;
 
@@ -219,7 +231,6 @@ void Calibrator::finish ()
       std::swap (clicked_y [LL], clicked_y [UR]);
     }
 
-
   /* Compute min/max coordinates.
    * These are scaled to [oldcalib_min, oldcalib_max]] */
   const float scale_x = (oldcalib_max_x - oldcalib_min_x)/(float)width;
@@ -271,7 +282,7 @@ public:
 CalibratorXorgPrint::CalibratorXorgPrint (const char* drivername0, int min_x, int max_x, int min_y, int max_y)
   : Calibrator (drivername0, min_x, max_x, min_y, max_y)
 {
-    printf ("Calibrating driver %s with min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
+    printf ("Calibrating unknown driver \"%s\" (having min_x=%d, max_x=%d and min_y=%d, max_y=%d)\n",
                 drivername, oldcalib_min_x, oldcalib_max_x, oldcalib_min_y, oldcalib_max_y);
 }
 
@@ -291,6 +302,375 @@ void CalibratorXorgPrint::finish_data (
   printf ("\tOption\t\"MaxY\"\t\t\"%d\"\t# was \"%d\"\n",
                 max_y, oldcalib_max_y);
   printf ("\tOption\t\"SwapXY\"\t\"%d\"\n", swap_xy);
+}
+
+
+
+/***************************
+ * Class for dynamic evdev calibration
+ * uses xinput "Evdev Axis Calibration"
+ ***************************/
+class CalibratorEvdev: public Calibrator
+{
+private:
+  Display     *display;
+  XDeviceInfo *info;
+  XDevice     *dev;
+public:
+  CalibratorEvdev (const char*, int, int, int, int);
+  ~CalibratorEvdev ();
+
+  virtual void finish_data (int, int, int, int, int, int, int);
+
+  static Bool check_driver(const char *name);
+
+  // xinput functions
+  static Atom parse_atom(Display *display, const char *name);
+  static XDeviceInfo* find_device_info(Display *display, const char *name, Bool only_extended);
+  int do_set_prop(Display *display, Atom type, int format, int argc, char *argv[]);
+};
+
+CalibratorEvdev::CalibratorEvdev (const char* drivername0, int min_x, int max_x, int min_y, int max_y)
+  : Calibrator (drivername0, min_x, max_x, min_y, max_y)
+{
+    Atom                property;
+    Atom                act_type;
+    int                 act_format;
+    unsigned long       nitems, bytes_after;
+    unsigned char       *data, *ptr;
+
+    printf ("Calibrating EVDEV driver for \"%s\"\n", drivername);
+
+    // init
+    display = XOpenDisplay(NULL);
+    if (display == NULL) {
+        fprintf(stderr, "Unable to connect to X server\n");
+        return;
+    }
+
+
+    info = find_device_info(display, drivername, False);
+    if (!info)
+    {
+        fprintf(stderr, "unable to find device %s\n", drivername);
+        return;
+    }
+
+    dev = XOpenDevice(display, info->id);
+    if (!dev)
+    {
+        fprintf(stderr, "unable to open device '%s'\n", info->name);
+        return;
+    }
+
+    // get "Evdev Axis Calibration" property
+    property = parse_atom(display, "Evdev Axis Calibration");
+    if (XGetDeviceProperty(display, dev, property, 0, 1000, False,
+                           AnyPropertyType, &act_type, &act_format,
+                           &nitems, &bytes_after, &data) == Success)
+    {
+        if (act_format != 32 || act_type != XA_INTEGER) {
+            fprintf(stderr, "Error: unexpected format or type from \"Evdev Axis Calibration\" property.\n");
+        }
+
+        if (nitems != 0) {
+            ptr = data;
+
+            oldcalib_min_x = *((long*)ptr);
+            ptr += sizeof(long);
+            oldcalib_max_x = *((long*)ptr);
+            ptr += sizeof(long);
+            oldcalib_min_y = *((long*)ptr);
+            ptr += sizeof(long);
+            oldcalib_max_y = *((long*)ptr);
+            ptr += sizeof(long);
+
+            printf("Read current calibration data from XInput: min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
+                oldcalib_min_x, oldcalib_max_x, oldcalib_min_y, oldcalib_max_y);
+        }
+
+        XFree(data);
+    } else
+        printf("\tFetch failure\n");
+
+}
+
+CalibratorEvdev::~CalibratorEvdev () {
+    XCloseDevice(display, dev);
+    XCloseDisplay(display);
+}
+
+void CalibratorEvdev::finish_data (
+    int min_x, int max_x, int min_y, int max_y, int swap_xy, int flip_x, int flip_y)
+{
+  // Evdev Axes Swap
+  if (swap_xy) {
+    printf("Swapping X and Y axis...\n");
+    // xinput set-int-prop 4 224 8 0
+    char str_prop[50];
+    sprintf(str_prop, "Evdev Axes Swap");
+    char str_swap_xy[20];
+    sprintf(str_swap_xy, "%d", swap_xy);
+
+    int argc = 3;
+    char* argv[argc];
+    //argv[0] = "";
+    argv[1] = str_prop;
+    argv[2] = str_swap_xy;
+    do_set_prop(display, XA_INTEGER, 8, argc, argv);
+  }
+
+  // Evdev Axis Inversion
+  /* Ignored, X server can handle it by flipping min/max values. */
+
+  // Evdev Axis Calibration
+  // xinput set-int-prop 4 223 5 500 8 300
+  printf("Setting new calibration data: %d, %d, %d, %d\n", min_x, max_x, min_y, max_y);
+  char str_prop[50];
+  sprintf(str_prop, "Evdev Axis Calibration");
+  char str_min_x[20];
+  sprintf(str_min_x, "%d", min_x);
+  char str_max_x[20];
+  sprintf(str_max_x, "%d", max_x);
+  char str_min_y[20];
+  sprintf(str_min_y, "%d", min_y);
+  char str_max_y[20];
+  sprintf(str_max_y, "%d", max_y);
+
+  int argc = 6;
+  char* argv[argc];
+  //argv[0] = "";
+  argv[1] = str_prop;
+  argv[2] = str_min_x;
+  argv[3] = str_max_x;
+  argv[4] = str_min_y;
+  argv[5] = str_max_y;
+  do_set_prop(display, XA_INTEGER, 32, argc, argv);
+
+  // close
+  XSync(display, False);
+}
+
+Bool CalibratorEvdev::check_driver(const char *name) {
+    Display     *display;
+    XDeviceInfo *info;
+    XDevice     *dev;
+    int         nprops;
+    Atom        *props;
+    Bool        found = False;
+
+    display = XOpenDisplay(NULL);
+    if (display == NULL) {
+	    fprintf(stderr, "Unable to connect to X server\n");
+        quit(1);
+    }
+
+    info = find_device_info(display, name, False);
+    if (!info)
+    {
+        fprintf(stderr, "unable to find device %s\n", name);
+        return NULL;
+    }
+
+    dev = XOpenDevice(display, info->id);
+    if (!dev)
+    {
+        fprintf(stderr, "unable to open device '%s'\n", info->name);
+        return NULL;
+    }
+
+    props = XListDeviceProperties(display, dev, &nprops);
+    if (!nprops)
+    {
+        printf("Device '%s' does not report any properties.\n", info->name);
+        return NULL;
+    }
+
+    // check if "Evdev Axis Calibration" exists, then its an evdev driver
+    while(nprops--)
+    {
+        if (strcmp(XGetAtomName(display, props[nprops]),
+                   "Evdev Axis Calibration") == 0) {
+            found = True;
+            break;
+        }
+    }
+
+    XFree(props);
+    XCloseDevice(display, dev);
+    XCloseDisplay(display);
+
+    return found;
+}
+
+Atom CalibratorEvdev::parse_atom(Display *display, const char *name) {
+    Bool is_atom = True;
+    int i;
+
+    for (i = 0; name[i] != '\0'; i++) {
+        if (!isdigit(name[i])) {
+            is_atom = False;
+            break;
+        }
+    }
+
+    if (is_atom)
+        return atoi(name);
+    else
+        return XInternAtom(display, name, False);
+}
+
+XDeviceInfo* CalibratorEvdev::find_device_info(
+Display *display, const char *name, Bool only_extended)
+{
+    XDeviceInfo	*devices;
+    XDeviceInfo *found = NULL;
+    int		loop;
+    int		num_devices;
+    int		len = strlen(name);
+    Bool	is_id = True;
+    XID		id = (XID)-1;
+
+    for (loop=0; loop<len; loop++) {
+        if (!isdigit(name[loop])) {
+	        is_id = False;
+	        break;
+        }
+    }
+
+    if (is_id) {
+	    id = atoi(name);
+    }
+
+    devices = XListInputDevices(display, &num_devices);
+
+    for (loop=0; loop<num_devices; loop++) {
+        if ((!only_extended || (devices[loop].use >= IsXExtensionDevice)) &&
+	        ((!is_id && strcmp(devices[loop].name, name) == 0) ||
+	         (is_id && devices[loop].id == id))) {
+            if (found) {
+                fprintf(stderr,
+	                    "Warning: There are multiple devices named \"%s\".\n"
+	                    "To ensure the correct one is selected, please use "
+	                    "the device ID instead.\n\n", name);
+                return NULL;
+            } else {
+                found = &devices[loop];
+            }
+        }
+    }
+
+    return found;
+}
+
+int CalibratorEvdev::do_set_prop(
+Display *display, Atom type, int format, int argc, char **argv)
+{
+    Atom          prop;
+    Atom          old_type;
+    char         *name;
+    int           i;
+    Atom          float_atom;
+    int           old_format, nelements = 0;
+    unsigned long act_nitems, bytes_after;
+    char         *endptr;
+    union {
+        unsigned char *c;
+        short *s;
+        long *l;
+        Atom *a;
+    } data;
+
+    if (argc < 3)
+    {
+        fprintf(stderr, "Wrong usage of do_set_prop, need at least 3 arguments\n");
+        return EXIT_FAILURE;
+    }
+
+    name = argv[1];
+
+    prop = parse_atom(display, name);
+
+    if (prop == None) {
+        fprintf(stderr, "invalid property %s\n", name);
+        return EXIT_FAILURE;
+    }
+
+    float_atom = XInternAtom(display, "FLOAT", False);
+
+    nelements = argc - 2;
+    if (type == None || format == 0) {
+        if (XGetDeviceProperty(display, dev, prop, 0, 0, False, AnyPropertyType,
+                               &old_type, &old_format, &act_nitems,
+                               &bytes_after, &data.c) != Success) {
+            fprintf(stderr, "failed to get property type and format for %s\n",
+                    name);
+            return EXIT_FAILURE;
+        } else {
+            if (type == None)
+                type = old_type;
+            if (format == 0)
+                format = old_format;
+        }
+
+        XFree(data.c);
+    }
+
+    if (type == None) {
+        fprintf(stderr, "property %s doesn't exist, you need to specify "
+                "its type and format\n", name);
+        return EXIT_FAILURE;
+    }
+
+    data.c = (unsigned char*)calloc(nelements, sizeof(long));
+
+    for (i = 0; i < nelements; i++)
+    {
+        if (type == XA_INTEGER) {
+            switch (format)
+            {
+                case 8:
+                    data.c[i] = atoi(argv[2 + i]);
+                    break;
+                case 16:
+                    data.s[i] = atoi(argv[2 + i]);
+                    break;
+                case 32:
+                    data.l[i] = atoi(argv[2 + i]);
+                    break;
+                default:
+                    fprintf(stderr, "unexpected size for property %s", name);
+                    return EXIT_FAILURE;
+            }
+        } else if (type == float_atom) {
+            if (format != 32) {
+                fprintf(stderr, "unexpected format %d for property %s\n",
+                        format, name);
+                return EXIT_FAILURE;
+            }
+            *(float *)(data.l + i) = strtod(argv[2 + i], &endptr);
+            if (endptr == argv[2 + i]) {
+                fprintf(stderr, "argument %s could not be parsed\n", argv[2 + i]);
+                return EXIT_FAILURE;
+            }
+        } else if (type == XA_ATOM) {
+            if (format != 32) {
+                fprintf(stderr, "unexpected format %d for property %s\n",
+                        format, name);
+                return EXIT_FAILURE;
+            }
+            data.a[i] = parse_atom(display, argv[2 + i]);
+        } else {
+            fprintf(stderr, "unexpected type for property %s\n", name);
+            return EXIT_FAILURE;
+        }
+    }
+
+    XChangeDeviceProperty(display, dev, prop, type, format, PropModeReplace,
+                          data.c, nelements);
+    free(data.c);
+    XCloseDevice(display, dev);
+    return EXIT_SUCCESS;
 }
 
 
@@ -499,19 +879,26 @@ CalibrationArea::CalibrationArea ()
   /* Not sure this is the right place for this, but here we go
    * Get driver name and axis information from XInput */
   {
+    int ndevices;
+    Display  *display;
+    XDeviceInfoPtr list, slist;
+    XAnyClassPtr any;
+    int xi_opcode, event, error;
+
     int found = 0;
     const char* drivername = "";
     int min_x = 0, max_x = 0;
     int min_y = 0, max_y = 0;
 
-    int ndevices;
-    Display  *display;
-    XDeviceInfoPtr list, slist;
-    XAnyClassPtr any;
+    display = XOpenDisplay(NULL);
 
-    if ((display = XOpenDisplay (0)) == NULL)
-    {
-        fprintf (stderr, "Error: No connection to Xserver - Terminating.\n");
+    if (display == NULL) {
+	    fprintf(stderr, "Unable to connect to X server\n");
+        quit(1);
+    }
+
+    if (!XQueryExtension(display, "XInputExtension", &xi_opcode, &event, &error)) {
+        printf("X Input extension not available.\n");
         quit(1);
     }
 
@@ -553,7 +940,8 @@ CalibrationArea::CalibrationArea ()
         }
 
     }
-    XFreeDeviceList (slist);
+    XFreeDeviceList(slist);
+    XCloseDisplay(display);
 
     if (found == 0) {
         fprintf (stderr, "Error: No calibratable devices found.\n");
@@ -565,9 +953,16 @@ CalibrationArea::CalibrationArea ()
     /* Different driver, different backend behaviour (case sensitive ?) */
     if (strcmp(drivername, "Usbtouchscreen") == 0)
         W = new CalibratorUsbts();
-    else
-        W = new CalibratorXorgPrint(drivername,
-                    min_x, max_x, min_y, max_y);
+    else {
+        // unable to know device driver from its name alone
+        // either its EVDEV or an unknown driver
+        if (CalibratorEvdev::check_driver(drivername))
+            W = new CalibratorEvdev(drivername,
+                        min_x, max_x, min_y, max_y);
+        else
+            W = new CalibratorXorgPrint(drivername,
+                        min_x, max_x, min_y, max_y);
+    }
   }
 
   /* Listen for mouse events */
