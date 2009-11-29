@@ -1,6 +1,4 @@
 /*
- * Copyright © 2008 Soren Hauberg
- *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without
  * fee, provided that the above copyright notice appear in all copies
@@ -282,7 +280,7 @@ public:
 CalibratorXorgPrint::CalibratorXorgPrint (const char* drivername0, int min_x, int max_x, int min_y, int max_y)
   : Calibrator (drivername0, min_x, max_x, min_y, max_y)
 {
-    printf ("Calibrating unknown driver \"%s\" (currently having min_x=%d, max_x=%d and min_y=%d, max_y=%d)\n",
+    printf ("Calibrating Xorg driver \"%s\" (currently having min_x=%d, max_x=%d and min_y=%d, max_y=%d)\n",
                 drivername, oldcalib_min_x, oldcalib_max_x, oldcalib_min_y, oldcalib_max_y);
     printf("\tIf the current calibration data is estimated wrong then either supply it manually with --precalib <minx> <maxx> <miny> <maxy> or run the 'get_precalib.sh' script to automatically get it from your current Xorg configuration (through hal).\n");
 }
@@ -293,7 +291,16 @@ void CalibratorXorgPrint::finish_data (
   /* We ignore flip_x and flip_y,
    * the min/max values will already be flipped and drivers can handle this */
 
-  printf ("Suggested new values for xorg.conf:\n");
+  // FDI policy file
+  printf("\nNew method for making the calibration permanent: create an FDI policy file like /etc/hal/fdi/policy/touchscreen.fdi with:\n\
+<match key=\"info.product\" contains=\"%%Name_Of_TouchScreen%%\">\n\
+  <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n\
+  <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
+  <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
+  <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n\
+</match>\n", min_x, max_x, min_y, max_y);
+
+  printf ("\nOld method, edit /etc/X11/xorg.conf and add in the 'Section \"Device\"' of your touchscreen device:\n");
   printf ("\tOption\t\"MinX\"\t\t\"%d\"\t# was \"%d\"\n",
                 min_x, oldcalib_min_x);
   printf ("\tOption\t\"MaxX\"\t\t\"%d\"\t# was \"%d\"\n",
@@ -302,7 +309,8 @@ void CalibratorXorgPrint::finish_data (
                 min_y, oldcalib_min_y);
   printf ("\tOption\t\"MaxY\"\t\t\"%d\"\t# was \"%d\"\n",
                 max_y, oldcalib_max_y);
-  printf ("\tOption\t\"SwapXY\"\t\"%d\"\n", swap_xy);
+  if (swap_xy != 0)
+    printf ("\tOption\t\"SwapXY\"\t\"%d\"\n", swap_xy);
 }
 
 
@@ -404,9 +412,16 @@ CalibratorEvdev::~CalibratorEvdev () {
 void CalibratorEvdev::finish_data (
     int min_x, int max_x, int min_y, int max_y, int swap_xy, int flip_x, int flip_y)
 {
+  printf("\nTo make the changes permanent, create add a startup script to your window manager with the following command(s):\n");
+  if (swap_xy)
+    printf(" xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", drivername, swap_xy);
+  printf(" xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", drivername, min_x, max_x, min_y, max_y);
+
+
+  printf("\nDoing dynamic recalibration:\n");
   // Evdev Axes Swap
   if (swap_xy) {
-    printf("Swapping X and Y axis...\n");
+    printf("\tSwapping X and Y axis...\n");
     // xinput set-int-prop 4 224 8 0
     char str_prop[50];
     sprintf(str_prop, "Evdev Axes Swap");
@@ -425,8 +440,8 @@ void CalibratorEvdev::finish_data (
   /* Ignored, X server can handle it by flipping min/max values. */
 
   // Evdev Axis Calibration
-  // xinput set-int-prop 4 223 5 500 8 300
-  printf("Setting new calibration data: %d, %d, %d, %d\n", min_x, max_x, min_y, max_y);
+  // xinput set-int-prop 4 223 32 5 500 8 300
+  printf("\tSetting new calibration data: %d, %d, %d, %d\n", min_x, max_x, min_y, max_y);
   char str_prop[50];
   sprintf(str_prop, "Evdev Axis Calibration");
   char str_min_x[20];
@@ -1134,7 +1149,7 @@ int main(int argc, char** argv)
         }
     }
   }
-            
+
   Gtk::Main kit(argc, argv);
 
   Gtk::Window win;
