@@ -282,8 +282,9 @@ public:
 CalibratorXorgPrint::CalibratorXorgPrint (const char* drivername0, int min_x, int max_x, int min_y, int max_y)
   : Calibrator (drivername0, min_x, max_x, min_y, max_y)
 {
-    printf ("Calibrating unknown driver \"%s\" (having min_x=%d, max_x=%d and min_y=%d, max_y=%d)\n",
+    printf ("Calibrating unknown driver \"%s\" (currently having min_x=%d, max_x=%d and min_y=%d, max_y=%d)\n",
                 drivername, oldcalib_min_x, oldcalib_max_x, oldcalib_min_y, oldcalib_max_y);
+    printf("\tIf the current calibration data is estimated wrong then either supply it manually with --precalib <minx> <maxx> <miny> <maxy> or run the 'get_precalib.sh' script to automatically get it from your current Xorg configuration (through hal).\n");
 }
 
 void CalibratorXorgPrint::finish_data (
@@ -855,7 +856,7 @@ void CalibratorUsbts::finish_data (
 class CalibrationArea : public Gtk::DrawingArea
 {
 public:
-  CalibrationArea ();
+  CalibrationArea (int argc, char** argv);
 
 protected:
   /* Helper functions */
@@ -873,7 +874,7 @@ protected:
   int time_elapsed;
 };
 
-CalibrationArea::CalibrationArea ()
+CalibrationArea::CalibrationArea (int argc, char** argv)
   : num_clicks (0), time_elapsed (0)
 {
   /* Not sure this is the right place for this, but here we go
@@ -943,6 +944,22 @@ CalibrationArea::CalibrationArea ()
     XFreeDeviceList(slist);
     XCloseDisplay(display);
 
+    // override min/maxX/Y from command line ?
+    if (argc > 1) {
+        for (int i=1; i!=argc; i++) {
+            if (strcmp("--precalib", argv[i]) == 0) {
+                if (argc > i+1)
+                    min_x = atoi(argv[i+1]);
+                if (argc > i+2)
+                    max_x = atoi(argv[i+2]);
+                if (argc > i+3)
+                    min_y = atoi(argv[i+3]);
+                if (argc > i+4)
+                    max_y = atoi(argv[i+4]);
+            }
+        }
+    }
+
     if (found == 0) {
         fprintf (stderr, "Error: No calibratable devices found.\n");
         quit (1);
@@ -956,6 +973,7 @@ CalibrationArea::CalibrationArea ()
     else {
         // unable to know device driver from its name alone
         // either its EVDEV or an unknown driver
+        // evtouch has: "EVTouch TouchScreen"
         if (CalibratorEvdev::check_driver(drivername))
             W = new CalibratorEvdev(drivername,
                         min_x, max_x, min_y, max_y);
@@ -1097,15 +1115,32 @@ bool CalibrationArea::on_timeout ()
   return true;
 }
 
+static void
+usage(char* cmd)
+{
+    fprintf(stderr, "usage: %s [-h|--help] [--precalib <minx> <maxx> <miny> <maxy>]\n", cmd);
+    fprintf(stderr, "\t--precalib: manually provide the current calibration setting (eg the values in xorg.conf)\n");
+}
 
 int main(int argc, char** argv)
 {
+  // Display help ?
+  if (argc > 1) {
+    for (int i=1; i!=argc; i++) {
+        if (strcmp("-h", argv[i]) == 0 ||
+             strcmp("--help", argv[i]) == 0) {
+            usage(argv[0]);
+            return 0;
+        }
+    }
+  }
+            
   Gtk::Main kit(argc, argv);
 
   Gtk::Window win;
   win.fullscreen ();
 
-  CalibrationArea area;
+  CalibrationArea area(argc, argv);
   win.add (area);
   area.show ();
 
