@@ -1,5 +1,5 @@
 #!/bin/sh
-# Get running EVTOUCH calibration data from lshal
+# Get running calibration data from lshal
 # (needed to recalibrate it, most easily fetchable from lshal)
 
 export PATH=".:$PATH"

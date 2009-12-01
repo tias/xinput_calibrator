@@ -1,0 +1,17 @@
+xinput_calibrator 0.4.1 [2009-12-1]
+Other:
+* Add README and Changelog file
+
+xinput_calibrator 0.4.0 [2009-12-1]
+New features/improvements:
+* Add example FDI policy file for generic touchscreen, next to example xorg.conf values
+* Add support for providing the current calibration on the command line (with --precalib), add help information (-h or --help). Included a script that reads the current calibration data from lshal, and runs the calibration program with the right --precalib data
+* Add support for dynamic evdev re-calibration
+
+
+xinput_calibrator 0.2.0 [2009-09-10]
+New features/improvements:
+* Add generic xinput methods for reading the current data and writing example xorg.conf files.
+* put usbtouchscreen specific stuff in a new subclass
+* Initial code from
+http://lists.x.org/archives/xorg/2008-September/039064.html
