@@ -959,10 +959,14 @@ CalibrationArea::CalibrationArea (int argc, char** argv)
     XFreeDeviceList(slist);
     XCloseDisplay(display);
 
-    // override min/maxX/Y from command line ?
+    // parse input, part 2
+    bool fake = false;
+    bool precalib = false;
     if (argc > 1) {
         for (int i=1; i!=argc; i++) {
+            // Get pre-calibration ?
             if (strcmp("--precalib", argv[i]) == 0) {
+                precalib = true;
                 if (argc > i+1)
                     min_x = atoi(argv[i+1]);
                 if (argc > i+2)
@@ -972,12 +976,26 @@ CalibrationArea::CalibrationArea (int argc, char** argv)
                 if (argc > i+4)
                     max_y = atoi(argv[i+4]);
             }
+
+            // Fake calibratable device ?
+            if (strcmp("--fake", argv[i]) == 0) {
+                fake = true;
+            }
         }
     }
 
     if (found == 0) {
-        fprintf (stderr, "Error: No calibratable devices found.\n");
-        quit (1);
+        if (fake) {
+            // Fake a calibratable device
+            drivername = "Fake_device";
+            if (!precalib) {
+                min_x = 0; max_x = 0;
+                min_y = 0; max_y = 0;
+            }
+        } else {
+            fprintf (stderr, "Error: No calibratable devices found.\n");
+            exit(1);
+        }
     }
     if (found > 1)
         printf ("Warning: multiples calibratable devices found, calibrating last one (%s)\n", drivername);
