@@ -902,7 +902,7 @@ CalibrationArea::CalibrationArea (int argc, char** argv)
     int xi_opcode, event, error;
 
     int found = 0;
-    const char* drivername = "";
+    const char* drivername = NULL;
     int min_x = 0, max_x = 0;
     int min_y = 0, max_y = 0;
 
@@ -938,7 +938,7 @@ CalibrationArea::CalibrationArea (int argc, char** argv)
                     !(ax[1].min_value == -1 && ax[1].max_value == -1)) {
                     /* a calibratable device (no mouse etc) */
                     found++;
-                    drivername = list->name;
+                    drivername = strdup(list->name);
                     min_x = ax[0].min_value;
                     max_x = ax[0].max_value;
                     min_y = ax[1].min_value;
