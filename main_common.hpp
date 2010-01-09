@@ -89,7 +89,7 @@ struct XYinfo {
 // find a calibratable device (using Xinput)
 // retuns number of devices found,
 // data of last driver is returned in the function parameters
-int find_driver(const char* drivername, XYinfo& axys) 
+int find_driver(const char*& drivername, XYinfo& axys)
 {
     int found = 0;
 
@@ -153,8 +153,9 @@ int find_driver(const char* drivername, XYinfo& axys)
 
 static void usage(char* cmd)
 {
-    fprintf(stderr, "Usage: %s [-h|--help] [--precalib <minx> <maxx> <miny> <maxy>]\n", cmd);
+    fprintf(stderr, "Usage: %s [-h|--help] [--precalib <minx> <maxx> <miny> <maxy>] [--fake]\n", cmd);
     fprintf(stderr, "\t--precalib: manually provide the current calibration setting (eg the values in xorg.conf)\n");
+    fprintf(stderr, "\t--fake: emulate a fake driver (for testing purposes)\n");
 }
 
 Calibrator* main_common(int argc, char** argv)
@@ -196,19 +197,19 @@ Calibrator* main_common(int argc, char** argv)
     // find driver(s)
     const char* drivername = NULL;
     XYinfo axys;
-    int nr_found = find_driver(drivername, axys);
-    if (nr_found == 0) {
-        if (fake) {
-            // Fake a calibratable device
-            drivername = "Fake_device";
-            axys = XYinfo(0,0,0,0);
-        } else {
+    if (fake) {
+        // Fake a calibratable device
+        drivername = "Fake_device";
+        axys = XYinfo(0,0,0,0);
+    } else {
+        // Find the right device
+        int nr_found = find_driver(drivername, axys);
+        if (nr_found == 0) {
             fprintf (stderr, "Error: No calibratable devices found.\n");
             exit(1);
+        } else if (nr_found > 1) {
+            printf ("Warning: multiple calibratable devices found, calibrating last one (%s)\n", drivername);
         }
-    }
-    if (nr_found > 1) {
-        printf ("Warning: multiple calibratable devices found, calibrating last one (%s)\n", drivername);
     }
 
     // override min/max XY from command line ?
