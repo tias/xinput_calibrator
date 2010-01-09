@@ -63,6 +63,7 @@ protected:
     bool on_timer_signal();
     bool on_expose_event(GdkEventExpose *event);
     bool on_button_press_event(GdkEventButton *event);
+    bool on_key_press_event(GdkEventKey *event);
 
     // Helper functions
     void redraw();
@@ -72,7 +73,8 @@ CalibrationArea::CalibrationArea(Calibrator* calibrator0)
   : calibrator(calibrator0), time_elapsed(0)
 {
     // Listen for mouse events
-    add_events(Gdk::BUTTON_PRESS_MASK);
+    add_events(Gdk::KEY_PRESS_MASK | Gdk::BUTTON_PRESS_MASK);
+    set_flags(Gtk::CAN_FOCUS);
 
     // Compute absolute circle centers
     const Glib::RefPtr<Gdk::Screen> S = get_screen();
@@ -194,4 +196,9 @@ bool CalibrationArea::on_button_press_event(GdkEventButton *event)
     redraw();
 
     return true;
+}
+
+bool CalibrationArea::on_key_press_event(GdkEventKey *event)
+{
+    exit(0);
 }
