@@ -39,8 +39,14 @@ const int clock_radius = 50;
 const int clock_line_width = 10;
 
 // Text printed on screen
-const int font_size = 20;
-const std::string help_text = "Press the point with the stylus";
+const int font_size = 18;
+const int help_lines = 4;
+const std::string help_text[help_lines] = {
+    "Touchscreen Calibration",
+    "Press the point, use a stylus to increase precision.",
+    "",
+    "(To abort, press any key or wait)"
+};
 
 
 /*******************************************
@@ -105,11 +111,31 @@ bool CalibrationArea::on_expose_event(GdkEventExpose *event)
         cr->clip();
 
         // Print the text
-        Cairo::TextExtents extent;
         cr->set_font_size(font_size);
-        cr->get_text_extents(help_text, extent);
-        cr->move_to((display_width-extent.width)/2, 0.3*display_height);
-        cr->show_text(help_text);
+        double text_height = -1;
+        double text_width = -1;
+        Cairo::TextExtents extent;
+        for (int i = 0; i != help_lines; i++) {
+            cr->get_text_extents(help_text[i], extent);
+            text_width = std::max(text_width, extent.width);
+            text_height = std::max(text_height, extent.height);
+        }
+        text_height += 2;
+
+        double x = (display_width - text_width) / 2;
+        double y = (display_height - text_height) / 2 - 60;
+        cr->set_line_width(3);
+        cr->rectangle(x - 10, y - (help_lines*text_height) - 10,
+                text_width + 20, (help_lines*text_height) + 20);
+
+        // Print help lines
+        y -= 3;
+        for (int i = help_lines-1; i != -1; i--) {
+            cr->get_text_extents(help_text[i], extent);
+            cr->move_to(x + (text_width-extent.width)/2, y);
+            cr->show_text(help_text[i]);
+            y -= text_height;
+        }
         cr->stroke();
 
         // Draw the points
