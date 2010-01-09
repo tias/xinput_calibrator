@@ -33,6 +33,8 @@ const int time_step = 100;  // in milliseconds
 const int max_time = 15000; // 5000 = 5 sec
 
 // Clock appereance
+const int cross_lines = 25;
+const int cross_circle = 4;
 const int clock_radius = 50;
 const int clock_line_width = 10;
 
@@ -92,7 +94,6 @@ CalibrationArea::CalibrationArea(Calibrator* calibrator0)
 
 bool CalibrationArea::on_expose_event(GdkEventExpose *event)
 {
-    const double radius = 4;
     Glib::RefPtr<Gdk::Window> window = get_window();
     if (window) {
         Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
@@ -110,19 +111,23 @@ bool CalibrationArea::on_expose_event(GdkEventExpose *event)
         cr->stroke();
 
         // Draw the points
-        int i = 0;
-        for (; i < calibrator->get_numclicks(); i++) {
-            cr->arc(X[i], Y[i], radius, 0.0, 2.0 * M_PI);
-            cr->set_source_rgb(1.0, 1.0, 1.0);
-            cr->fill_preserve();
+        for (int i = 0; i <= calibrator->get_numclicks(); i++) {
+            // set color: already clicked or not
+            if (i < calibrator->get_numclicks())
+                cr->set_source_rgb(1.0, 1.0, 1.0);
+            else
+                cr->set_source_rgb(0.8, 0.0, 0.0);
+
+            cr->set_line_width(1);
+            cr->move_to(X[i] - cross_lines, Y[i]);
+            cr->rel_line_to(cross_lines*2, 0);
+            cr->move_to(X[i], Y[i] - cross_lines);
+            cr->rel_line_to(0, cross_lines*2);
+            cr->stroke();
+
+            cr->arc(X[i], Y[i], cross_circle, 0.0, 2.0 * M_PI);
             cr->stroke();
         }
-
-        cr->set_line_width(2);
-        cr->arc(X[i], Y[i], radius, 0.0, 2.0 * M_PI);
-        cr->set_source_rgb(0.8, 0.0, 0.0);
-        //cr->fill_preserve();
-        cr->stroke();
 
         // Draw the clock background
         cr->arc(display_width/2, display_height/2, clock_radius/2, 0.0, 2.0 * M_PI);
@@ -132,7 +137,7 @@ bool CalibrationArea::on_expose_event(GdkEventExpose *event)
 
         cr->set_line_width(clock_line_width);
         cr->arc(display_width/2, display_height/2, (clock_radius - clock_line_width)/2,
-             0.0, 2.0 * M_PI * (double)time_elapsed/(double)max_time);
+             3/2.0*M_PI, (3/2.0*M_PI) + ((double)time_elapsed/(double)max_time) * 2*M_PI);
         cr->set_source_rgb(0.0, 0.0, 0.0);
         cr->stroke();
 
