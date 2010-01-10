@@ -23,6 +23,7 @@
 #include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdexcept>
 
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>

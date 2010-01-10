@@ -39,7 +39,7 @@ const int clock_radius = 50;
 const int clock_line_width = 10;
 
 // Text printed on screen
-const int font_size = 18;
+const int font_size = 16;
 const int help_lines = 4;
 const std::string help_text[help_lines] = {
     "Touchscreen Calibration",
@@ -124,7 +124,7 @@ bool CalibrationArea::on_expose_event(GdkEventExpose *event)
 
         double x = (display_width - text_width) / 2;
         double y = (display_height - text_height) / 2 - 60;
-        cr->set_line_width(3);
+        cr->set_line_width(2);
         cr->rectangle(x - 10, y - (help_lines*text_height) - 10,
                 text_width + 20, (help_lines*text_height) + 20);
 
