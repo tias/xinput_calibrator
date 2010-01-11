@@ -1,17 +1,21 @@
-This is xinput_calibrator v0.4.1
+xinput_calibrator: A generic touchscreen calibration program for X.Org
 
-xinput_calibrator: A generic touchscreen calibration program, for all Xorg touchscreen drivers.
-
+Version: 0.5.0
 Website: http://www.freedesktop.org/wiki/Software/xinput_calibrator
+Source:  http://github.com/tias/xinput_calibrator
+Bugs:    http://github.com/tias/xinput_calibrator/issues
 
 
 Build instructions:
 -------------------
-    g++ -Wall xinput_calibrator.cc `pkg-config --cflags --libs gtkmm-2.4` -o xinput_calibrator
-
-Installation instructions:
---------------------------
-You need to have the package 'gtkmm-2.4' installed ! (this dependency will be removed in the next version)
+make
+    Builds both the X11 and gtkmm based GUI,
+    the xinput_calibrator binary is the X11 based GUI by default.
+make x11
+    Build only the X11 based GUI (xinput_calibrator.x11)
+make gtkmm
+    Build only the gtkmm based GUI (xinput_calibrator.gtkmm),
+    you need to have the package 'gtkmm-2.4' installed.
 
 Usage:
 ------
@@ -33,3 +37,4 @@ Xinput_calibrator is based on a simple calibrator that was proposed on the Xorg 
 
 The new version (v0.4.0) writes Xorg.conf and (HAL) FDI policy file values, and contains a wrapper script to get axis valuator information for the evtouch driver (evtouch does not export the current calibration through its axis valuators). It is also the first program to support dynamic evdev calibration, by using its advanced Xinput functionality.
 
+The v0.5.0 version is written entirely in the X window system, needing no external dependencies. Because of its modular structure, other frontends can be easily created too.

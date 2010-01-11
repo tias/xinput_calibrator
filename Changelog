@@ -1,3 +1,18 @@
+xinput_calibrator 0.5.0 [2010-01-11]
+Major features:
+* Rewrite: split the one-huge-file into clean components
+* New X11 based gui: like the gtkmm one, but in pure X11
+
+Minor features:
+* Add --fake option (for development/testing)
+* make the touch points more visuals: draw a cross through them
+* press any key to quit
+* help text of 4 lines
+
+Bug fixes:
+* Use strdup() due to pointer scope autofree [Thanks Sam Lin]
+* clarify that the license is the pure MIT/X11 license
+
 xinput_calibrator 0.4.1 [2009-12-1]
 Other:
 * Add README and Changelog file
