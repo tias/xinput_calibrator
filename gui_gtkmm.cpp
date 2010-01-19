@@ -226,5 +226,6 @@ bool CalibrationArea::on_button_press_event(GdkEventButton *event)
 
 bool CalibrationArea::on_key_press_event(GdkEventKey *event)
 {
+    (void) event;
     exit(0);
 }

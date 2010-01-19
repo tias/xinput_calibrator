@@ -90,13 +90,14 @@ struct XYinfo {
 // find a calibratable device (using Xinput)
 // retuns number of devices found,
 // data of last driver is returned in the function parameters
+int find_driver(const char*& drivername, XYinfo& axys);
 int find_driver(const char*& drivername, XYinfo& axys)
 {
     int found = 0;
 
     Display* display = XOpenDisplay(NULL);
     if (display == NULL) {
-	    fprintf(stderr, "Unable to connect to X server\n");
+        fprintf(stderr, "Unable to connect to X server\n");
         exit(1);
     }
 
@@ -159,6 +160,7 @@ static void usage(char* cmd)
     fprintf(stderr, "\t--fake: emulate a fake driver (for testing purposes)\n");
 }
 
+Calibrator* main_common(int argc, char** argv);
 Calibrator* main_common(int argc, char** argv)
 {
     bool fake = false;
@@ -170,7 +172,7 @@ Calibrator* main_common(int argc, char** argv)
         for (int i=1; i!=argc; i++) {
             // Display help ?
             if (strcmp("-h", argv[i]) == 0 ||
-                 strcmp("--help", argv[i]) == 0) {
+                strcmp("--help", argv[i]) == 0) {
                 usage(argv[0]);
                 exit(0);
             }

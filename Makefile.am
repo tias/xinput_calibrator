@@ -23,19 +23,19 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-#AM_CFLAGS = -Wall -ansi -pedantic -W -Wmissing-prototypes -Wmissing-declarations -Werror -std=gnu99
+AM_CXXFLAGS = -Wall -ansi -pedantic -W -Wmissing-declarations -Werror
 
 if BUILD_GTKMM
 bin_PROGRAMS = xinput_calibrator_x11 xinput_calibrator_gtkmm
 xinput_calibrator_gtkmm_SOURCES = main_gtkmm.cpp
-xinput_calibrator_gtkmm_CXXFLAGS = $(GTKMM_CFLAGS)
+xinput_calibrator_gtkmm_CXXFLAGS = $(GTKMM_CFLAGS) $(AM_CXXFLAGS)
 xinput_calibrator_gtkmm_LDADD = $(GTKMM_LIBS)
 else
 bin_PROGRAMS = xinput_calibrator_x11
 endif
 
 xinput_calibrator_x11_LDADD = $(XORG_LIBS)
-xinput_calibrator_x11_CFLAGS = $(XORG_CFLAGS)
+xinput_calibrator_x11_CXXFLAGS = $(XORG_CFLAGS) $(AM_CXXFLAGS)
 xinput_calibrator_x11_SOURCES = main_x11.cpp
 
 EXTRA_DIST = autogen.sh

@@ -72,6 +72,7 @@ protected:
 
     void read_int_parameter(const char *param, int &value)
     {
+        int dummy;
         char filename[100];
         sprintf(filename, "%s/%s", module_prefix, param);
         FILE *fid = fopen(filename, "r");
@@ -80,12 +81,13 @@ protected:
             return;
         }
 
-        fscanf(fid, "%d", &value);
+        dummy = fscanf(fid, "%d", &value);
         fclose(fid);
     }
 
     void read_bool_parameter(const char *param, bool &value)
     {
+        char *dummy;
         char filename[100];
         sprintf(filename, "%s/%s", module_prefix, param);
         FILE *fid = fopen(filename, "r");
@@ -95,7 +97,7 @@ protected:
         }
 
         char val[3];
-        fgets(val, 2, fid);
+        dummy = fgets(val, 2, fid);
         fclose(fid);
 
         value = (val[0] == yesno(true));
@@ -198,7 +200,7 @@ void CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
     }
     fclose(fid);
 
-    char new_opt[opt_len];
+    char *new_opt = new char[opt_len];
     sprintf(new_opt, "%s %s=%d %s=%d %s=%d %s=%d %s=%d %s=%d %s=%c %s=%c %s=%c %s=%c\n",
          opt, p_range_x, range_x, p_range_y, range_y,
          p_min_x, new_axys.x_min, p_min_y, new_axys.y_min,
