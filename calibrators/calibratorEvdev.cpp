@@ -394,6 +394,5 @@ Display *display, Atom type, int format, int argc, char **argv)
     XChangeDeviceProperty(display, dev, prop, type, format, PropModeReplace,
                           data.c, nelements);
     free(data.c);
-    XCloseDevice(display, dev);
     return EXIT_SUCCESS;
 }
