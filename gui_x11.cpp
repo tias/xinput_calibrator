@@ -112,8 +112,12 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     // Load font and get font information structure
     font_info = XLoadQueryFont(display, "9x15");
     if (font_info == NULL) {
-        XCloseDisplay(display);
-        throw std::runtime_error("Unable to open 9x15 font");
+        // fall back to native font
+        font_info = XLoadQueryFont(display, "fixed");
+        if (font_info == NULL) {
+            XCloseDisplay(display);
+            throw std::runtime_error("Unable to open neither '9x15' nor 'fixed' font");
+        }
     }
 
     // Compute absolute circle centers
