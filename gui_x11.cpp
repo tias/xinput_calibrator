@@ -265,9 +265,15 @@ bool GuiCalibratorX11::on_button_press_event(XEvent event)
     // Are we done yet?
     if (calibrator->get_numclicks() >= 4) {
         // Recalibrate
-        calibrator->finish(display_width, display_height);
+        bool success = calibrator->finish(display_width, display_height);
 
-        exit(0);
+        if (success) {
+            exit(0);
+        } else {
+            // TODO, in GUI ?
+            fprintf(stderr, "Error: unable to apply or save configuration values");
+            exit(1);
+        }
     }
 
     // Force a redraw

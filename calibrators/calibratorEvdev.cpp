@@ -47,7 +47,7 @@ public:
     CalibratorEvdev(const char* const drivername, const XYinfo& axys);
     ~CalibratorEvdev();
 
-    virtual void finish_data(const XYinfo new_axys, int swap_xy);
+    virtual bool finish_data(const XYinfo new_axys, int swap_xy);
 
     static Bool check_driver(const char* const name);
 
@@ -121,12 +121,14 @@ CalibratorEvdev::~CalibratorEvdev () {
     XCloseDisplay(display);
 }
 
-void CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
+bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 {
     printf("\nTo make the settings permanent, create add a startup script for your window manager with the following command(s):\n");
     if (swap_xy)
         printf(" xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", drivername, swap_xy);
     printf(" xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", drivername, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+
+    bool success = true;
 
     printf("\nDoing dynamic recalibration:\n");
     // Evdev Axes Swap
@@ -142,7 +144,8 @@ void CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
         sprintf(str_swap_xy, "%d", swap_xy);
         arr_cmd[2] = str_swap_xy;
 
-        do_set_prop(display, XA_INTEGER, 8, 3, arr_cmd);
+        int ret = xinput_do_set_prop(display, XA_INTEGER, 8, 3, arr_cmd);
+        success &= (ret == EXIT_SUCCESS);
     }
 
     // Evdev Axis Calibration
@@ -166,10 +169,13 @@ void CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     sprintf(str_max_y, "%d", new_axys.y_max);
     arr_cmd[5] = str_max_y;
 
-    do_set_prop(display, XA_INTEGER, 32, 6, arr_cmd);
+    int ret = xinput_do_set_prop(display, XA_INTEGER, 32, 6, arr_cmd);
+    success &= (ret == EXIT_SUCCESS);
 
     // close
     XSync(display, False);
+
+    return success;
 }
 
 Bool CalibratorEvdev::check_driver(const char *name) {

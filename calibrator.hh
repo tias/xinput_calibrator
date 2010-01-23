@@ -28,19 +28,32 @@
 class Calibrator
 {
 public:
+    /* Constructor for a specific calibrator
+     *
+     * The constructor will throw an exception,
+     * if the touchscreen is not of the type it supports
+     */
     Calibrator(const char* const drivername, const XYinfo& axys);
     ~Calibrator() {}
 
+    // get the number of clicks already registered
     int get_numclicks();
+    // add a click with the given coordinates
     bool add_click(double x, double y);
-    void finish(int width, int height);
+    // calculate and apply the calibration
+    bool finish(int width, int height);
 
 protected:
-    virtual void finish_data(const XYinfo new_axys, int swap_xy) =0;
+    // overloaded function that applies the new calibration
+    virtual bool finish_data(const XYinfo new_axys, int swap_xy) =0;
 
+    // name of the device (driver)
     const char* const drivername;
+    // original axys values
     XYinfo old_axys;
+    // nr of clicks registered
     int num_clicks;
+    // click coordinates
     double clicked_x[4], clicked_y[4];
 };
 

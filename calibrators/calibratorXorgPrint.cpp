@@ -29,7 +29,7 @@ class CalibratorXorgPrint: public Calibrator
 public:
     CalibratorXorgPrint(const char* const drivername, const XYinfo& axys);
 
-    virtual void finish_data(const XYinfo new_axys, int swap_xy);
+    virtual bool finish_data(const XYinfo new_axys, int swap_xy);
 };
 
 CalibratorXorgPrint::CalibratorXorgPrint(const char* const drivername0, const XYinfo& axys0)
@@ -41,7 +41,7 @@ CalibratorXorgPrint::CalibratorXorgPrint(const char* const drivername0, const XY
     printf("\tIf the current calibration data is estimated wrong then either supply it manually with --precalib <minx> <maxx> <miny> <maxy> or run the 'get_precalib.sh' script to automatically get it from your current Xorg configuration (through hal).\n");
 }
 
-void CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
+bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
 {
     // FDI policy output
     printf("\nNew method for making the calibration permanent: create an FDI policy file like /etc/hal/fdi/policy/touchscreen.fdi with:\n\
@@ -67,4 +67,6 @@ void CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
                 new_axys.y_max, old_axys.y_max);
     if (swap_xy != 0)
         printf("\tOption\t\"SwapXY\"\t\"%d\"\n", swap_xy);
+
+    return true;
 }

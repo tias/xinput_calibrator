@@ -54,7 +54,7 @@ public:
     CalibratorUsbtouchscreen(const char* const drivername, const XYinfo& axys);
     ~CalibratorUsbtouchscreen();
 
-    virtual void finish_data(const XYinfo new_axys, int swap_xy);
+    virtual bool finish_data(const XYinfo new_axys, int swap_xy);
 
 protected:
     // Globals for kernel parameters from startup.
@@ -156,7 +156,7 @@ CalibratorUsbtouchscreen::~CalibratorUsbtouchscreen()
     write_bool_parameter (p_swap_xy, val_swap_xy);
 }
 
-void CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
+bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
 {
     // New ranges
     const int range_x = (new_axys.x_max - new_axys.x_min);
@@ -183,7 +183,7 @@ void CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
     if (fid == NULL) {
         fprintf(stderr, "Error: Can't open '%s' for reading. Make sure you have the necesary rights\n", modprobe_conf_local);
         fprintf(stderr, "New calibration data NOT saved\n");
-        return;
+        return false;
     }
 
     std::string new_contents;
@@ -213,8 +213,10 @@ void CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
     if (fid == NULL) {
         fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necesary rights\n", modprobe_conf_local);
         fprintf(stderr, "New calibration data NOT saved\n");
-        return;
+        return false;
     }
     fprintf(fid, "%s", new_contents.c_str ());
     fclose(fid);
+
+    return true;
 }

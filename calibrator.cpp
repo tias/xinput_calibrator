@@ -48,8 +48,12 @@ bool Calibrator::add_click(double x, double y)
     return true;
 }
 
-void Calibrator::finish(int width, int height)
+bool Calibrator::finish(int width, int height)
 {
+    if (get_numclicks() != 4) {
+        return false;
+    }
+
     // Should x and y be swapped?
     const bool swap_xy = (abs (clicked_x [UL] - clicked_x [UR]) < abs (clicked_y [UL] - clicked_y [UR]));
     if (swap_xy) {
@@ -83,6 +87,6 @@ void Calibrator::finish(int width, int height)
         std::swap(axys.y_min, axys.x_max);
     }
 
-    // finish the data, driver specific
-    finish_data(axys, swap_xy);
+    // finish the data, driver/calibrator specific
+    return finish_data(axys, swap_xy);
 }
