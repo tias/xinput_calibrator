@@ -23,8 +23,8 @@
 #include <algorithm>
 #include "calibrator.hh"
 
-Calibrator::Calibrator(const char* const drivername0, const XYinfo& axys0)
-  : drivername(drivername0), old_axys(axys0), num_clicks(0)
+Calibrator::Calibrator(const char* const drivername0, const XYinfo& axys0, const bool verbose0)
+  : drivername(drivername0), old_axys(axys0), verbose(verbose0), num_clicks(0)
 {
 }
 
@@ -38,12 +38,20 @@ bool Calibrator::add_click(double x, double y)
     // Check that we don't click the same point twice
     if (num_clicks > 0 && click_threshold > 0
      && abs (x - clicked_x[num_clicks-1]) < click_threshold
-     && abs (y - clicked_y[num_clicks-1]) < click_threshold)
+     && abs (y - clicked_y[num_clicks-1]) < click_threshold) {
+        if (verbose) {
+            printf("DEBUG: Not adding click %i (X=%.0f, Y=%.0f): within %i pixels of previous click\n",
+                num_clicks, x, y, click_threshold);
+        }
         return false;
+    }
 
     clicked_x[num_clicks] = x;
     clicked_y[num_clicks] = y;
     num_clicks ++;
+
+    if (verbose)
+        printf("DEBUG: Adding click %i (X=%.0f, Y=%.0f)\n", num_clicks-1, x, y);
 
     return true;
 }

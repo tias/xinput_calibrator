@@ -27,13 +27,13 @@
 class CalibratorXorgPrint: public Calibrator
 {
 public:
-    CalibratorXorgPrint(const char* const drivername, const XYinfo& axys);
+    CalibratorXorgPrint(const char* const drivername, const XYinfo& axys, const bool verbose);
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
 };
 
-CalibratorXorgPrint::CalibratorXorgPrint(const char* const drivername0, const XYinfo& axys0)
-  : Calibrator(drivername0, axys0)
+CalibratorXorgPrint::CalibratorXorgPrint(const char* const drivername0, const XYinfo& axys0, const bool verbose0)
+  : Calibrator(drivername0, axys0, verbose0)
 {
     printf("Calibrating standard Xorg driver \"%s\"\n", drivername);
     printf("\tcurrent calibration values: min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",

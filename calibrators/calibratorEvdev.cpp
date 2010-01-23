@@ -45,7 +45,7 @@ private:
     XDeviceInfo *info;
     XDevice     *dev;
 public:
-    CalibratorEvdev(const char* const drivername, const XYinfo& axys);
+    CalibratorEvdev(const char* const drivername, const XYinfo& axys, const bool verbose);
     ~CalibratorEvdev();
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
@@ -56,8 +56,8 @@ public:
     int xinput_do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
 };
 
-CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& axys0)
-  : Calibrator(drivername0, axys0)
+CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& axys0, const bool verbose0)
+  : Calibrator(drivername0, axys0, verbose0)
 {
     // init
     display = XOpenDisplay(NULL);
@@ -153,6 +153,13 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 
         int ret = xinput_do_set_prop(display, XA_INTEGER, 8, 3, arr_cmd);
         success &= (ret == EXIT_SUCCESS);
+
+        if (verbose) {
+            if (ret == EXIT_SUCCESS)
+                printf("DEBUG: Succesfully swapped X and Y axis.\n");
+            else
+                printf("DEBUG: Failed to swap X and Y axis.\n");
+        }
     }
 
     // Evdev Axis Calibration
@@ -178,6 +185,13 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 
     int ret = xinput_do_set_prop(display, XA_INTEGER, 32, 6, arr_cmd);
     success &= (ret == EXIT_SUCCESS);
+
+    if (verbose) {
+        if (ret == EXIT_SUCCESS)
+            printf("DEBUG: Succesfully applied axis calibration.\n");
+        else
+            printf("DEBUG: Failed to apply axis calibration.\n");
+    }
 
     // close
     XSync(display, False);

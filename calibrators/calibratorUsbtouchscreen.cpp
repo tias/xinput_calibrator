@@ -51,7 +51,7 @@ const char *p_swap_xy = "swap_xy";
 class CalibratorUsbtouchscreen: public Calibrator
 {
 public:
-    CalibratorUsbtouchscreen(const char* const drivername, const XYinfo& axys);
+    CalibratorUsbtouchscreen(const char* const drivername, const XYinfo& axys, const bool verbose);
     ~CalibratorUsbtouchscreen();
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
@@ -132,8 +132,8 @@ protected:
     }
 };
 
-CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const drivername0, const XYinfo& axys0)
-  : Calibrator(drivername0, axys0)
+CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const drivername0, const XYinfo& axys0, const bool verbose0)
+  : Calibrator(drivername0, axys0, verbose0)
 {
     if (strcmp(drivername, "Usbtouchscreen") != 0)
         throw WrongCalibratorException("Not a usbtouchscreen device");

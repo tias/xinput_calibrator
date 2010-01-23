@@ -33,7 +33,7 @@ public:
      * The constructor will throw an exception,
      * if the touchscreen is not of the type it supports
      */
-    Calibrator(const char* const drivername, const XYinfo& axys);
+    Calibrator(const char* const drivername, const XYinfo& axys, const bool verbose);
     ~Calibrator() {}
 
     // get the number of clicks already registered
@@ -51,6 +51,8 @@ protected:
     const char* const drivername;
     // original axys values
     XYinfo old_axys;
+    // be verbose or not
+    bool verbose;
     // nr of clicks registered
     int num_clicks;
     // click coordinates
