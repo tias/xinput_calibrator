@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009 Tias Guns
+ * Copyright 2007 Peter Hutterer (xinput_ methods from xinput)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,10 +50,10 @@ public:
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
 
-    // xinput functions (from the xinput source)
-    static Atom parse_atom(Display *display, const char* name);
-    static XDeviceInfo* find_device_info(Display *display, const char* name, Bool only_extended);
-    int do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
+    // xinput_ functions (from the xinput project)
+    static Atom xinput_parse_atom(Display *display, const char* name);
+    static XDeviceInfo* xinput_find_device_info(Display *display, const char* name, Bool only_extended);
+    int xinput_do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
 };
 
 CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& axys0)
@@ -64,7 +65,7 @@ CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& ax
         throw WrongCalibratorException("Evdev: Unable to connect to X server");
     }
 
-    info = find_device_info(display, drivername, False);
+    info = xinput_find_device_info(display, drivername, False);
     if (!info) {
         XCloseDisplay(display);
         throw WrongCalibratorException("Evdev: Unable to find device");
@@ -84,7 +85,7 @@ CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& ax
     unsigned char   *data, *ptr;
 
     // get "Evdev Axis Calibration" property
-    property = parse_atom(display, "Evdev Axis Calibration");
+    property = xinput_parse_atom(display, "Evdev Axis Calibration");
     if (XGetDeviceProperty(display, dev, property, 0, 1000, False,
                            AnyPropertyType, &act_type, &act_format,
                            &nitems, &bytes_after, &data) != Success)
@@ -184,7 +185,7 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     return success;
 }
 
-Atom CalibratorEvdev::parse_atom(Display *display, const char *name) {
+Atom CalibratorEvdev::xinput_parse_atom(Display *display, const char *name) {
     Bool is_atom = True;
     int i;
 
@@ -201,7 +202,7 @@ Atom CalibratorEvdev::parse_atom(Display *display, const char *name) {
         return XInternAtom(display, name, False);
 }
 
-XDeviceInfo* CalibratorEvdev::find_device_info(
+XDeviceInfo* CalibratorEvdev::xinput_find_device_info(
 Display *display, const char *name, Bool only_extended)
 {
     XDeviceInfo	*devices;
@@ -244,7 +245,7 @@ Display *display, const char *name, Bool only_extended)
     return found;
 }
 
-int CalibratorEvdev::do_set_prop(
+int CalibratorEvdev::xinput_do_set_prop(
 Display *display, Atom type, int format, int argc, char **argv)
 {
     Atom          prop;
@@ -264,13 +265,13 @@ Display *display, Atom type, int format, int argc, char **argv)
 
     if (argc < 3)
     {
-        fprintf(stderr, "Wrong usage of do_set_prop, need at least 3 arguments\n");
+        fprintf(stderr, "Wrong usage of xinput_do_set_prop, need at least 3 arguments\n");
         return EXIT_FAILURE;
     }
 
     name = argv[1];
 
-    prop = parse_atom(display, name);
+    prop = xinput_parse_atom(display, name);
 
     if (prop == None) {
         fprintf(stderr, "invalid property %s\n", name);
@@ -340,7 +341,7 @@ Display *display, Atom type, int format, int argc, char **argv)
                         format, name);
                 return EXIT_FAILURE;
             }
-            data.a[i] = parse_atom(display, argv[2 + i]);
+            data.a[i] = xinput_parse_atom(display, argv[2 + i]);
         } else {
             fprintf(stderr, "unexpected type for property %s\n", name);
             return EXIT_FAILURE;
