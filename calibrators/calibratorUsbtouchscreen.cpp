@@ -135,6 +135,9 @@ protected:
 CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const drivername0, const XYinfo& axys0)
   : Calibrator(drivername0, axys0)
 {
+    if (strcmp(drivername, "Usbtouchscreen") != 0)
+        throw WrongCalibratorException("Not a usbtouchscreen device");
+
     // Reset the currently running kernel
     read_bool_parameter(p_transform_xy, val_transform_xy);
     read_bool_parameter(p_flip_x, val_flip_x);
@@ -145,6 +148,8 @@ CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const drivername0
     write_bool_parameter(p_flip_x, false);
     write_bool_parameter(p_flip_y, false);
     write_bool_parameter(p_swap_xy, false);
+
+    printf("Calibrating Usbtouchscreen, through the kernel module\n");
 }
 
 CalibratorUsbtouchscreen::~CalibratorUsbtouchscreen()

@@ -49,8 +49,6 @@ public:
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
 
-    static Bool check_driver(const char* const name);
-
     // xinput functions (from the xinput source)
     static Atom parse_atom(Display *display, const char* name);
     static XDeviceInfo* find_device_info(Display *display, const char* name, Bool only_extended);
@@ -60,42 +58,48 @@ public:
 CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& axys0)
   : Calibrator(drivername0, axys0)
 {
-    printf("Calibrating EVDEV driver for \"%s\"\n", drivername);
-
     // init
     display = XOpenDisplay(NULL);
     if (display == NULL) {
-        fprintf(stderr, "Unable to connect to X server\n");
-        return;
+        throw WrongCalibratorException("Evdev: Unable to connect to X server");
     }
 
     info = find_device_info(display, drivername, False);
     if (!info) {
-        fprintf(stderr, "unable to find device %s\n", drivername);
-        return;
+        XCloseDisplay(display);
+        throw WrongCalibratorException("Evdev: Unable to find device");
     }
 
     dev = XOpenDevice(display, info->id);
     if (!dev) {
-        fprintf(stderr, "unable to open device '%s'\n", info->name);
-        return;
+        XCloseDisplay(display);
+        throw WrongCalibratorException("Evdev: Unable to open device");
     }
 
-    // get "Evdev Axis Calibration" property
-    Atom            property = parse_atom(display, "Evdev Axis Calibration");
+    // XGetDeviceProperty vars
+    Atom            property;
     Atom            act_type;
     int             act_format;
     unsigned long   nitems, bytes_after;
     unsigned char   *data, *ptr;
+
+    // get "Evdev Axis Calibration" property
+    property = parse_atom(display, "Evdev Axis Calibration");
     if (XGetDeviceProperty(display, dev, property, 0, 1000, False,
                            AnyPropertyType, &act_type, &act_format,
-                           &nitems, &bytes_after, &data) == Success)
+                           &nitems, &bytes_after, &data) != Success)
     {
-        if (act_format != 32 || act_type != XA_INTEGER) {
-            fprintf(stderr, "Error: unexpected format or type from \"Evdev Axis Calibration\" property.\n");
-        }
+        XCloseDevice(display, dev);
+        XCloseDisplay(display);
+        throw WrongCalibratorException("Evdev: \"Evdev Axis Calibration\" property missing, not a (valid) evdev device");
 
-        if (nitems != 0) {
+    } else {
+        if (act_format != 32 || act_type != XA_INTEGER) {
+            XCloseDevice(display, dev);
+            XCloseDisplay(display);
+            throw WrongCalibratorException("Evdev: invalid \"Evdev Axis Calibration\" property format");
+
+        } else if (nitems != 0) {
             ptr = data;
 
             old_axys.x_min = *((long*)ptr);
@@ -106,14 +110,16 @@ CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& ax
             ptr += sizeof(long);
             old_axys.y_max = *((long*)ptr);
             ptr += sizeof(long);
-
-            printf("Read current calibration data from XInput: min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
-                old_axys.x_min, old_axys.x_max, old_axys.y_min, old_axys.y_max);
         }
 
         XFree(data);
-    } else
-        printf("\tFetch failure for 'Evdev Axis Calibration', continuing nonetheless\n");
+    }
+
+    // TODO: swap_xy and flip_x/flip_y stuff
+
+    printf("Calibrating EVDEV driver for \"%s\"\n", drivername);
+    printf("\tcurrent calibration values (from XInput): min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
+                old_axys.x_min, old_axys.x_max, old_axys.y_min, old_axys.y_max);
 }
 
 CalibratorEvdev::~CalibratorEvdev () {
@@ -176,62 +182,6 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     XSync(display, False);
 
     return success;
-}
-
-Bool CalibratorEvdev::check_driver(const char *name) {
-    Display     *display;
-    XDeviceInfo *info;
-    XDevice     *dev;
-    int         nprops;
-    Atom        *props;
-    Bool        found = False;
-
-    display = XOpenDisplay(NULL);
-    if (display == NULL) {
-        //fprintf(stderr, "Unable to connect to X server");
-        return false;
-    }
-
-    info = find_device_info(display, name, False);
-    if (!info)
-    {
-        XCloseDisplay(display);
-        //fprintf(stderr, "unable to find device %s\n", name);
-        return false;
-    }
-
-    dev = XOpenDevice(display, info->id);
-    if (!dev)
-    {
-        XCloseDisplay(display);
-        //fprintf(stderr, "unable to open device '%s'\n", info->name);
-        return false;
-    }
-
-    props = XListDeviceProperties(display, dev, &nprops);
-    if (!nprops)
-    {
-        XCloseDevice(display, dev);
-        XCloseDisplay(display);
-        //printf("Device '%s' does not report any properties.\n", info->name);
-        return false;
-    }
-
-    // check if "Evdev Axis Calibration" exists, then its an evdev driver
-    while(nprops--)
-    {
-        if (strcmp(XGetAtomName(display, props[nprops]),
-                   "Evdev Axis Calibration") == 0) {
-            found = True;
-            break;
-        }
-    }
-
-    XFree(props);
-    XCloseDevice(display, dev);
-    XCloseDisplay(display);
-
-    return found;
 }
 
 Atom CalibratorEvdev::parse_atom(Display *display, const char *name) {

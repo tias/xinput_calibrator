@@ -35,10 +35,10 @@ public:
 CalibratorXorgPrint::CalibratorXorgPrint(const char* const drivername0, const XYinfo& axys0)
   : Calibrator(drivername0, axys0)
 {
-    printf ("Calibrating Xorg driver \"%s\" (currently having min_x=%d, max_x=%d and min_y=%d, max_y=%d)\n",
-                drivername, old_axys.x_min, old_axys.x_max,
-                old_axys.y_min, old_axys.y_max);
-    printf("\tIf the current calibration data is estimated wrong then either supply it manually with --precalib <minx> <maxx> <miny> <maxy> or run the 'get_precalib.sh' script to automatically get it from your current Xorg configuration (through hal).\n");
+    printf("Calibrating standard Xorg driver \"%s\"\n", drivername);
+    printf("\tcurrent calibration values: min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
+                old_axys.x_min, old_axys.x_max, old_axys.y_min, old_axys.y_max);
+    printf("\tIf these values are estimated wrong, either supply it manually with the --precalib option, or run the 'get_precalib.sh' script to automatically get it (through HAL).\n");
 }
 
 bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)

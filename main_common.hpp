@@ -79,6 +79,12 @@ struct XYinfo {
          x_min(xmi), x_max(xma), y_min(ymi), y_max(yma) {}
 };
 
+class WrongCalibratorException : public std::invalid_argument {
+    public:
+        WrongCalibratorException(const std::string& msg = "") :
+            std::invalid_argument(msg) {}
+};
+
 // all need struct XYinfo, and some the consts too
 #include "calibrator.cpp"
 #include "calibrators/calibratorXorgPrint.cpp"
@@ -227,21 +233,26 @@ Calibrator* main_common(int argc, char** argv)
             axys.y_max = pre_axys.y_max;
     }
 
-    Calibrator* calibrator;
+
     // Different driver, different backend behaviour
-    if (strcmp(drivername, "Usbtouchscreen") == 0)
+    try {
         // Usbtouchscreen driver
-        calibrator = new CalibratorUsbtouchscreen(drivername, axys);
-    else {
-        // unable to know device driver from its name alone
-        // either its EVDEV or a normal Xorg touchscreen driver
-        if (CalibratorEvdev::check_driver(drivername)) {
-            // Evdev driver
-            calibrator = new CalibratorEvdev(drivername, axys);
-        } else {
-            // EVTouch is handled as a normal Xorg driver
-            calibrator = new CalibratorXorgPrint(drivername, axys);
-        }
+        return new CalibratorUsbtouchscreen(drivername, axys);
+
+    } catch(WrongCalibratorException& x) {
+        // TODO: verbose output
+        //printf("%s\n", x.what());
     }
-    return calibrator;
+
+    try {
+        // next, try Evdev driver
+        return new CalibratorEvdev(drivername, axys);
+
+    } catch(WrongCalibratorException& x) {
+        // TODO: verbose output
+        //printf("%s\n", x.what());
+    }
+
+    // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
+    return new CalibratorXorgPrint(drivername, axys);
 }
