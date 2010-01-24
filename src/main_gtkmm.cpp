@@ -28,7 +28,7 @@
 #include <cairomm/context.h>
 
 #include "main_common.hpp"
-#include "gui_gtkmm.cpp"
+#include "gui/gui_gtkmm.cpp"
 
 int main(int argc, char** argv)
 {

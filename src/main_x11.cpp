@@ -21,7 +21,7 @@
  */
 
 #include "main_common.hpp"
-#include "gui_x11.cpp"
+#include "gui/gui_x11.cpp"
 
 int main(int argc, char** argv)
 {

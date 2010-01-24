@@ -87,9 +87,9 @@ class WrongCalibratorException : public std::invalid_argument {
 
 // all need struct XYinfo, and some the consts too
 #include "calibrator.cpp"
-#include "calibrators/calibratorXorgPrint.cpp"
-#include "calibrators/calibratorEvdev.cpp"
-#include "calibrators/calibratorUsbtouchscreen.cpp"
+#include "calibrator/calibratorXorgPrint.cpp"
+#include "calibrator/calibratorEvdev.cpp"
+#include "calibrator/calibratorUsbtouchscreen.cpp"
 
 
 

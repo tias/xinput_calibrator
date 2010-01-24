@@ -24,7 +24,23 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src
+AM_CXXFLAGS = -Wall -ansi -pedantic -W -Wmissing-declarations -Werror
 
-EXTRA_DIST = autogen.sh
+if BUILD_X11
+bin_PROGRAMS = xinput_calibrator_x11
+xinput_calibrator_x11_SOURCES = main_x11.cpp
+xinput_calibrator_x11_LDADD = $(XINPUT_LIBS) $(XORG_LIBS)
+xinput_calibrator_x11_CXXFLAGS = $(XINPUT_CFLAGS) $(XORG_CFLAGS) $(AM_CXXFLAGS)
+endif
+
+if BUILD_GTKMM
+if BUILD_X11
+bin_PROGRAMS += xinput_calibrator_gtkmm
+else
+bin_PROGRAMS = xinput_calibrator_gtkmm
+endif
+xinput_calibrator_gtkmm_SOURCES = main_gtkmm.cpp
+xinput_calibrator_gtkmm_LDADD = $(XINPUT_LIBS) $(GTKMM_LIBS)
+xinput_calibrator_gtkmm_CXXFLAGS = $(XINPUT_CFLAGS) $(GTKMM_CFLAGS) $(AM_CXXFLAGS)
+endif
+
