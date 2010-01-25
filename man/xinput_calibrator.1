@@ -1,0 +1,52 @@
+.\" 
+.TH "xinput_calibrator" "1" "" "Tias Guns" ""
+.SH "NAME"
+xinput_calibrator \- A generic touchscreen calibration program for X.Org
+
+.SH "SYNOPSIS"
+.B xinput_calibrator_x11 [OPTIONS]
+.br 
+.B xinput_calibrator_gtkmm [OPTIONS]
+.SH "DESCRIPTION"
+xinput_calibrator is a program for calibrating your touchscreen, when using the X Window System.
+.PP 
+It currently features:
+.br 
+\- a minimalistic and intuitive GUI (X11 or gtkmm)
+.br 
+\- works for any standard Xorg touchscreen driver (uses Xinput to get axis valuators)
+.br 
+\- can output the calibration in xorg.conf and FDI format
+.br 
+\- can dynamically recalibrate the evdev driver
+.br 
+\- and more
+.PP 
+see http://www.freedesktop.org/wiki/Software/xinput_calibrator
+
+.SH "OPTIONS"
+.TP 8
+.B \-h, \-\-help
+Print a help message listing the version and available options.
+.PP 
+.TP 8
+.B \-v, \-\-verbose
+Print debug messages during the process.
+.PP 
+.TP 8
+.B \-\-precalib \fImin_x\fP \fImax_x\fP \fImin_y\fP \fImax_y\fP
+Manually provide the current calibration setting.
+.br 
+This is usefull if the calibration values are stored in your xorg.conf, but the driver does not export them to xinput (eg, the calibrator can not find these values)
+.PP 
+.TP 8
+.B \-\-fake
+Emulate a fake driver (for testing purposes)
+.br 
+Usefull to test the calibrator without applying the values, and possibly even without having a touchscreen.
+.SH "SEE ALSO"
+xinput(1)
+.SH "AUTHORS"
+.nf 
+Tias Guns <tias@ulyssis.org>
+.fi 

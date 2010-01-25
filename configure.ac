@@ -68,4 +68,5 @@ AM_CONDITIONAL([BUILD_GTKMM], [test "x$enable_gtkmm" = "xyes"])
 AC_SUBST(VERSION)
 
 AC_OUTPUT([Makefile
-           src/Makefile])
+           src/Makefile
+           man/Makefile])

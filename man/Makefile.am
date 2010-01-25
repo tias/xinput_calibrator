@@ -1,5 +1,4 @@
 #
-# Copyright (c) 2010 Petr Stetiar <ynezz@true.cz>
 # Copyright (c) 2010 Tias Guns <tias@ulyssis.org>
 #
 # Permission is hereby granted, free of charge, to any person
@@ -24,7 +23,4 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src man
-
-EXTRA_DIST = autogen.sh
+man_MANS = xinput_calibrator.1
