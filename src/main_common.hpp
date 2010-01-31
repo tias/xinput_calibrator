@@ -124,12 +124,13 @@ int find_device(bool verbose, const char*& device_name, XYinfo& device_axys)
         }
     }
 
+    Atom atomTouchscreen = XInternAtom(display, XI_TOUCHSCREEN, False);
     int ndevices;
     XDeviceInfoPtr list, slist;
     slist=list=(XDeviceInfoPtr) XListInputDevices (display, &ndevices);
     for (int i=0; i<ndevices; i++, list++)
     {
-        if (list->use == IsXKeyboard || list->use == IsXPointer)
+        if (list->type != atomTouchscreen)
             continue;
 
         XAnyClassPtr any = (XAnyClassPtr) (list->inputclassinfo);
@@ -141,10 +142,14 @@ int find_device(bool verbose, const char*& device_name, XYinfo& device_axys)
                 XValuatorInfoPtr V = (XValuatorInfoPtr) any;
                 XAxisInfoPtr ax = (XAxisInfoPtr) V->axes;
 
-                if (V->num_axes >= 2 &&
-                    !(ax[0].min_value == -1 && ax[0].max_value == -1) &&
-                    !(ax[1].min_value == -1 && ax[1].max_value == -1)) {
-                    /* a calibratable device (no mouse etc) */
+                if (V->num_axes < 2) {
+                    if (verbose)
+                        printf("DEBUG: Skipped touchscreen %s with only %i axes, instead of 2.\n", list->name, V->num_axes);
+                } else {
+                    if (V->num_axes > 2 && verbose)
+                        printf("DEBUG: Warning, touchscreen %s has %i axes, only using the first 2.\n", list->name, V->num_axes);
+
+                    // a calibratable touschscreen
                     found++;
                     device_name = strdup(list->name);
                     device_axys.x_min = ax[0].min_value;
