@@ -50,9 +50,12 @@ public:
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
 
+    bool set_swapxy(const int swap_xy);
+    bool set_calibration(const XYinfo new_axys);
+
     // xinput_ functions (from the xinput project)
-    static Atom xinput_parse_atom(Display *display, const char* name);
-    static XDeviceInfo* xinput_find_device_info(Display *display, const char* name, Bool only_extended);
+    Atom xinput_parse_atom(Display *display, const char* name);
+    XDeviceInfo* xinput_find_device_info(Display *display, const char* name, Bool only_extended);
     int xinput_do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
 };
 
@@ -111,7 +114,24 @@ CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& ax
             XCloseDisplay(display);
             throw WrongCalibratorException("Evdev: invalid \"Evdev Axis Calibration\" property format");
 
-        } else if (nitems != 0) {
+        } else if (nitems == 0) {
+            if (verbose)
+                printf("DEBUG: Evdev Axis Calibration not set, setting to axis valuators to be sure.\n");
+
+            // No axis calibration set, set it to the default one
+            // QUIRK: when my machine resumes from a sleep,
+            // the calibration property is no longer exported thourgh xinput, but still active
+            // not setting the values here would result in a wrong first calibration
+            bool ok = set_calibration(old_axys);
+
+            if (verbose) {
+                if (ok)
+                    printf("DEBUG: Succesfully applied axis calibration.\n");
+                else
+                    printf("DEBUG: Failed to apply axis calibration.\n");
+            }
+
+        } else if (nitems > 0) {
             ptr = data;
 
             old_axys.x_min = *((long*)ptr);
@@ -152,21 +172,11 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     // Evdev Axes Swap
     if (swap_xy) {
         printf("\tSwapping X and Y axis...\n");
-        // xinput set-int-prop "divername" "Evdev Axes Swap" 8 0
-        char* arr_cmd[3];
-        //arr_cmd[0] = "";
-        char str_prop[50];
-        sprintf(str_prop, "Evdev Axes Swap");
-        arr_cmd[1] = str_prop;
-        char str_swap_xy[20];
-        sprintf(str_swap_xy, "%d", swap_xy);
-        arr_cmd[2] = str_swap_xy;
-
-        int ret = xinput_do_set_prop(display, XA_INTEGER, 8, 3, arr_cmd);
-        success &= (ret == EXIT_SUCCESS);
+        bool ok = set_swapxy(swap_xy);
+        success &= ok;
 
         if (verbose) {
-            if (ret == EXIT_SUCCESS)
+            if (ok)
                 printf("DEBUG: Succesfully swapped X and Y axis.\n");
             else
                 printf("DEBUG: Failed to swap X and Y axis.\n");
@@ -175,6 +185,40 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 
     // Evdev Axis Calibration
     printf("\tSetting new calibration data: %d, %d, %d, %d\n", new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    bool ok = set_calibration(new_axys);
+    success &= ok;
+
+    if (verbose) {
+        if (ok)
+            printf("DEBUG: Succesfully applied axis calibration.\n");
+        else
+            printf("DEBUG: Failed to apply axis calibration.\n");
+    }
+
+    // close
+    XSync(display, False);
+
+    return success;
+}
+
+bool CalibratorEvdev::set_swapxy(const int swap_xy)
+{
+    // xinput set-int-prop "divername" "Evdev Axes Swap" 8 0
+    char* arr_cmd[3];
+    //arr_cmd[0] = "";
+    char str_prop[50];
+    sprintf(str_prop, "Evdev Axes Swap");
+    arr_cmd[1] = str_prop;
+    char str_swap_xy[20];
+    sprintf(str_swap_xy, "%d", swap_xy);
+    arr_cmd[2] = str_swap_xy;
+
+    int ret = xinput_do_set_prop(display, XA_INTEGER, 8, 3, arr_cmd);
+    return (ret == EXIT_SUCCESS);
+}
+
+bool CalibratorEvdev::set_calibration(const XYinfo new_axys)
+{
     // xinput set-int-prop 4 223 32 5 500 8 300
     char* arr_cmd[6];
     //arr_cmd[0] = "";
@@ -195,19 +239,7 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     arr_cmd[5] = str_max_y;
 
     int ret = xinput_do_set_prop(display, XA_INTEGER, 32, 6, arr_cmd);
-    success &= (ret == EXIT_SUCCESS);
-
-    if (verbose) {
-        if (ret == EXIT_SUCCESS)
-            printf("DEBUG: Succesfully applied axis calibration.\n");
-        else
-            printf("DEBUG: Failed to apply axis calibration.\n");
-    }
-
-    // close
-    XSync(display, False);
-
-    return success;
+    return (ret == EXIT_SUCCESS);
 }
 
 Atom CalibratorEvdev::xinput_parse_atom(Display *display, const char *name) {
