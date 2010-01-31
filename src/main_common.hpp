@@ -93,13 +93,18 @@ class WrongCalibratorException : public std::invalid_argument {
 
 
 
-// find a calibratable device (using XInput)
-// retuns number of devices found,
-// data of last device is returned in the function parameters
-int find_device(bool, bool, XID&, const char*&, XYinfo&);
-int find_device(bool verbose, bool list_devices,
+/**
+ * find a calibratable touchscreen device (using XInput)
+ *
+ * if pre_device is NULL, the last calibratable device is selected.
+ * retuns number of devices found,
+ * the data of the device is returned in the last 3 function parameters
+ */
+int find_device(const char*, bool, bool, XID&, const char*&, XYinfo&);
+int find_device(const char* pre_device, bool verbose, bool list_devices,
         XID& device_id, const char*& device_name, XYinfo& device_axys)
 {
+    bool pre_device_is_id = true;
     int found = 0;
 
     Display* display = XOpenDisplay(NULL);
@@ -125,6 +130,17 @@ int find_device(bool verbose, bool list_devices,
         }
     }
 
+    if (pre_device != NULL) {
+        int len = strlen(pre_device);
+        for (int loop=0; loop<len; loop++) {
+	        if (!isdigit(pre_device[loop])) {
+	            pre_device_is_id = false;
+	            break;
+	        }
+        }
+    }
+
+
     Atom atomTouchscreen = XInternAtom(display, XI_TOUCHSCREEN, False);
     int ndevices;
     XDeviceInfoPtr list, slist;
@@ -133,6 +149,17 @@ int find_device(bool verbose, bool list_devices,
     {
         if (list->type != atomTouchscreen)
             continue;
+
+        // if we are looking for a specific device
+        if (pre_device != NULL) {
+            if ((pre_device_is_id && list->id == (XID) atoi(pre_device)) ||
+                (!pre_device_is_id && strcmp(list->name, pre_device) == 0)) {
+                // OK, fall through
+            } else {
+                // skip, not this device
+                continue;
+            }
+        }
 
         XAnyClassPtr any = (XAnyClassPtr) (list->inputclassinfo);
         for (int j=0; j<list->num_classes; j++)
@@ -183,10 +210,11 @@ int find_device(bool verbose, bool list_devices,
 static void usage(char* cmd)
 {
     fprintf(stderr, "xinput_calibratior, v%s\n\n", VERSION);
-    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--precalib <minx> <maxx> <miny> <maxy>] [--fake]\n", cmd);
+    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--device <device name or id>] [--precalib <minx> <maxx> <miny> <maxy>] [--fake]\n", cmd);
     fprintf(stderr, "\t-h, --help: print this help message\n");
     fprintf(stderr, "\t-v, --verbose: print debug messages during the process\n");
     fprintf(stderr, "\t--list: list calibratable input devices and quit\n");
+    fprintf(stderr, "\t--device <device name or id>: select a specific device to calibrate\n");
     fprintf(stderr, "\t--precalib: manually provide the current calibration setting (eg the values in xorg.conf)\n");
     fprintf(stderr, "\t--fake: emulate a fake device (for testing purposes)\n");
 }
@@ -199,6 +227,7 @@ Calibrator* main_common(int argc, char** argv)
     bool fake = false;
     bool precalib = false;
     XYinfo pre_axys;
+    const char* pre_device = NULL;
 
     // parse input
     if (argc > 1) {
@@ -219,7 +248,17 @@ Calibrator* main_common(int argc, char** argv)
             // Just list devices ?
             if (strcmp("--list", argv[i]) == 0) {
                 list_devices = true;
-            }
+            } else
+
+            // Select specific device ?
+            if (strcmp("--device", argv[i]) == 0) {
+                if (argc > i+1)
+                    pre_device = argv[++i];
+                else {
+                    fprintf(stderr, "Error: --device needs a device name or id as argument; use --list to list the calibratable input devices.\n");
+                    exit(1);
+                }
+            } else
 
             // Get pre-calibration ?
             if (strcmp("--precalib", argv[i]) == 0) {
@@ -238,6 +277,7 @@ Calibrator* main_common(int argc, char** argv)
             if (strcmp("--fake", argv[i]) == 0) {
                 fake = true;
             }
+            // TODO proper quit when not parsing an option, also means i++ everytime one is found.
         }
     }
     
@@ -256,7 +296,7 @@ Calibrator* main_common(int argc, char** argv)
         }
     } else {
         // Find the right device
-        int nr_found = find_device(verbose, list_devices, device_id, device_name, device_axys);
+        int nr_found = find_device(pre_device, verbose, list_devices, device_id, device_name, device_axys);
 
         if (list_devices) {
             // printed the list in find_device
@@ -266,10 +306,18 @@ Calibrator* main_common(int argc, char** argv)
         }
 
         if (nr_found == 0) {
-            fprintf (stderr, "Error: No calibratable devices found.\n");
+            if (pre_device == NULL)
+                fprintf (stderr, "Error: No calibratable devices found.\n");
+            else
+                fprintf (stderr, "Error: Device \"%s\" not found; use --list to list the calibratable input devices.\n", pre_device);
             exit(1);
+
         } else if (nr_found > 1) {
-            printf ("Warning: multiple calibratable devices found, calibrating last one (%s)\n", device_name);
+            printf ("Warning: multiple calibratable devices found, calibrating last one (%s)\n\tuse --device to select another one.\n", device_name);
+        }
+
+        if (verbose) {
+            printf("DEBUG: Selected device: %s\n", device_name);
         }
     }
 
