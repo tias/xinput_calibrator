@@ -14,7 +14,7 @@ It currently features:
 .br 
 \- a minimalistic and intuitive GUI (X11 or gtkmm)
 .br 
-\- works for any standard Xorg touchscreen driver (uses Xinput to get axis valuators)
+\- works for any standard Xorg touchscreen driver (uses XInput to get axis valuators)
 .br 
 \- can output the calibration in xorg.conf and FDI format
 .br 
@@ -37,7 +37,7 @@ Print debug messages during the process.
 .B \-\-precalib \fImin_x\fP \fImax_x\fP \fImin_y\fP \fImax_y\fP
 Manually provide the current calibration setting.
 .br 
-This is usefull if the calibration values are stored in your xorg.conf, but the driver does not export them to xinput (eg, the calibrator can not find these values)
+This is usefull if the calibration values are stored in your xorg.conf, but the driver does not export them through XInput (eg, the calibrator can not know these values)
 .PP 
 .TP 8
 .B \-\-fake

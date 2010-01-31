@@ -77,6 +77,17 @@ CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& ax
         throw WrongCalibratorException("Evdev: Unable to open device");
     }
 
+    // check X Input version >= 1.5
+    XExtensionVersion *version = XGetExtensionVersion(display, INAME);
+    if (version && (version != (XExtensionVersion*) NoSuchExtension)) {
+        if (version->major_version < 1 or
+            (version->major_version == 1 and version->minor_version < 5)) {
+            XFree(version);
+            throw WrongCalibratorException("Evdev: your X server is too old, for dynamic recalibration of evdev you need at least XServer 1.6 and X Input 1.5");
+        }
+        XFree(version);
+    }
+
     // XGetDeviceProperty vars
     Atom            property;
     Atom            act_type;

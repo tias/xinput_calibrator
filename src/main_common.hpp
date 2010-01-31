@@ -93,7 +93,7 @@ class WrongCalibratorException : public std::invalid_argument {
 
 
 
-// find a calibratable device (using Xinput)
+// find a calibratable device (using XInput)
 // retuns number of devices found,
 // data of last driver is returned in the function parameters
 int find_driver(bool verbose, const char*& drivername, XYinfo& axys);
