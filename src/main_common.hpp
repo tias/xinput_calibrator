@@ -96,8 +96,9 @@ class WrongCalibratorException : public std::invalid_argument {
 // find a calibratable device (using XInput)
 // retuns number of devices found,
 // data of last device is returned in the function parameters
-int find_device(bool verbose, const char*& device_name, XYinfo& device_axys);
-int find_device(bool verbose, const char*& device_name, XYinfo& device_axys)
+int find_device(bool, bool, XID&, const char*&, XYinfo&);
+int find_device(bool verbose, bool list_devices,
+        XID& device_id, const char*& device_name, XYinfo& device_axys)
 {
     int found = 0;
 
@@ -151,11 +152,15 @@ int find_device(bool verbose, const char*& device_name, XYinfo& device_axys)
 
                     // a calibratable touschscreen
                     found++;
+                    device_id = list->id;
                     device_name = strdup(list->name);
                     device_axys.x_min = ax[0].min_value;
                     device_axys.x_max = ax[0].max_value;
                     device_axys.y_min = ax[1].min_value;
                     device_axys.y_max = ax[1].max_value;
+
+                    if (list_devices)
+                        printf("Device \"%s\" id=%i\n", device_name, (int)device_id);
                 }
 
             }
@@ -178,9 +183,10 @@ int find_device(bool verbose, const char*& device_name, XYinfo& device_axys)
 static void usage(char* cmd)
 {
     fprintf(stderr, "xinput_calibratior, v%s\n\n", VERSION);
-    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--precalib <minx> <maxx> <miny> <maxy>] [--fake]\n", cmd);
+    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--precalib <minx> <maxx> <miny> <maxy>] [--fake]\n", cmd);
     fprintf(stderr, "\t-h, --help: print this help message\n");
     fprintf(stderr, "\t-v, --verbose: print debug messages during the process\n");
+    fprintf(stderr, "\t--list: list calibratable input devices and quit\n");
     fprintf(stderr, "\t--precalib: manually provide the current calibration setting (eg the values in xorg.conf)\n");
     fprintf(stderr, "\t--fake: emulate a fake device (for testing purposes)\n");
 }
@@ -189,6 +195,7 @@ Calibrator* main_common(int argc, char** argv);
 Calibrator* main_common(int argc, char** argv)
 {
     bool verbose = false;
+    bool list_devices = false;
     bool fake = false;
     bool precalib = false;
     XYinfo pre_axys;
@@ -208,6 +215,11 @@ Calibrator* main_common(int argc, char** argv)
                 strcmp("--verbose", argv[i]) == 0) {
                 verbose = true;
             } else
+
+            // Just list devices ?
+            if (strcmp("--list", argv[i]) == 0) {
+                list_devices = true;
+            }
 
             // Get pre-calibration ?
             if (strcmp("--precalib", argv[i]) == 0) {
@@ -231,6 +243,7 @@ Calibrator* main_common(int argc, char** argv)
     
 
     // Choose the device to calibrate
+    XID         device_id   = (XID) -1;
     const char* device_name = NULL;
     XYinfo      device_axys;
     if (fake) {
@@ -243,7 +256,14 @@ Calibrator* main_common(int argc, char** argv)
         }
     } else {
         // Find the right device
-        int nr_found = find_device(verbose, device_name, device_axys);
+        int nr_found = find_device(verbose, list_devices, device_id, device_name, device_axys);
+
+        if (list_devices) {
+            // printed the list in find_device
+            if (nr_found == 0)
+                printf("No calibratable devices found.\n");
+            exit(0);
+        }
 
         if (nr_found == 0) {
             fprintf (stderr, "Error: No calibratable devices found.\n");
