@@ -44,6 +44,8 @@ private:
     Display     *display;
     XDeviceInfo *info;
     XDevice     *dev;
+
+    int old_swap_xy;
 public:
     CalibratorEvdev(const char* const drivername, const XYinfo& axys, const bool verbose);
     ~CalibratorEvdev();
@@ -60,7 +62,7 @@ public:
 };
 
 CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& axys0, const bool verbose0)
-  : Calibrator(drivername0, axys0, verbose0)
+  : Calibrator(drivername0, axys0, verbose0), old_swap_xy(0)
 {
     // init
     display = XOpenDisplay(NULL);
@@ -147,7 +149,19 @@ CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& ax
         XFree(data);
     }
 
-    // TODO: swap_xy and flip_x/flip_y stuff
+    // get "Evdev Axes Swap" property
+    property = xinput_parse_atom(display, "Evdev Axes Swap");
+    if (XGetDeviceProperty(display, dev, property, 0, 1000, False,
+                           AnyPropertyType, &act_type, &act_format,
+                           &nitems, &bytes_after, &data) == Success)
+    {
+        if (act_format == 8 && act_type == XA_INTEGER && nitems == 1) {
+            old_swap_xy = *((char*)data);
+
+            if (verbose)
+                printf("DEBUG: Read axes swap value of %i.\n", old_swap_xy);
+        }
+    }
 
     printf("Calibrating EVDEV driver for \"%s\"\n", drivername);
     printf("\tcurrent calibration values (from XInput): min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
@@ -171,8 +185,11 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     printf("\nDoing dynamic recalibration:\n");
     // Evdev Axes Swap
     if (swap_xy) {
+        // swap x and y, if it was already swapped, unswap
+        int new_swap_xy = 1 - old_swap_xy;
+
         printf("\tSwapping X and Y axis...\n");
-        bool ok = set_swapxy(swap_xy);
+        bool ok = set_swapxy(new_swap_xy);
         success &= ok;
 
         if (verbose) {
