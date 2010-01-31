@@ -43,30 +43,48 @@ CalibratorXorgPrint::CalibratorXorgPrint(const char* const drivername0, const XY
 
 bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
 {
-    // FDI policy output
-    printf("\nNew method for making the calibration permanent: create an FDI policy file like /etc/hal/fdi/policy/touchscreen.fdi with:\n\
-<match key=\"info.product\" contains=\"%%Name_Of_TouchScreen%%\">\n\
-  <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n\
-  <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
-  <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
-  <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
-         , new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    if (swap_xy != 0)
-        printf("  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", swap_xy);
-    printf("</match>\n");
+    // TODO: detect which are applicable at runtime/in the makefile ?
+    printf("\n\n== Applying the calibration ==\n");
+    printf("There are multiple ways to do this: the tranditional way (xorg.conf), the new way (udev rule) and the soon deprecated way (HAL policy):\n");
 
     // Xorg.conf output
-    printf("\nOld method, edit /etc/X11/xorg.conf and add in the 'Section \"Device\"' of your touchscreen device:\n");
-    printf("\tOption\t\"MinX\"\t\t\"%d\"\t# was \"%d\"\n",
-                new_axys.x_min, old_axys.x_min);
-    printf("\tOption\t\"MaxX\"\t\t\"%d\"\t# was \"%d\"\n",
-                new_axys.x_max, old_axys.x_max);
-    printf("\tOption\t\"MinY\"\t\t\"%d\"\t# was \"%d\"\n",
-                new_axys.y_min, old_axys.y_min);
-    printf("\tOption\t\"MaxY\"\t\t\"%d\"\t# was \"%d\"\n",
-                new_axys.y_max, old_axys.y_max);
+    printf("\nxorg.conf: edit /etc/X11/xorg.conf and add in the 'Section \"InputDevice\"' of your device:\n");
+    printf("\tOption\t\"MinX\"\t\t\"%d\"\n",
+                new_axys.x_min);
+    printf("\tOption\t\"MaxX\"\t\t\"%d\"\n",
+                new_axys.x_max);
+    printf("\tOption\t\"MinY\"\t\t\"%d\"\n",
+                new_axys.y_min);
+    printf("\tOption\t\"MaxY\"\t\t\"%d\"\n",
+                new_axys.y_max);
     if (swap_xy != 0)
-        printf("\tOption\t\"SwapXY\"\t\"%d\"\n", swap_xy);
+        printf("\tOption\t\"SwapXY\"\t\"%d\" # unless it was already set to 1\n", swap_xy);
+
+    // udev rule
+    printf("\nudev rule: create the file '/etc/udev/rules.d/99_touchscreen.rules' with: (replace %%Name_Of_TouchScreen%% appropriately)\n\
+\tACTION!=\"add|change\", GOTO=\"xorg_touchscreen_end\"\n\
+\tKERNEL!=\"event*\", GOTO=\"xorg_touchscreen_end\"\n\
+\tATTRS{product}!=\"%%Name_Of_TouchScreen%%\", GOTO=\"xorg_touchscreen_end\"\n\
+\tENV{x11_options.minx}=\"%d\"\n\
+\tENV{x11_options.miny}=\"%d\"\n\
+\tENV{x11_options.maxx}=\"%d\"\n\
+\tENV{x11_options.maxy}=\"%d\"\n"
+         , new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    if (swap_xy != 0)
+        printf("\tENV{x11_options.swapxy}=\"%d\"\n", swap_xy);
+    printf("\tLABEL=\"xorg_touchscreen_end\"\n");
+
+    // HAL policy output
+    printf("\nHAL policy: create the file '/etc/hal/fdi/policy/touchscreen.fdi' with: (replace %%Name_Of_TouchScreen%% appropriately)\n\
+\t<match key=\"info.product\" contains=\"%%Name_Of_TouchScreen%%\">\n\
+\t  <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n\
+\t  <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
+\t  <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
+\t  <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
+         , new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    if (swap_xy != 0)
+        printf("\t  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", swap_xy);
+    printf("\t</match>\n");
 
     return true;
 }
