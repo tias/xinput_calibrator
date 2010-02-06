@@ -209,7 +209,6 @@ int find_device(const char* pre_device, bool verbose, bool list_devices,
 
 static void usage(char* cmd)
 {
-    fprintf(stderr, "xinput_calibratior, v%s\n\n", VERSION);
     fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--device <device name or id>] [--precalib <minx> <maxx> <miny> <maxy>] [--fake]\n", cmd);
     fprintf(stderr, "\t-h, --help: print this help message\n");
     fprintf(stderr, "\t-v, --verbose: print debug messages during the process\n");
@@ -235,6 +234,7 @@ Calibrator* main_common(int argc, char** argv)
             // Display help ?
             if (strcmp("-h", argv[i]) == 0 ||
                 strcmp("--help", argv[i]) == 0) {
+                fprintf(stderr, "xinput_calibratior, v%s\n\n", VERSION);
                 usage(argv[0]);
                 exit(0);
             } else
@@ -255,7 +255,8 @@ Calibrator* main_common(int argc, char** argv)
                 if (argc > i+1)
                     pre_device = argv[++i];
                 else {
-                    fprintf(stderr, "Error: --device needs a device name or id as argument; use --list to list the calibratable input devices.\n");
+                    fprintf(stderr, "Error: --device needs a device name or id as argument; use --list to list the calibratable input devices.\n\n");
+                    usage(argv[0]);
                     exit(1);
                 }
             } else
@@ -264,20 +265,26 @@ Calibrator* main_common(int argc, char** argv)
             if (strcmp("--precalib", argv[i]) == 0) {
                 precalib = true;
                 if (argc > i+1)
-                    pre_axys.x_min = atoi(argv[i+1]);
-                if (argc > i+2)
-                    pre_axys.x_max = atoi(argv[i+2]);
-                if (argc > i+3)
-                    pre_axys.y_min = atoi(argv[i+3]);
-                if (argc > i+4)
-                    pre_axys.y_max = atoi(argv[i+4]);
+                    pre_axys.x_min = atoi(argv[++i]);
+                if (argc > i+1)
+                    pre_axys.x_max = atoi(argv[++i]);
+                if (argc > i+1)
+                    pre_axys.y_min = atoi(argv[++i]);
+                if (argc > i+1)
+                    pre_axys.y_max = atoi(argv[++i]);
             } else
 
             // Fake calibratable device ?
             if (strcmp("--fake", argv[i]) == 0) {
                 fake = true;
             }
-            // TODO proper quit when not parsing an option, also means i++ everytime one is found.
+            
+            // unknown option
+            else {
+                fprintf(stderr, "Unknown option: %s\n\n", argv[i]);
+                usage(argv[0]);
+                exit(0);
+            }
         }
     }
     
