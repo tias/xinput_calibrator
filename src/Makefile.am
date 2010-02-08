@@ -24,7 +24,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-AM_CXXFLAGS = -Wall -ansi -pedantic -W -Wmissing-declarations -Werror
+AM_CXXFLAGS = -Wall -ansi -pedantic -Wmissing-declarations
 
 if BUILD_X11
 bin_PROGRAMS = xinput_calibrator_x11
