@@ -85,12 +85,23 @@ class WrongCalibratorException : public std::invalid_argument {
             std::invalid_argument(msg) {}
 };
 
+// strdup: non-ansi
+char* my_strdup(const char* s);
+char* my_strdup(const char* s) {
+    size_t len = strlen(s) + 1;
+    void* p = malloc(len);
+
+    if (p == NULL)
+        return NULL;
+
+    return (char*) memcpy(p, s, len);
+}
+
 // all need struct XYinfo, and some the consts too
 #include "calibrator.cpp"
 #include "calibrator/calibratorXorgPrint.cpp"
 #include "calibrator/calibratorEvdev.cpp"
 #include "calibrator/calibratorUsbtouchscreen.cpp"
-
 
 
 /**
@@ -180,7 +191,7 @@ int find_device(const char* pre_device, bool verbose, bool list_devices,
                     // a calibratable touschscreen
                     found++;
                     device_id = list->id;
-                    device_name = strdup(list->name);
+                    device_name = my_strdup(list->name);
                     device_axys.x_min = ax[0].min_value;
                     device_axys.x_max = ax[0].max_value;
                     device_axys.y_min = ax[1].min_value;
