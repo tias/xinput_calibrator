@@ -33,14 +33,14 @@ int Calibrator::get_numclicks()
     return num_clicks;
 }
 
-bool Calibrator::add_click(double x, double y)
+bool Calibrator::add_click(int x, int y)
 {
     // Check that we don't click the same point twice
     if (num_clicks > 0 && click_threshold > 0
      && abs (x - clicked_x[num_clicks-1]) < click_threshold
      && abs (y - clicked_y[num_clicks-1]) < click_threshold) {
         if (verbose) {
-            printf("DEBUG: Not adding click %i (X=%.0f, Y=%.0f): within %i pixels of previous click\n",
+            printf("DEBUG: Not adding click %i (X=%i, Y=%i): within %i pixels of previous click\n",
                 num_clicks, x, y, click_threshold);
         }
         return false;
@@ -51,7 +51,7 @@ bool Calibrator::add_click(double x, double y)
     num_clicks ++;
 
     if (verbose)
-        printf("DEBUG: Adding click %i (X=%.0f, Y=%.0f)\n", num_clicks-1, x, y);
+        printf("DEBUG: Adding click %i (X=%i, Y=%i)\n", num_clicks-1, x, y);
 
     return true;
 }

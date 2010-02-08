@@ -208,7 +208,7 @@ bool CalibrationArea::on_button_press_event(GdkEventButton *event)
 {
     // Handle click
     time_elapsed = 0;
-    calibrator->add_click(event->x_root, event->y_root);
+    calibrator->add_click((int)event->x_root, (int)event->y_root);
 
     // Are we done yet?
     if (calibrator->get_numclicks() >= 4) {

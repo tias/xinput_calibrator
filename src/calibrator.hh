@@ -39,7 +39,7 @@ public:
     // get the number of clicks already registered
     int get_numclicks();
     // add a click with the given coordinates
-    bool add_click(double x, double y);
+    bool add_click(int x, int y);
     // calculate and apply the calibration
     bool finish(int width, int height);
 
@@ -56,7 +56,7 @@ protected:
     // nr of clicks registered
     int num_clicks;
     // click coordinates
-    double clicked_x[4], clicked_y[4];
+    int clicked_x[4], clicked_y[4];
 };
 
 #endif
