@@ -33,7 +33,7 @@ public:
      * The constructor will throw an exception,
      * if the touchscreen is not of the type it supports
      */
-    Calibrator(const char* const drivername, const XYinfo& axys, const bool verbose);
+    Calibrator(const char* const device_name, const XYinfo& axys, const bool verbose);
     ~Calibrator() {}
 
     // get the number of clicks already registered
@@ -48,7 +48,7 @@ protected:
     virtual bool finish_data(const XYinfo new_axys, int swap_xy) =0;
 
     // name of the device (driver)
-    const char* const drivername;
+    const char* const device_name;
     // original axys values
     XYinfo old_axys;
     // be verbose or not

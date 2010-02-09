@@ -47,7 +47,7 @@ private:
 
     int old_swap_xy;
 public:
-    CalibratorEvdev(const char* const drivername, const XYinfo& axys, const bool verbose);
+    CalibratorEvdev(const char* const device_name, const XYinfo& axys, const bool verbose);
     ~CalibratorEvdev();
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
@@ -61,8 +61,8 @@ public:
     int xinput_do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
 };
 
-CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& axys0, const bool verbose0)
-  : Calibrator(drivername0, axys0, verbose0), old_swap_xy(0)
+CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0)
+  : Calibrator(device_name0, axys0, verbose0), old_swap_xy(0)
 {
     // init
     display = XOpenDisplay(NULL);
@@ -70,7 +70,7 @@ CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& ax
         throw WrongCalibratorException("Evdev: Unable to connect to X server");
     }
 
-    info = xinput_find_device_info(display, drivername, False);
+    info = xinput_find_device_info(display, device_name, False);
     if (!info) {
         XCloseDisplay(display);
         throw WrongCalibratorException("Evdev: Unable to find device");
@@ -163,7 +163,7 @@ CalibratorEvdev::CalibratorEvdev(const char* const drivername0, const XYinfo& ax
         }
     }
 
-    printf("Calibrating EVDEV driver for \"%s\"\n", drivername);
+    printf("Calibrating EVDEV driver for \"%s\"\n", device_name);
     printf("\tcurrent calibration values (from XInput): min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
                 old_axys.x_min, old_axys.x_max, old_axys.y_min, old_axys.y_max);
 }
@@ -177,8 +177,8 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 {
     printf("\nTo make the settings permanent, create add a startup script for your window manager with the following command(s):\n");
     if (swap_xy)
-        printf(" xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", drivername, swap_xy);
-    printf(" xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", drivername, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+        printf(" xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, swap_xy);
+    printf(" xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
 
     bool success = true;
 

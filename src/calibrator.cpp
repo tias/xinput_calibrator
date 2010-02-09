@@ -23,8 +23,8 @@
 #include <algorithm>
 #include "calibrator.hh"
 
-Calibrator::Calibrator(const char* const drivername0, const XYinfo& axys0, const bool verbose0)
-  : drivername(drivername0), old_axys(axys0), verbose(verbose0), num_clicks(0)
+Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0, const bool verbose0)
+  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0)
 {
 }
 
