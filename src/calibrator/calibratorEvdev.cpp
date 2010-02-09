@@ -47,7 +47,7 @@ private:
 
     int old_swap_xy;
 public:
-    CalibratorEvdev(const char* const device_name, const XYinfo& axys, const bool verbose);
+    CalibratorEvdev(const char* const device_name, const XYinfo& axys, const bool verbose, XID device_id=(XID)-1);
     ~CalibratorEvdev();
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
@@ -61,7 +61,7 @@ public:
     int xinput_do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
 };
 
-CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0)
+CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0, XID device_id)
   : Calibrator(device_name0, axys0, verbose0), old_swap_xy(0)
 {
     // init
@@ -70,13 +70,17 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& a
         throw WrongCalibratorException("Evdev: Unable to connect to X server");
     }
 
-    info = xinput_find_device_info(display, device_name, False);
-    if (!info) {
-        XCloseDisplay(display);
-        throw WrongCalibratorException("Evdev: Unable to find device");
+    // normaly, we already have the device id
+    if (device_id == (XID)-1) {
+        info = xinput_find_device_info(display, device_name, False);
+        if (!info) {
+            XCloseDisplay(display);
+            throw WrongCalibratorException("Evdev: Unable to find device");
+        }
+        device_id = info->id;
     }
 
-    dev = XOpenDevice(display, info->id);
+    dev = XOpenDevice(display, device_id);
     if (!dev) {
         XCloseDisplay(display);
         throw WrongCalibratorException("Evdev: Unable to open device");
@@ -163,7 +167,7 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& a
         }
     }
 
-    printf("Calibrating EVDEV driver for \"%s\"\n", device_name);
+    printf("Calibrating EVDEV driver for \"%s\" id=%i\n", device_name, (int)device_id);
     printf("\tcurrent calibration values (from XInput): min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
                 old_axys.x_min, old_axys.x_max, old_axys.y_min, old_axys.y_max);
 }
