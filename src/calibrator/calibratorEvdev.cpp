@@ -166,6 +166,8 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& a
                 printf("DEBUG: Read axes swap value of %i.\n", old_swap_xy);
         }
     }
+    // TODO? evdev < 2.3.2 with swap_xy had a bug which calibrated before swapping (eg X calib on Y axis)
+    // see http://cgit.freedesktop.org/xorg/driver/xf86-input-evdev/commit/?h=evdev-2.3-branch&id=3772676fd65065b43a94234127537ab5030b09f8
 
     printf("Calibrating EVDEV driver for \"%s\" id=%i\n", device_name, (int)device_id);
     printf("\tcurrent calibration values (from XInput): min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
@@ -179,19 +181,15 @@ CalibratorEvdev::~CalibratorEvdev () {
 
 bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 {
-    printf("\nTo make the settings permanent, create add a startup script for your window manager with the following command(s):\n");
-    if (swap_xy)
-        printf(" xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, swap_xy);
-    printf(" xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-
     bool success = true;
+
+    // swap x and y: check if we need to swap with: if (swap_xy)
+    // value to swap too is inverse of previous swap value: in new_swap_xy
+    int new_swap_xy = 1 - old_swap_xy;
 
     printf("\nDoing dynamic recalibration:\n");
     // Evdev Axes Swap
     if (swap_xy) {
-        // swap x and y, if it was already swapped, unswap
-        int new_swap_xy = 1 - old_swap_xy;
-
         printf("\tSwapping X and Y axis...\n");
         bool ok = set_swapxy(new_swap_xy);
         success &= ok;
@@ -215,9 +213,41 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
         else
             printf("DEBUG: Failed to apply axis calibration.\n");
     }
-
     // close
     XSync(display, False);
+
+
+    // on stdout: ways to make calibration permanent
+    printf("\n\n== Making the calibration permanent ==\n");
+    // create startup script
+    printf("If you have the 'xinput' tool installed, a simple way is to create a script that starts with your X session, containing the following command(s):\n");
+    if (swap_xy)
+        printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_swap_xy);
+    printf("    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+
+
+    // TODO detect EVDEV version at runtime ?
+    // deliberately not mention HAL way, by the time users run evdev 2.3.0, there will be no more HAL (on linux)
+    printf("\nIf you have evdev version 2.3.0 or higher, there are 2 more ways: the tranditional way (xorg.conf) and the new way (udev rule):\n");
+
+    // Xorg.conf output
+    printf("xorg.conf: edit /etc/X11/xorg.conf and add in the 'Section \"InputDevice\"' of your device:\n");
+    printf("    Option\t\"Calibration\"\t\t\"%d %d %d %d\"\n",
+                new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    if (swap_xy)
+        printf("    Option\t\"SwapAxes\"\t\"%d\" # unless it was already set to 1\n", new_swap_xy);
+
+    // udev rule
+    printf("udev rule: create the file '/etc/udev/rules.d/99_touchscreen.rules' with:\n\
+    ACTION!=\"add|change\", GOTO=\"xorg_touchscreen_end\"\n\
+    KERNEL!=\"event*\", GOTO=\"xorg_touchscreen_end\"\n\
+    ATTRS{product}!=\"%s\", GOTO=\"xorg_touchscreen_end\"\n\
+    ENV{x11_options.calibration}=\"%d %d %d %d\"\n",
+         device_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    if (swap_xy)
+        printf("    ENV{x11_options.swapxy}=\"%d\"\n", new_swap_xy);
+    printf("    LABEL=\"xorg_touchscreen_end\"\n");
+
 
     return success;
 }
