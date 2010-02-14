@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Calibrate Touchscreen
+Name[de]=Touchscreen Kalibrieren
+Name[nl]=Touchscreen Calibreren
+Comment=Run the calibration tool for touchscreens
+Exec=xinput_calibrator
+Terminal=true
+Type=Application
+Icon=calibrate
+StartupNotify=true
+Categories=System;Settings;
