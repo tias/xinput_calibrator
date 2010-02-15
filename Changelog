@@ -1,3 +1,30 @@
+xinput_calibrator 0.6.0 [2010-02-15]
+Major features:
+* switch to autotools based build system (Petr Štetiar)
+* add -v option, prints debug messages
+* add --list option, lists calibratable devices
+* add support for --device option, selects a specific device
+* Add a manpage
+
+Minor features:
+* make it compile with strict flags (Petr Štetiar)
+* Load font fixed when 9x15 fails in GuiCalibratorX11 (Marco Cavallini)
+* add support for specific device id for evdev (necessary when 2 devices have the same name)
+* xorg print: clean up output and added udev rule
+* evdev: print ways to make config permanent (easier when evdev >= 2.3.0)
+* scripts/xinput_calibrator.desktop a sample .desktop file
+* scripts/xinput_calibrator_pointercal.sh script to make the changes permanent
+(xinput is called with every Xorg start)
+
+Bug fixes/enhancements:
+* fix double free in evdev calibrator (reported by Marco Cavallini)
+* Check that XInput >= 1.5 in evdev calibrator (reported by Marcin Juszkiewicz)
+* check that the device is a XI_TOUCHSCREEN
+* set evdev calibration to default when none is apparently set (fixes sleep/resume quirk)
+* swap_xy in dynamic evdev: unswap if already swapped
+
+For the complete changeset, see the git log
+
 xinput_calibrator 0.5.0 [2010-01-11]
 Major features:
 * Rewrite: split the one-huge-file into clean components

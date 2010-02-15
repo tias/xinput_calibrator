@@ -25,7 +25,7 @@
 #
 
 AC_PREREQ([2.57])
-AC_INIT(xinput_calibrator,[0.5.0], [http://github.com/tias/xinput_calibrator/issues],, [http://www.freedesktop.org/wiki/Software/xinput_calibrator])
+AC_INIT(xinput_calibrator,[0.6.0], [http://github.com/tias/xinput_calibrator/issues],, [http://www.freedesktop.org/wiki/Software/xinput_calibrator])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
 
@@ -37,7 +37,6 @@ AC_PATH_X
 AC_CHECK_HEADERS([stdlib.h string.h])
 AC_HEADER_STDBOOL
 AC_FUNC_STRTOD
-AC_CHECK_FUNCS([strdup])
 
 PKG_CHECK_MODULES(XINPUT, x11 xext [xi >= 1.2] [inputproto >= 1.5])
 AC_SUBST(XINPUT_CFLAGS)
