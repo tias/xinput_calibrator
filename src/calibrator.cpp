@@ -24,7 +24,7 @@
 #include "calibrator.hh"
 
 Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0, const bool verbose0)
-  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0), threshold_doubleclick(7), threshold_misclick(20)
+  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0), threshold_doubleclick(7), threshold_misclick(15)
 {
 }
 
@@ -45,7 +45,7 @@ int Calibrator::get_numclicks()
 
 bool Calibrator::add_click(int x, int y)
 {
-    // Check that we don't click the same point twice
+    // Double-click check
     if (num_clicks > 0 && threshold_doubleclick > 0
      && abs (x - clicked_x[num_clicks-1]) < threshold_doubleclick
      && abs (y - clicked_y[num_clicks-1]) < threshold_doubleclick) {
@@ -54,6 +54,34 @@ bool Calibrator::add_click(int x, int y)
                 num_clicks, x, y, threshold_doubleclick);
         }
         return false;
+    }
+
+    // Mis-click detection, check second and third point with first point
+    if (num_clicks == 1 || num_clicks == 2) {
+        if (abs (x - clicked_x[0]) > threshold_misclick
+         && abs (x - clicked_y[0]) > threshold_misclick
+         && abs (y - clicked_x[0]) > threshold_misclick
+         && abs (y - clicked_y[0]) > threshold_misclick) {
+        printf("%i: misclick0, %i,%i to %i,%i\n", num_clicks, x, y, clicked_x[num_clicks-1], clicked_y[num_clicks-1]);
+    } else {
+        printf("%i: goodclick0, %i,%i to %i,%i\n", num_clicks, x, y, clicked_x[num_clicks-1], clicked_y[num_clicks-1]);
+    }
+    }
+
+    // Mis-click check, check last point with second and third
+    if (num_clicks == 3) {
+        if ((abs (x - clicked_x[1]) > threshold_misclick
+         && abs (x - clicked_y[1]) > threshold_misclick
+         && abs (y - clicked_x[1]) > threshold_misclick
+         && abs (y - clicked_y[1]) > threshold_misclick) ||
+            (abs (x - clicked_x[2]) > threshold_misclick
+         && abs (x - clicked_y[2]) > threshold_misclick
+         && abs (y - clicked_x[2]) > threshold_misclick
+         && abs (y - clicked_y[2]) > threshold_misclick)) {
+        printf("%i: misclick3, %i,%i to %i,%i\n", num_clicks, x, y, clicked_x[num_clicks-2], clicked_y[num_clicks-1]);
+    } else {
+        printf("%i: goodclick3, %i,%i to %i,%i\n", num_clicks, x, y, clicked_x[num_clicks-2], clicked_y[num_clicks-1]);
+    }
     }
 
     clicked_x[num_clicks] = x;
