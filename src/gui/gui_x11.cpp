@@ -182,6 +182,9 @@ GuiCalibratorX11::~GuiCalibratorX11()
 
 void GuiCalibratorX11::redraw()
 {
+    // TODO: clear the area first !
+    // (needed when restarting calibration)
+
     // Print the text
     int text_height = font_info->ascent + font_info->descent;
     int text_width = -1;

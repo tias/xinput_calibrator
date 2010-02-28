@@ -45,7 +45,7 @@ int Calibrator::get_numclicks()
 
 bool Calibrator::add_click(int x, int y)
 {
-    // Double-click check
+    // Double-click detection
     if (num_clicks > 0 && threshold_doubleclick > 0
      && abs (x - clicked_x[num_clicks-1]) < threshold_doubleclick
      && abs (y - clicked_y[num_clicks-1]) < threshold_doubleclick) {
@@ -57,31 +57,37 @@ bool Calibrator::add_click(int x, int y)
     }
 
     // Mis-click detection, check second and third point with first point
-    if (num_clicks == 1 || num_clicks == 2) {
-        if (abs (x - clicked_x[0]) > threshold_misclick
+    if ((num_clicks == 1 || num_clicks == 2) &&
+        (abs (x - clicked_x[0]) > threshold_misclick
          && abs (x - clicked_y[0]) > threshold_misclick
          && abs (y - clicked_x[0]) > threshold_misclick
-         && abs (y - clicked_y[0]) > threshold_misclick) {
-        printf("%i: misclick0, %i,%i to %i,%i\n", num_clicks, x, y, clicked_x[num_clicks-1], clicked_y[num_clicks-1]);
-    } else {
-        printf("%i: goodclick0, %i,%i to %i,%i\n", num_clicks, x, y, clicked_x[num_clicks-1], clicked_y[num_clicks-1]);
-    }
+         && abs (y - clicked_y[0]) > threshold_misclick)) {
+        if (verbose) {
+            printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[0], clicked_y[0], threshold_misclick);
+        }
+
+        num_clicks = 0;
+        // Alert user: Mis-click detected, restarting calibration.
+        return false;
     }
 
     // Mis-click check, check last point with second and third
-    if (num_clicks == 3) {
-        if ((abs (x - clicked_x[1]) > threshold_misclick
+    if (num_clicks == 3 &&
+        ((abs (x - clicked_x[1]) > threshold_misclick
          && abs (x - clicked_y[1]) > threshold_misclick
          && abs (y - clicked_x[1]) > threshold_misclick
          && abs (y - clicked_y[1]) > threshold_misclick) ||
-            (abs (x - clicked_x[2]) > threshold_misclick
+         (abs (x - clicked_x[2]) > threshold_misclick
          && abs (x - clicked_y[2]) > threshold_misclick
          && abs (y - clicked_x[2]) > threshold_misclick
-         && abs (y - clicked_y[2]) > threshold_misclick)) {
-        printf("%i: misclick3, %i,%i to %i,%i\n", num_clicks, x, y, clicked_x[num_clicks-2], clicked_y[num_clicks-1]);
-    } else {
-        printf("%i: goodclick3, %i,%i to %i,%i\n", num_clicks, x, y, clicked_x[num_clicks-2], clicked_y[num_clicks-1]);
-    }
+         && abs (y - clicked_y[2]) > threshold_misclick))) {
+        if (verbose) {
+            printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 1 (X=%i, Y=%i) or click 2 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[1], clicked_y[1], clicked_x[2], clicked_y[2], threshold_misclick);
+        }
+
+        num_clicks = 0;
+        // Alert user: Mis-click detected, restarting calibration.
+        return false;
     }
 
     clicked_x[num_clicks] = x;
