@@ -46,6 +46,7 @@ int Calibrator::get_numclicks()
 bool Calibrator::add_click(int x, int y)
 {
     // Double-click detection
+    // actually, it is still possible to click on a previous point
     if (num_clicks > 0 && threshold_doubleclick > 0
      && abs (x - clicked_x[num_clicks-1]) < threshold_doubleclick
      && abs (y - clicked_y[num_clicks-1]) < threshold_doubleclick) {
@@ -57,6 +58,8 @@ bool Calibrator::add_click(int x, int y)
     }
 
     // Mis-click detection, check second and third point with first point
+    // actually, check that different axes...
+    // and check that threshold_misclick > 0
     if ((num_clicks == 1 || num_clicks == 2) &&
         (abs (x - clicked_x[0]) > threshold_misclick
          && abs (x - clicked_y[0]) > threshold_misclick
