@@ -36,6 +36,10 @@ public:
     Calibrator(const char* const device_name, const XYinfo& axys, const bool verbose);
     ~Calibrator() {}
 
+    // set the doubleclick treshold
+    void set_threshold_doubleclick(int t);
+    // set the misclick treshold
+    void set_threshold_misclick(int t);
     // get the number of clicks already registered
     int get_numclicks();
     // add a click with the given coordinates
@@ -57,6 +61,14 @@ protected:
     int num_clicks;
     // click coordinates
     int clicked_x[4], clicked_y[4];
+
+    // Threshold to keep the same point from being clicked twice.
+    // Set to zero if you don't want this check
+    int threshold_doubleclick;
+
+    // Threshold to detect mis-clicks (clicks not along axes)
+    // Set to zero to ignore, lower is more precise calibration
+    int threshold_misclick;
 };
 
 #endif

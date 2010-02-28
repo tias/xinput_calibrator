@@ -24,8 +24,18 @@
 #include "calibrator.hh"
 
 Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0, const bool verbose0)
-  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0)
+  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0), threshold_doubleclick(7), threshold_misclick(20)
 {
+}
+
+void Calibrator::set_threshold_doubleclick(int t)
+{
+    threshold_doubleclick = t;
+}
+
+void Calibrator::set_threshold_misclick(int t)
+{
+    threshold_misclick = t;
 }
 
 int Calibrator::get_numclicks()
@@ -36,12 +46,12 @@ int Calibrator::get_numclicks()
 bool Calibrator::add_click(int x, int y)
 {
     // Check that we don't click the same point twice
-    if (num_clicks > 0 && click_threshold > 0
-     && abs (x - clicked_x[num_clicks-1]) < click_threshold
-     && abs (y - clicked_y[num_clicks-1]) < click_threshold) {
+    if (num_clicks > 0 && threshold_doubleclick > 0
+     && abs (x - clicked_x[num_clicks-1]) < threshold_doubleclick
+     && abs (y - clicked_y[num_clicks-1]) < threshold_doubleclick) {
         if (verbose) {
             printf("DEBUG: Not adding click %i (X=%i, Y=%i): within %i pixels of previous click\n",
-                num_clicks, x, y, click_threshold);
+                num_clicks, x, y, threshold_doubleclick);
         }
         return false;
     }

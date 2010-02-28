@@ -56,10 +56,6 @@
  */
 const int num_blocks = 8;
 
-// Threshold to keep the same point from being clicked twice.
-// Set to zero if you don't want this check
-const int click_threshold = 7;
-
 // Names of the points
 enum {
     UL = 0, // Upper-left
