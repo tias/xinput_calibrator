@@ -45,16 +45,20 @@ int Calibrator::get_numclicks()
 
 bool Calibrator::add_click(int x, int y)
 {
-    // Double-click detection
-    // actually, it is still possible to click on a previous point
-    if (num_clicks > 0 && threshold_doubleclick > 0
-     && abs (x - clicked_x[num_clicks-1]) < threshold_doubleclick
-     && abs (y - clicked_y[num_clicks-1]) < threshold_doubleclick) {
-        if (verbose) {
-            printf("DEBUG: Not adding click %i (X=%i, Y=%i): within %i pixels of previous click\n",
-                num_clicks, x, y, threshold_doubleclick);
+    if (threshold_doubleclick > 0 && num_clicks > 0) {
+        // Double-click detection
+        int i = num_clicks-1;
+        while (i >= 0) {
+            if (abs(x - clicked_x[i]) < threshold_doubleclick
+                && abs(y - clicked_y[i]) < threshold_doubleclick) {
+                if (verbose) {
+                    printf("DEBUG: Not adding click %i (X=%i, Y=%i): within %i pixels of previous click\n",
+                        num_clicks, x, y, threshold_doubleclick);
+                }
+                return false;
+            }
+            i--;
         }
-        return false;
     }
 
     // Mis-click detection, check second and third point with first point
