@@ -64,6 +64,7 @@ protected:
     int display_width, display_height;
     int time_elapsed;
 
+    const char* message;
 
     // Signal handlers
     bool on_timer_signal();
@@ -73,10 +74,11 @@ protected:
 
     // Helper functions
     void redraw();
+    void draw_message(const char* msg);
 };
 
 CalibrationArea::CalibrationArea(Calibrator* calibrator0)
-  : calibrator(calibrator0), time_elapsed(0)
+  : calibrator(calibrator0), time_elapsed(0), message(NULL)
 {
     // Listen for mouse events
     add_events(Gdk::KEY_PRESS_MASK | Gdk::BUTTON_PRESS_MASK);
@@ -169,6 +171,28 @@ bool CalibrationArea::on_expose_event(GdkEventExpose *event)
         cr->set_source_rgb(0.0, 0.0, 0.0);
         cr->stroke();
 
+
+        // Draw the message (if any)
+        if (message != NULL) {
+            // Frame the message
+            cr->set_font_size(font_size);
+            Cairo::TextExtents extent;
+            cr->get_text_extents(this->message, extent);
+            text_width = extent.width;
+            text_height = extent.height;
+
+            x = (display_width - text_width) / 2;
+            y = (display_height - text_height + clock_radius) / 2 + 60;
+            cr->set_line_width(2);
+            cr->rectangle(x - 10, y - text_height - 10,
+                    text_width + 20, text_height + 25);
+
+            // Print the message
+            cr->move_to(x, y);
+            cr->show_text(this->message);
+            cr->stroke();
+        }
+
         cr->restore();
     }
 
@@ -208,12 +232,18 @@ bool CalibrationArea::on_button_press_event(GdkEventButton *event)
 {
     // Handle click
     time_elapsed = 0;
-    calibrator->add_click((int)event->x_root, (int)event->y_root);
+    bool success = calibrator->add_click((int)event->x_root, (int)event->y_root);
+
+    if (!success && calibrator->get_numclicks() == 0) {
+        draw_message("Mis-click detected, restarting...");
+    } else {
+        draw_message(NULL);
+    }
 
     // Are we done yet?
     if (calibrator->get_numclicks() >= 4) {
         // Recalibrate
-        bool success = calibrator->finish(display_width, display_height);
+        success = calibrator->finish(display_width, display_height);
 
         if (success) {
             exit(0);
@@ -228,6 +258,11 @@ bool CalibrationArea::on_button_press_event(GdkEventButton *event)
     redraw();
 
     return true;
+}
+
+void CalibrationArea::draw_message(const char* msg)
+{
+    this->message = msg;
 }
 
 bool CalibrationArea::on_key_press_event(GdkEventKey *event)
