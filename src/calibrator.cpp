@@ -45,8 +45,8 @@ int Calibrator::get_numclicks()
 
 bool Calibrator::add_click(int x, int y)
 {
+    // Double-click detection
     if (threshold_doubleclick > 0 && num_clicks > 0) {
-        // Double-click detection
         int i = num_clicks-1;
         while (i >= 0) {
             if (abs(x - clicked_x[i]) < threshold_doubleclick
@@ -61,50 +61,55 @@ bool Calibrator::add_click(int x, int y)
         }
     }
 
-    // Mis-click detection, check second and third point with first point
-    // actually, check that different axes...
-    // and check that threshold_misclick > 0
-    if ((num_clicks == 1 || num_clicks == 2) &&
-        (abs (x - clicked_x[0]) > threshold_misclick
-         && abs (x - clicked_y[0]) > threshold_misclick
-         && abs (y - clicked_x[0]) > threshold_misclick
-         && abs (y - clicked_y[0]) > threshold_misclick)) {
-        if (verbose) {
-            printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[0], clicked_y[0], threshold_misclick);
+    // Mis-click detection
+    if (threshold_misclick > 0 && num_clicks > 0) {
+        bool misclick = true;
+
+        if (num_clicks == 1) {
+            // check that along one axis of first pointV
+            if (along_axis(x,clicked_x[0],clicked_y[0]) ||
+                along_axis(y,clicked_x[0],clicked_y[0]))
+                misclick = false;
+        } else if (num_clicks == 2) {
+            // check that along other axis of first point than second point
+            if ((along_axis(y,clicked_x[0],clicked_y[0]) &&
+                 along_axis(clicked_x[1],clicked_x[0],clicked_y[0])) ||
+                (along_axis(x,clicked_x[0],clicked_y[0]) &&
+                 along_axis(clicked_y[1],clicked_x[0],clicked_y[0])))
+                misclick = false;
+        } else if (num_clicks == 3) {
+            // check that along both axis of second and third point
+            if ((along_axis(x,clicked_x[1],clicked_y[1]) &&
+                 along_axis(y,clicked_x[2],clicked_y[2])) ||
+                (along_axis(y,clicked_x[1],clicked_y[1]) &&
+                 along_axis(x,clicked_x[2],clicked_y[2])))
+                misclick = false;
         }
 
-        num_clicks = 0;
-        // Alert user: Mis-click detected, restarting calibration.
-        return false;
-    }
+        if (misclick) {
+            if (verbose) {
+                printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[0], clicked_y[0], threshold_misclick);
+            }
 
-    // Mis-click check, check last point with second and third
-    if (num_clicks == 3 &&
-        ((abs (x - clicked_x[1]) > threshold_misclick
-         && abs (x - clicked_y[1]) > threshold_misclick
-         && abs (y - clicked_x[1]) > threshold_misclick
-         && abs (y - clicked_y[1]) > threshold_misclick) ||
-         (abs (x - clicked_x[2]) > threshold_misclick
-         && abs (x - clicked_y[2]) > threshold_misclick
-         && abs (y - clicked_x[2]) > threshold_misclick
-         && abs (y - clicked_y[2]) > threshold_misclick))) {
-        if (verbose) {
-            printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 1 (X=%i, Y=%i) or click 2 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[1], clicked_y[1], clicked_x[2], clicked_y[2], threshold_misclick);
+            num_clicks = 0;
+            return false;
         }
-
-        num_clicks = 0;
-        // Alert user: Mis-click detected, restarting calibration.
-        return false;
     }
 
     clicked_x[num_clicks] = x;
     clicked_y[num_clicks] = y;
-    num_clicks ++;
+    num_clicks++;
 
     if (verbose)
         printf("DEBUG: Adding click %i (X=%i, Y=%i)\n", num_clicks-1, x, y);
 
     return true;
+}
+
+inline bool Calibrator::along_axis(int xy, int x0, int y0)
+{
+    return ((abs(xy - x0) < threshold_misclick) ||
+            (abs(xy - y0) < threshold_misclick));
 }
 
 bool Calibrator::finish(int width, int height)

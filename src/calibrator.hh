@@ -48,6 +48,9 @@ public:
     bool finish(int width, int height);
 
 protected:
+    // check whether the coordinates are along the respective axis
+    bool along_axis(int xy, int x0, int y0);
+
     // overloaded function that applies the new calibration
     virtual bool finish_data(const XYinfo new_axys, int swap_xy) =0;
 
