@@ -153,12 +153,14 @@ int find_device(const char* pre_device, bool verbose, bool list_devices,
     }
 
 
+    if (verbose)
+        printf("DEBUG: Skipping virtual master devices and devices without axis valuators.\n");
     int ndevices;
     XDeviceInfoPtr list, slist;
     slist=list=(XDeviceInfoPtr) XListInputDevices (display, &ndevices);
     for (int i=0; i<ndevices; i++, list++)
     {
-        if (list->use == IsXKeyboard || list->use == IsXPointer)
+        if (list->use == IsXKeyboard || list->use == IsXPointer) // virtual master device
             continue;
 
         // if we are looking for a specific device
@@ -181,11 +183,16 @@ int find_device(const char* pre_device, bool verbose, bool list_devices,
                 XValuatorInfoPtr V = (XValuatorInfoPtr) any;
                 XAxisInfoPtr ax = (XAxisInfoPtr) V->axes;
 
-                if (V->num_axes < 2 ||
+                if (V->mode != Absolute) {
+                    if (verbose)
+                        printf("DEBUG: Skipping device '%s' id=%i, does not report Absolute events.\n",
+                            list->name, (int)list->id);
+                } else if (V->num_axes < 2 ||
                     (ax[0].min_value == -1 && ax[0].max_value == -1) ||
                     (ax[1].min_value == -1 && ax[1].max_value == -1)) {
                     if (verbose)
-                        printf("DEBUG: Skipping device '%s' of type '%s', does not have 2 calibratable axes.\n", list->name, XGetAtomName(display, list->type));
+                        printf("DEBUG: Skipping device '%s' id=%i, does not have two calibratable axes.\n",
+                            list->name, (int)list->id);
                 } else {
                     /* a calibratable device (has 2 axis valuators) */
                     found++;
