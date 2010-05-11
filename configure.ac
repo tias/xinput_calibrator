@@ -44,25 +44,29 @@ AC_SUBST(XINPUT_CFLAGS)
 AC_SUBST(XINPUT_LIBS)
 
 
-AC_ARG_ENABLE([x11], AS_HELP_STRING([--disable-x11], [Disable X11 GUI]))
-AS_IF([test "x$enable_x11" != "xno"], [
-	PKG_CHECK_MODULES(XORG, [x11], enable_x11="yes", enable_x11="no")
-    AC_SUBST(XORG_CFLAGS)
-    AC_SUBST(XORG_LIBS)
-])
-AM_CONDITIONAL([BUILD_X11], [test "x$enable_x11" = "xyes"])
+AC_ARG_WITH([gui], AS_HELP_STRING([--with-gui=default], [Use gtkmm GUI if available, x11 GUI otherwise (default)]),,[with_gui=default])
+AC_ARG_WITH([gui], AS_HELP_STRING([--with-gui=gtkmm], [Use gtkmm GUI]))
+AC_ARG_WITH([gui], AS_HELP_STRING([--with-gui=x11], [Use native x11 GUI]))
+AC_MSG_CHECKING([gui])
+AC_MSG_RESULT($with_gui)
 
-
-AC_ARG_ENABLE([gtkmm], AS_HELP_STRING([--disable-gtkmm], [Disable GTKMM GUI]))
-AS_IF([test "x$enable_gtkmm" != "xno"], [
-	PKG_CHECK_MODULES(GTKMM, [gtkmm-2.4], enable_gtkmm="yes",
-        [if test "x$enable_gtkmm" = "xyes"; then
+AS_IF([test "x$with_gui" = xdefault || test "x$with_gui" = xgtkmm], [
+	PKG_CHECK_MODULES(GTKMM, [gtkmm-2.4], with_gui="gtkmm",
+        [if test "x$with_gui" = xgtkmm; then
             AC_MSG_ERROR([GTKMM GUI requested, but gtkmm-2.4 not found])
          fi])
     AC_SUBST(GTKMM_CFLAGS)
 	AC_SUBST(GTKMM_LIBS)
 ])
-AM_CONDITIONAL([BUILD_GTKMM], [test "x$enable_gtkmm" = "xyes"])
+AM_CONDITIONAL([BUILD_GTKMM], [test "x$with_gui" = xgtkmm])
+
+AS_IF([test "x$with_gui" = xdefault || test "x$with_gui" = xx11], [
+	PKG_CHECK_MODULES(X11, [x11], with_gui="x11", with_gui="no")
+    AC_SUBST(X11_CFLAGS)
+    AC_SUBST(X11_LIBS)
+])
+AM_CONDITIONAL([BUILD_X11], [test "x$with_gui" = xx11])
+
 
 
 AC_SUBST(VERSION)

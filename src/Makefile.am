@@ -26,21 +26,17 @@
 
 AM_CXXFLAGS = -Wall -ansi -pedantic -Wmissing-declarations
 
+bin_PROGRAMS = xinput_calibrator
+
+# only one of the BUILD_ flags should be set
 if BUILD_X11
-bin_PROGRAMS = xinput_calibrator_x11
-xinput_calibrator_x11_SOURCES = main_x11.cpp
-xinput_calibrator_x11_LDADD = $(XINPUT_LIBS) $(XORG_LIBS)
-xinput_calibrator_x11_CXXFLAGS = $(XINPUT_CFLAGS) $(XORG_CFLAGS) $(AM_CXXFLAGS)
+xinput_calibrator_SOURCES = main_x11.cpp
+xinput_calibrator_LDADD = $(XINPUT_LIBS) $(X11_LIBS)
+xinput_calibrator_CXXFLAGS = $(XINPUT_CFLAGS) $(X11_CFLAGS) $(AM_CXXFLAGS)
 endif
 
 if BUILD_GTKMM
-if BUILD_X11
-bin_PROGRAMS += xinput_calibrator_gtkmm
-else
-bin_PROGRAMS = xinput_calibrator_gtkmm
+xinput_calibrator_SOURCES = main_gtkmm.cpp
+xinput_calibrator_LDADD = $(XINPUT_LIBS) $(GTKMM_LIBS)
+xinput_calibrator_CXXFLAGS = $(XINPUT_CFLAGS) $(GTKMM_CFLAGS) $(AM_CXXFLAGS)
 endif
-xinput_calibrator_gtkmm_SOURCES = main_gtkmm.cpp
-xinput_calibrator_gtkmm_LDADD = $(XINPUT_LIBS) $(GTKMM_LIBS)
-xinput_calibrator_gtkmm_CXXFLAGS = $(XINPUT_CFLAGS) $(GTKMM_CFLAGS) $(AM_CXXFLAGS)
-endif
-
