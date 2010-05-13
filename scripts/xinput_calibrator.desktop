@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Calibrate Touchscreen
 Name[de]=Touchscreen Kalibrieren
-Name[nl]=Touchscreen Calibreren
+Name[nl]=Touchscreen Kalibreren
 Comment=Run the calibration tool for touchscreens
 Exec=xinput_calibrator
 Terminal=true
