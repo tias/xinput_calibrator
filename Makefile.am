@@ -28,3 +28,6 @@ AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src man
 
 EXTRA_DIST = autogen.sh
+
+util_DATA = scripts/xinput_calibrator.desktop
+utildir = $(datadir)/applications
