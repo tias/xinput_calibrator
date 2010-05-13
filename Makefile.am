@@ -29,5 +29,8 @@ SUBDIRS = src man
 
 EXTRA_DIST = autogen.sh
 
+icon_DATA = scripts/xinput_calibrator.svg scripts/xinput_calibrator.xpm
+icondir = $(datadir)/pixmaps
+
 util_DATA = scripts/xinput_calibrator.desktop
 utildir = $(datadir)/applications
