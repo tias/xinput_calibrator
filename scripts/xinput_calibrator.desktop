@@ -6,6 +6,6 @@ Comment=Run the calibration tool for touchscreens
 Exec=xinput_calibrator
 Terminal=true
 Type=Application
-Icon=calibrate
+Icon=xinput_calibrator
 StartupNotify=true
 Categories=System;Settings;
