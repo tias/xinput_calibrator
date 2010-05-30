@@ -2,7 +2,7 @@ Source: xinput-calibrator
 Section: x11
 Priority: optional
 Maintainer: Tias Guns <tias@ulyssis.org>
-Build-Depends: debhelper (>= 7), autotools-dev
+Build-Depends: debhelper (>= 7), autotools-dev, libx11-dev, pkg-config, libxi-dev
 Standards-Version: 3.8.3
 Homepage: http://www.freedesktop.org/wiki/Software/xinput_calibrator
 Bugs: http://github.com/tias/xinput_calibrator/issues
