@@ -122,8 +122,8 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
 
     // Compute absolute circle centers
     int screen_num = DefaultScreen(display);
-    display_width = DisplayWidth(display, screen_num);
-    display_height = DisplayHeight(display, screen_num);
+    display_width = 1024; //DisplayWidth(display, screen_num);
+    display_height = 600; //DisplayHeight(display, screen_num);
 
     const int delta_x = display_width/num_blocks;
     const int delta_y = display_height/num_blocks;
@@ -138,7 +138,7 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     attributes.event_mask = ExposureMask | KeyPressMask | ButtonPressMask;
 
     win = XCreateWindow(display, RootWindow(display, screen_num),
-                0, 0, display_width, display_height, 0,
+                0, 424, display_width, display_height, 0,
                 CopyFromParent, InputOutput, CopyFromParent,
                 CWOverrideRedirect | CWEventMask,
                 &attributes);
