@@ -73,4 +73,6 @@ AC_SUBST(VERSION)
 
 AC_OUTPUT([Makefile
            src/Makefile
+           src/calibrator/Makefile
+           src/gui/Makefile
            man/Makefile])
