@@ -24,3 +24,5 @@
 #
 
 man_MANS = xinput_calibrator.1
+EXTRA_DIST = \
+	$(man_MANS)
