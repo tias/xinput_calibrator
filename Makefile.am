@@ -25,7 +25,7 @@
 #
 
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src man
+SUBDIRS = src man scripts
 
 EXTRA_DIST = autogen.sh
 
