@@ -6,6 +6,8 @@ Build-Depends: debhelper (>= 7), autotools-dev
 Standards-Version: 3.8.3
 Homepage: http://www.freedesktop.org/wiki/Software/xinput_calibrator
 Bugs: http://github.com/tias/xinput_calibrator/issues
+Vcs-Git: http://github.com/tias/xinput_calibrator.git
+Vcs-Browser: http://github.com/tias/xinput_calibrator
 
 Package: xinput-calibrator
 Architecture: any
