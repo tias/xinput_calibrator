@@ -4,9 +4,7 @@
 xinput_calibrator \- A generic touchscreen calibration program for X.Org
 
 .SH "SYNOPSIS"
-.B xinput_calibrator_x11 [OPTIONS]
-.br 
-.B xinput_calibrator_gtkmm [OPTIONS]
+.B xinput_calibrator [OPTIONS]
 .SH "DESCRIPTION"
 xinput_calibrator is a program for calibrating your touchscreen, when using the X Window System.
 .PP 
@@ -16,7 +14,7 @@ It currently features:
 .br 
 \- works for any standard Xorg touchscreen driver (uses XInput to get axis valuators)
 .br 
-\- can output the calibration in xorg.conf and FDI format
+\- can output the calibration in xorg.conf, FDI and udev format
 .br 
 \- can dynamically recalibrate the evdev driver
 .br 
