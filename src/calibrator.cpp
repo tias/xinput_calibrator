@@ -50,8 +50,8 @@ bool Calibrator::add_click(int x, int y)
     if (threshold_doubleclick > 0 && num_clicks > 0) {
         int i = num_clicks-1;
         while (i >= 0) {
-            if (abs(x - clicked_x[i]) < threshold_doubleclick
-                && abs(y - clicked_y[i]) < threshold_doubleclick) {
+            if (abs(x - clicked_x[i]) <= threshold_doubleclick
+                && abs(y - clicked_y[i]) <= threshold_doubleclick) {
                 if (verbose) {
                     printf("DEBUG: Not adding click %i (X=%i, Y=%i): within %i pixels of previous click\n",
                         num_clicks, x, y, threshold_doubleclick);
@@ -114,8 +114,8 @@ bool Calibrator::add_click(int x, int y)
 
 inline bool Calibrator::along_axis(int xy, int x0, int y0)
 {
-    return ((abs(xy - x0) < threshold_misclick) ||
-            (abs(xy - y0) < threshold_misclick));
+    return ((abs(xy - x0) <= threshold_misclick) ||
+            (abs(xy - y0) <= threshold_misclick));
 }
 
 bool Calibrator::finish(int width, int height)
