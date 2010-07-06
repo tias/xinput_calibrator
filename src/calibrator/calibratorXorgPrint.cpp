@@ -66,8 +66,8 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
 \tKERNEL!=\"event*\", GOTO=\"xorg_touchscreen_end\"\n\
 \tATTRS{product}!=\"%%Name_Of_TouchScreen%%\", GOTO=\"xorg_touchscreen_end\"\n\
 \tENV{x11_options.minx}=\"%d\"\n\
-\tENV{x11_options.miny}=\"%d\"\n\
 \tENV{x11_options.maxx}=\"%d\"\n\
+\tENV{x11_options.miny}=\"%d\"\n\
 \tENV{x11_options.maxy}=\"%d\"\n"
          , new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
     if (swap_xy != 0)
@@ -78,8 +78,8 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     printf("\nHAL policy: create the file '/etc/hal/fdi/policy/touchscreen.fdi' with: (replace %%Name_Of_TouchScreen%% appropriately)\n\
 \t<match key=\"info.product\" contains=\"%%Name_Of_TouchScreen%%\">\n\
 \t  <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n\
-\t  <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
 \t  <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
+\t  <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
 \t  <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
          , new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
     if (swap_xy != 0)

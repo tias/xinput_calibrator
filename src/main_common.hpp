@@ -138,6 +138,7 @@ int find_device(const char* pre_device, bool verbose, bool list_devices,
     }
 
     if (pre_device != NULL) {
+        // check whether the pre_device is an ID (only digits)
         int len = strlen(pre_device);
         for (int loop=0; loop<len; loop++) {
 	        if (!isdigit(pre_device[loop])) {
@@ -148,13 +149,14 @@ int find_device(const char* pre_device, bool verbose, bool list_devices,
     }
 
 
-    Atom atomTouchscreen = XInternAtom(display, XI_TOUCHSCREEN, False);
+    if (verbose)
+        printf("DEBUG: Skipping virtual master devices and devices without axis valuators.\n");
     int ndevices;
     XDeviceInfoPtr list, slist;
     slist=list=(XDeviceInfoPtr) XListInputDevices (display, &ndevices);
     for (int i=0; i<ndevices; i++, list++)
     {
-        if (list->type != atomTouchscreen)
+        if (list->use == IsXKeyboard || list->use == IsXPointer) // virtual master device
             continue;
 
         // if we are looking for a specific device
@@ -177,14 +179,18 @@ int find_device(const char* pre_device, bool verbose, bool list_devices,
                 XValuatorInfoPtr V = (XValuatorInfoPtr) any;
                 XAxisInfoPtr ax = (XAxisInfoPtr) V->axes;
 
-                if (V->num_axes < 2) {
+                if (V->mode != Absolute) {
                     if (verbose)
-                        printf("DEBUG: Skipped touchscreen %s with only %i axes, instead of 2.\n", list->name, V->num_axes);
+                        printf("DEBUG: Skipping device '%s' id=%i, does not report Absolute events.\n",
+                            list->name, (int)list->id);
+                } else if (V->num_axes < 2 ||
+                    (ax[0].min_value == -1 && ax[0].max_value == -1) ||
+                    (ax[1].min_value == -1 && ax[1].max_value == -1)) {
+                    if (verbose)
+                        printf("DEBUG: Skipping device '%s' id=%i, does not have two calibratable axes.\n",
+                            list->name, (int)list->id);
                 } else {
-                    if (V->num_axes > 2 && verbose)
-                        printf("DEBUG: Warning, touchscreen %s has %i axes, only using the first 2.\n", list->name, V->num_axes);
-
-                    // a calibratable touschscreen
+                    /* a calibratable device (has 2 axis valuators) */
                     found++;
                     device_id = list->id;
                     device_name = my_strdup(list->name);

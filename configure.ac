@@ -25,12 +25,13 @@
 #
 
 AC_PREREQ([2.57])
-AC_INIT(xinput_calibrator,[0.6.0], [http://github.com/tias/xinput_calibrator/issues],, [http://www.freedesktop.org/wiki/Software/xinput_calibrator])
+AC_INIT(xinput_calibrator,[0.6.1], [http://github.com/tias/xinput_calibrator/issues],, [http://www.freedesktop.org/wiki/Software/xinput_calibrator])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
 
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_LIBTOOL
 AC_PROG_INSTALL
 
 AC_PATH_X
@@ -43,29 +44,36 @@ AC_SUBST(XINPUT_CFLAGS)
 AC_SUBST(XINPUT_LIBS)
 
 
-AC_ARG_ENABLE([x11], AS_HELP_STRING([--disable-x11], [Disable X11 GUI]))
-AS_IF([test "x$enable_x11" != "xno"], [
-	PKG_CHECK_MODULES(XORG, [x11], enable_x11="yes", enable_x11="no")
-    AC_SUBST(XORG_CFLAGS)
-    AC_SUBST(XORG_LIBS)
-])
-AM_CONDITIONAL([BUILD_X11], [test "x$enable_x11" = "xyes"])
+AC_ARG_WITH([gui], AS_HELP_STRING([--with-gui=default], [Use gtkmm GUI if available, x11 GUI otherwise (default)]),,[with_gui=default])
+AC_ARG_WITH([gui], AS_HELP_STRING([--with-gui=gtkmm], [Use gtkmm GUI]))
+AC_ARG_WITH([gui], AS_HELP_STRING([--with-gui=x11], [Use native x11 GUI]))
+AC_MSG_CHECKING([gui])
+AC_MSG_RESULT($with_gui)
 
-
-AC_ARG_ENABLE([gtkmm], AS_HELP_STRING([--disable-gtkmm], [Disable GTKMM GUI]))
-AS_IF([test "x$enable_gtkmm" != "xno"], [
-	PKG_CHECK_MODULES(GTKMM, [gtkmm-2.4], enable_gtkmm="yes",
-        [if test "x$enable_gtkmm" = "xyes"; then
+AS_IF([test "x$with_gui" = xdefault || test "x$with_gui" = xgtkmm], [
+	PKG_CHECK_MODULES(GTKMM, [gtkmm-2.4], with_gui="gtkmm",
+        [if test "x$with_gui" = xgtkmm; then
             AC_MSG_ERROR([GTKMM GUI requested, but gtkmm-2.4 not found])
          fi])
     AC_SUBST(GTKMM_CFLAGS)
 	AC_SUBST(GTKMM_LIBS)
 ])
-AM_CONDITIONAL([BUILD_GTKMM], [test "x$enable_gtkmm" = "xyes"])
+AM_CONDITIONAL([BUILD_GTKMM], [test "x$with_gui" = xgtkmm])
+
+AS_IF([test "x$with_gui" = xdefault || test "x$with_gui" = xx11], [
+	PKG_CHECK_MODULES(X11, [x11], with_gui="x11", with_gui="no")
+    AC_SUBST(X11_CFLAGS)
+    AC_SUBST(X11_LIBS)
+])
+AM_CONDITIONAL([BUILD_X11], [test "x$with_gui" = xx11])
+
 
 
 AC_SUBST(VERSION)
 
 AC_OUTPUT([Makefile
+           scripts/Makefile
            src/Makefile
+           src/calibrator/Makefile
+           src/gui/Makefile
            man/Makefile])

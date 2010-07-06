@@ -1,3 +1,11 @@
+xinput_calibrator 0.6.1 [2010-03-21]
+Bug fixes/enhancements:
+* More robust device detection: non-master device with axis valuators, in
+absolute mode and at least two calibratable axes. (reported by Sam Lin, Eric
+Drechsel)
+* Require libtool in configure.ac
+* fix miny and maxx printing order for UDEV and HAL (Mario Domenech Goulart)
+
 xinput_calibrator 0.6.0 [2010-02-15]
 Major features:
 * switch to autotools based build system (Petr Štetiar)
