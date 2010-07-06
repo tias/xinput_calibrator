@@ -23,8 +23,9 @@
 #include <algorithm>
 #include "calibrator.hh"
 
-Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0, const bool verbose0)
-  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0), threshold_doubleclick(7), threshold_misclick(15)
+Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0,
+    const bool verbose0, const int thr_misclick, const int thr_doubleclick)
+  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0), threshold_doubleclick(thr_doubleclick), threshold_misclick(thr_misclick)
 {
 }
 
@@ -66,7 +67,7 @@ bool Calibrator::add_click(int x, int y)
         bool misclick = true;
 
         if (num_clicks == 1) {
-            // check that along one axis of first pointV
+            // check that along one axis of first point
             if (along_axis(x,clicked_x[0],clicked_y[0]) ||
                 along_axis(y,clicked_x[0],clicked_y[0]))
                 misclick = false;
@@ -88,7 +89,12 @@ bool Calibrator::add_click(int x, int y)
 
         if (misclick) {
             if (verbose) {
-                printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[0], clicked_y[0], threshold_misclick);
+                if (num_clicks == 1)
+                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[0], clicked_y[0], threshold_misclick);
+                else if (num_clicks == 2)
+                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) or click 1 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[0], clicked_y[0], clicked_x[1], clicked_y[1], threshold_misclick);
+                else if (num_clicks == 3)
+                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 1 (X=%i, Y=%i) or click 2 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[1], clicked_y[1], clicked_x[2], clicked_y[2], threshold_misclick);
             }
 
             num_clicks = 0;

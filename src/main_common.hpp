@@ -240,6 +240,8 @@ Calibrator* main_common(int argc, char** argv)
     bool precalib = false;
     XYinfo pre_axys;
     const char* pre_device = NULL;
+    unsigned thr_misclick = 15;
+    unsigned thr_doubleclick = 7;
 
     // parse input
     if (argc > 1) {
@@ -363,7 +365,8 @@ Calibrator* main_common(int argc, char** argv)
     // Different device/driver, different ways to apply the calibration values
     try {
         // try Usbtouchscreen driver
-        return new CalibratorUsbtouchscreen(device_name, device_axys, verbose);
+        return new CalibratorUsbtouchscreen(device_name, device_axys,
+            verbose, thr_misclick, thr_doubleclick);
 
     } catch(WrongCalibratorException& x) {
         if (verbose)
@@ -372,7 +375,8 @@ Calibrator* main_common(int argc, char** argv)
 
     try {
         // next, try Evdev driver (with XID)
-        return new CalibratorEvdev(device_name, device_axys, verbose, device_id);
+        return new CalibratorEvdev(device_name, device_axys, verbose, device_id,
+            thr_misclick, thr_doubleclick);
 
     } catch(WrongCalibratorException& x) {
         if (verbose)
@@ -380,5 +384,6 @@ Calibrator* main_common(int argc, char** argv)
     }
 
     // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
-    return new CalibratorXorgPrint(device_name, device_axys, verbose);
+    return new CalibratorXorgPrint(device_name, device_axys,
+            verbose, thr_misclick, thr_doubleclick);
 }

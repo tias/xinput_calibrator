@@ -33,7 +33,8 @@ public:
      * The constructor will throw an exception,
      * if the touchscreen is not of the type it supports
      */
-    Calibrator(const char* const device_name, const XYinfo& axys, const bool verbose);
+    Calibrator(const char* const device_name, const XYinfo& axys,
+        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0);
     ~Calibrator() {}
 
     // set the doubleclick treshold
@@ -70,7 +71,8 @@ protected:
     int threshold_doubleclick;
 
     // Threshold to detect mis-clicks (clicks not along axes)
-    // Set to zero to ignore, lower is more precise calibration
+    // A lower value forces more precise calibration
+    // Set to zero if you don't want this check
     int threshold_misclick;
 };
 

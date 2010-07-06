@@ -47,7 +47,8 @@ private:
 
     int old_swap_xy;
 public:
-    CalibratorEvdev(const char* const device_name, const XYinfo& axys, const bool verbose, XID device_id=(XID)-1);
+    CalibratorEvdev(const char* const device_name, const XYinfo& axys, const bool verbose,
+        XID device_id=(XID)-1, const int thr_misclick=0, const int thr_doubleclick=0);
     ~CalibratorEvdev();
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
@@ -61,8 +62,8 @@ public:
     int xinput_do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
 };
 
-CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0, XID device_id)
-  : Calibrator(device_name0, axys0, verbose0), old_swap_xy(0)
+CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0, XID device_id, const int thr_misclick, const int thr_doubleclick)
+  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick), old_swap_xy(0)
 {
     // init
     display = XOpenDisplay(NULL);
