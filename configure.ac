@@ -25,7 +25,7 @@
 #
 
 AC_PREREQ([2.57])
-AC_INIT(xinput_calibrator,[0.6.1], [http://github.com/tias/xinput_calibrator/issues],, [http://www.freedesktop.org/wiki/Software/xinput_calibrator])
+AC_INIT(xinput_calibrator,[0.7.0], [http://github.com/tias/xinput_calibrator/issues],, [http://www.freedesktop.org/wiki/Software/xinput_calibrator])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
 
