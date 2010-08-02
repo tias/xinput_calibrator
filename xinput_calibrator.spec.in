@@ -3,7 +3,7 @@
 %global release 1%{?dist}
 %global _prefix /usr
 
-Summary: Touchscreen calibrator
+Summary: A generic touchscreen calibration program for X.Org
 Name: %{name}
 Version: %{version}
 Release: %{release}
@@ -16,7 +16,14 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: gtkmm24-devel
 
 %description
-Calibrates touch screens and describes how to make the calibration permanent.
+xinput_calibrator is a program for calibrating your touchscreen, when using
+the X Window System.
+It currently features:
+ - a minimalistic and intuitive GUI
+ - works for any standard Xorg touchscreen driver (uses XInput)
+ - can output the calibration in xorg.conf, FDI and udev format
+ - can dynamically recalibrate the evdev driver
+ - and more
 
 %prep
 %setup -q
