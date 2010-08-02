@@ -17,3 +17,6 @@ mkinstalldirs
 
 *.o
 *.pc
+*.tar.gz
+*.tar.bz2
+*.spec
