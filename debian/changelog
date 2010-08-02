@@ -1,3 +1,9 @@
+xinput-calibrator (0.7.0) unstable; urgency=low
+
+  * New upstream release (packaging changes, misclick detection)
+
+ -- Tias Guns <tias@ulyssis.org>  Mon, 02 August 2010 20:57:32 +0200
+
 xinput-calibrator (0.6.1) unstable; urgency=low
 
   * Initial Package.
