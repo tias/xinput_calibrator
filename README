@@ -1,6 +1,6 @@
 xinput calibrator: A generic touchscreen calibration program for X.Org
 
-Version: 0.6.1
+Version: 0.7.0
 Website: http://www.freedesktop.org/wiki/Software/xinput_calibrator
 Source:  http://github.com/tias/xinput_calibrator
 Bugs:    http://github.com/tias/xinput_calibrator/issues
@@ -40,3 +40,5 @@ Starting from v0.4.0, it writes Xorg.conf and (HAL) FDI policy file values, and 
 The v0.5.0 version is written entirely in the X window system, needing no external dependencies. Because of its modular structure, other frontends can be easily created too.
 
 Version v0.6.0 has a proper build system and gained a lot of features thanks to the feedback of different users.
+
+Version 0.7.0 has mis-click detection and proper packaging support: proper make dist, one binary, has manpage, menu entry and icon. DEB and RPM package meta-data in their respective VCS branches.

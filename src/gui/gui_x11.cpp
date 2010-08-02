@@ -95,6 +95,7 @@ protected:
 
     // Helper functions
     void redraw();
+    void draw_message(const char* msg);
 
 private:
     static GuiCalibratorX11* instance;
@@ -182,6 +183,9 @@ GuiCalibratorX11::~GuiCalibratorX11()
 
 void GuiCalibratorX11::redraw()
 {
+    // TODO: clear the area first !
+    // (needed when restarting calibration)
+
     // Print the text
     int text_height = font_info->ascent + font_info->descent;
     int text_width = -1;
@@ -258,14 +262,22 @@ bool GuiCalibratorX11::on_timer_signal()
 
 bool GuiCalibratorX11::on_button_press_event(XEvent event)
 {
+    // Clear window, maybe a bit overdone, but easiest for me atm.
+    // (goal is to clear possible message and other clicks)
+    XClearWindow(display, win);
+
     // Handle click
     time_elapsed = 0;
-    calibrator->add_click(event.xbutton.x, event.xbutton.y);
+    bool success = calibrator->add_click(event.xbutton.x, event.xbutton.y);
+
+    if (!success && calibrator->get_numclicks() == 0) {
+        draw_message("Mis-click detected, restarting...");
+    }
 
     // Are we done yet?
     if (calibrator->get_numclicks() >= 4) {
         // Recalibrate
-        bool success = calibrator->finish(display_width, display_height);
+        success = calibrator->finish(display_width, display_height);
 
         if (success) {
             exit(0);
@@ -280,6 +292,21 @@ bool GuiCalibratorX11::on_button_press_event(XEvent event)
     redraw();
 
     return true;
+}
+
+void GuiCalibratorX11::draw_message(const char* msg)
+{
+    int text_height = font_info->ascent + font_info->descent;
+    int text_width = XTextWidth(font_info, msg, strlen(msg));
+
+    int x = (display_width - text_width) / 2;
+    int y = (display_height - text_height) / 2 + clock_radius + 60;
+    XSetForeground(display, gc, pixel[BLACK]);
+    XSetLineAttributes(display, gc, 2, LineSolid, CapRound, JoinRound);
+    XDrawRectangle(display, win, gc, x - 10, y - text_height - 10,
+                text_width + 20, text_height + 25);
+
+    XDrawString(display, win, gc, x, y, msg, strlen(msg));
 }
 
 void GuiCalibratorX11::give_timer_signal()

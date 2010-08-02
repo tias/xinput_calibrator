@@ -1,3 +1,15 @@
+xinput_calibrator 0.7.0 [2010-08-01]
+Major features:
+* Automatic mis-click detection !
+* Now compiles only one binary (with gtkmm if availabe, otherwise x11)
+* .desktop file for menu entry
+* Made a tango-based calibration icon
+* Manpage information about making calibration permanent
+Bug fixes/enhancements:
+* A COPYING file to explicitise MIT/X11 license
+* Proper make dist (Thierry Reding)
+* Packaging fixes (David Ludlow)
+
 xinput_calibrator 0.6.1 [2010-03-21]
 Bug fixes/enhancements:
 * More robust device detection: non-master device with axis valuators, in

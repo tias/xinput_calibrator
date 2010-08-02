@@ -23,9 +23,20 @@
 #include <algorithm>
 #include "calibrator.hh"
 
-Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0, const bool verbose0)
-  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0)
+Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0,
+    const bool verbose0, const int thr_misclick, const int thr_doubleclick)
+  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0), threshold_doubleclick(thr_doubleclick), threshold_misclick(thr_misclick)
 {
+}
+
+void Calibrator::set_threshold_doubleclick(int t)
+{
+    threshold_doubleclick = t;
+}
+
+void Calibrator::set_threshold_misclick(int t)
+{
+    threshold_misclick = t;
 }
 
 int Calibrator::get_numclicks()
@@ -35,25 +46,76 @@ int Calibrator::get_numclicks()
 
 bool Calibrator::add_click(int x, int y)
 {
-    // Check that we don't click the same point twice
-    if (num_clicks > 0 && click_threshold > 0
-     && abs (x - clicked_x[num_clicks-1]) < click_threshold
-     && abs (y - clicked_y[num_clicks-1]) < click_threshold) {
-        if (verbose) {
-            printf("DEBUG: Not adding click %i (X=%i, Y=%i): within %i pixels of previous click\n",
-                num_clicks, x, y, click_threshold);
+    // Double-click detection
+    if (threshold_doubleclick > 0 && num_clicks > 0) {
+        int i = num_clicks-1;
+        while (i >= 0) {
+            if (abs(x - clicked_x[i]) <= threshold_doubleclick
+                && abs(y - clicked_y[i]) <= threshold_doubleclick) {
+                if (verbose) {
+                    printf("DEBUG: Not adding click %i (X=%i, Y=%i): within %i pixels of previous click\n",
+                        num_clicks, x, y, threshold_doubleclick);
+                }
+                return false;
+            }
+            i--;
         }
-        return false;
+    }
+
+    // Mis-click detection
+    if (threshold_misclick > 0 && num_clicks > 0) {
+        bool misclick = true;
+
+        if (num_clicks == 1) {
+            // check that along one axis of first point
+            if (along_axis(x,clicked_x[0],clicked_y[0]) ||
+                along_axis(y,clicked_x[0],clicked_y[0]))
+                misclick = false;
+        } else if (num_clicks == 2) {
+            // check that along other axis of first point than second point
+            if ((along_axis(y,clicked_x[0],clicked_y[0]) &&
+                 along_axis(clicked_x[1],clicked_x[0],clicked_y[0])) ||
+                (along_axis(x,clicked_x[0],clicked_y[0]) &&
+                 along_axis(clicked_y[1],clicked_x[0],clicked_y[0])))
+                misclick = false;
+        } else if (num_clicks == 3) {
+            // check that along both axis of second and third point
+            if ((along_axis(x,clicked_x[1],clicked_y[1]) &&
+                 along_axis(y,clicked_x[2],clicked_y[2])) ||
+                (along_axis(y,clicked_x[1],clicked_y[1]) &&
+                 along_axis(x,clicked_x[2],clicked_y[2])))
+                misclick = false;
+        }
+
+        if (misclick) {
+            if (verbose) {
+                if (num_clicks == 1)
+                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[0], clicked_y[0], threshold_misclick);
+                else if (num_clicks == 2)
+                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) or click 1 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[0], clicked_y[0], clicked_x[1], clicked_y[1], threshold_misclick);
+                else if (num_clicks == 3)
+                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 1 (X=%i, Y=%i) or click 2 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[1], clicked_y[1], clicked_x[2], clicked_y[2], threshold_misclick);
+            }
+
+            num_clicks = 0;
+            return false;
+        }
     }
 
     clicked_x[num_clicks] = x;
     clicked_y[num_clicks] = y;
-    num_clicks ++;
+    num_clicks++;
 
     if (verbose)
         printf("DEBUG: Adding click %i (X=%i, Y=%i)\n", num_clicks-1, x, y);
 
     return true;
+}
+
+inline bool Calibrator::along_axis(int xy, int x0, int y0)
+{
+    return ((abs(xy - x0) <= threshold_misclick) ||
+            (abs(xy - y0) <= threshold_misclick));
 }
 
 bool Calibrator::finish(int width, int height)

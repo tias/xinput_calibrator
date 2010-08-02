@@ -14,6 +14,8 @@ It currently features:
 .br 
 \- works for any standard Xorg touchscreen driver (uses XInput to get axis valuators)
 .br 
+\- mis\-click detection (prevents bogus calibration)
+.br 
 \- can output the calibration in xorg.conf, FDI and udev format
 .br 
 \- can dynamically recalibrate the evdev driver
@@ -35,6 +37,7 @@ Print debug messages during the process.
 .B \-\-list
 List the calibratable input devices.
 .PP 
+.TP 8
 .B \-\-device \fIdevice_name_or_id\fP
 Select a specific device to calibrate;
 use \-\-list to list the calibratable input devices.
@@ -44,6 +47,10 @@ use \-\-list to list the calibratable input devices.
 Manually provide the current calibration setting.
 .br 
 This is usefull if the calibration values are stored in your xorg.conf, but the driver does not export them through XInput (eg. the calibrator can not know these values)
+.PP 
+.TP 8
+.B \-\-misclick \fInr_of_pixels\fP
+set the misclick threshold (0=off, default: 15 pixels)
 .PP 
 .TP 8
 .B \-\-fake
@@ -129,11 +136,33 @@ If you use the recommended 'evdev' xserver driver, you can use the xinput tool:
 	xinput set\-int\-prop "\fIName_Of_TouchScreen\fR" "Evdev Axis Calibration" 32 \fImin_x\fP \fImax_x\fP \fImin_y\fP \fImax_y\fP
 .br 
 	xinput set\-int\-prop "\fIName_Of_TouchScreen\fR" "Evdev Axes Swap" 8 \fIswap_xy\fR
-.PP 
+.LP 
 \fIName_Of_TouchScreen\fR is the xserver name or id of the device, use 'xinput list' to find it.
+.SH "TROUBLESHOOTING"
+Run the calibrator with the \-v option, it will tell you what happens and what goes wrong.
+
+.B mis\-click detection
+The calibrator can automatically detect clicks with unreasonable values. This prevents you from ending up with a bogus calibration.
+.LP 
+If you keep getting the message 'Mis\-click detected, restarting...', one of the following is happening:
+  1. you are bad at clicking on crosses, use a stylus or increase the \-\-misclick threshold
+  2. your device is not properly supported by the kernel, it interprets the clicks wrong
+  3. your screen has a non\-linear deformation, 4\-point calibration can not help you
+.SH "EXAMPLES"
+To run the calibrator, type in your terminal:
+.LP 
+    xinput_calibrator
+.PP 
+If something goes wrong, or not as expected, turn on verbose messages:
+.LP 
+    xinput_calibrator \-v
+.PP 
+If you have to manually provide the current calibration values (when using EVDEV, you can use this to reset the calibration first):
+.LP 
+    xinput_calibrator \-\-precalib 0 1000 0 1000
 .SH "SEE ALSO"
 xinput(1)
-.PP
+.PP 
 \fBscripts/xinput_calibrator_pointercal.sh\fR an example script used on mobile devices to set the calibration on X start, using evdev and the 'xinput' tool.
 .SH "AUTHORS"
 .nf 
