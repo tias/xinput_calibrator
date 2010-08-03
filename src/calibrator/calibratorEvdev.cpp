@@ -222,6 +222,16 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
         printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_swap_xy);
     printf("See scripts/xinput_calibrator_pointercal.sh for an example used on mobile devices\n");
 
+    // xorg.conf.d snippet
+    printf("\nxorg.conf.d snippet (RECOMMENDED): copy the snippet below into /etc/X11/xorg.conf.d/99-calibration.conf\n");
+    printf("Section \"InputClass\"\n");
+    printf("	Identifier	\"calibration\"\n");
+    printf("	MatchProduct	\"%s\"\n", device_name);
+    printf("	Option\t\"Calibration\"\t\t\"%d %d %d %d\"\n",
+                new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    printf("EndSection\n");
+    printf("\n");
+
     // Xorg.conf output
     printf("xorg.conf: edit /etc/X11/xorg.conf and add in the 'Section \"InputDevice\"' of your device:\n");
     printf("    Option\t\"Calibration\"\t\t\"%d %d %d %d\"\n",
