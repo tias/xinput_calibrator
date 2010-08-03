@@ -222,29 +222,12 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
         printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_swap_xy);
     printf("See scripts/xinput_calibrator_pointercal.sh for an example used on mobile devices\n");
 
-
-    // TODO detect EVDEV version at runtime ?
-    // deliberately not mention HAL way, by the time users run evdev 2.3.0, there will be no more HAL (on linux)
-    printf("\nIf you have evdev version 2.3.0 or higher, there are 2 more ways: the tranditional way (xorg.conf) and the new way (udev rule):\n");
-
     // Xorg.conf output
     printf("xorg.conf: edit /etc/X11/xorg.conf and add in the 'Section \"InputDevice\"' of your device:\n");
     printf("    Option\t\"Calibration\"\t\t\"%d %d %d %d\"\n",
                 new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
     if (swap_xy)
         printf("    Option\t\"SwapAxes\"\t\"%d\" # unless it was already set to 1\n", new_swap_xy);
-
-    // udev rule
-    printf("udev rule: create the file '/etc/udev/rules.d/99_touchscreen.rules' with:\n\
-    ACTION!=\"add|change\", GOTO=\"xorg_touchscreen_end\"\n\
-    KERNEL!=\"event*\", GOTO=\"xorg_touchscreen_end\"\n\
-    ATTRS{product}!=\"%s\", GOTO=\"xorg_touchscreen_end\"\n\
-    ENV{x11_options.calibration}=\"%d %d %d %d\"\n",
-         device_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    if (swap_xy)
-        printf("    ENV{x11_options.swapxy}=\"%d\"\n", new_swap_xy);
-    printf("    LABEL=\"xorg_touchscreen_end\"\n");
-
 
     return success;
 }
