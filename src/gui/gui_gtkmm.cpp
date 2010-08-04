@@ -61,7 +61,6 @@ protected:
     // Data
     Calibrator* calibrator;
     double X[4], Y[4];
-    int display_width, display_height;
     int time_elapsed;
 
     const char* message;
@@ -84,10 +83,16 @@ CalibrationArea::CalibrationArea(Calibrator* calibrator0)
     add_events(Gdk::KEY_PRESS_MASK | Gdk::BUTTON_PRESS_MASK);
     set_flags(Gtk::CAN_FOCUS);
 
+    // Setup timer for animation
+    sigc::slot<bool> slot = sigc::mem_fun(*this, &CalibrationArea::on_timer_signal);
+    Glib::signal_timeout().connect(slot, time_step);
+}
+
+bool CalibrationArea::on_expose_event(GdkEventExpose *event)
+{
     // Compute absolute circle centers
-    const Glib::RefPtr<Gdk::Screen> S = get_screen();
-    display_width = S->get_width();
-    display_height = S->get_height();
+    int display_width = get_width();
+    int display_height = get_height();
 
     const int delta_x = display_width/num_blocks;
     const int delta_y = display_height/num_blocks;
@@ -96,14 +101,6 @@ CalibrationArea::CalibrationArea(Calibrator* calibrator0)
     X[LL] = delta_x;                     Y[LL] = display_height - delta_y - 1;
     X[LR] = display_width - delta_x - 1; Y[LR] = display_height - delta_y - 1;
 
-    // Setup timer for animation
-    sigc::slot<bool> slot = sigc::mem_fun(*this, &CalibrationArea::on_timer_signal);
-    Glib::signal_timeout().connect(slot, time_step);
-}
-
-
-bool CalibrationArea::on_expose_event(GdkEventExpose *event)
-{
     Glib::RefPtr<Gdk::Window> window = get_window();
     if (window) {
         Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
@@ -203,7 +200,7 @@ void CalibrationArea::redraw()
 {
     Glib::RefPtr<Gdk::Window> win = get_window();
     if (win) {
-        const Gdk::Rectangle rect(0, 0, display_width, display_height);
+        const Gdk::Rectangle rect(0, 0, get_width(), get_height());
         win->invalidate_rect(rect, false);
     }
 }
@@ -218,8 +215,8 @@ bool CalibrationArea::on_timer_signal()
     // Update clock
     Glib::RefPtr<Gdk::Window> win = get_window();
     if (win) {
-        const Gdk::Rectangle rect(display_width/2 - clock_radius - clock_line_width,
-                                 display_height/2 - clock_radius - clock_line_width,
+        const Gdk::Rectangle rect(get_width()/2 - clock_radius - clock_line_width,
+                                 get_height()/2 - clock_radius - clock_line_width,
                                  2 * clock_radius + 1 + 2 * clock_line_width,
                                  2 * clock_radius + 1 + 2 * clock_line_width);
         win->invalidate_rect(rect, false);
@@ -243,7 +240,7 @@ bool CalibrationArea::on_button_press_event(GdkEventButton *event)
     // Are we done yet?
     if (calibrator->get_numclicks() >= 4) {
         // Recalibrate
-        success = calibrator->finish(display_width, display_height);
+        success = calibrator->finish(get_width(), get_height());
 
         if (success) {
             exit(0);
