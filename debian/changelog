@@ -1,3 +1,12 @@
+xinput-calibrator (0.7.0-1) unstable; urgency=low
+
+  * add libgtkmm-2.4-dev to Build-Depends, default for desktop distributions
+    is to use gtkmm gui
+  * update description (add mis-click, remove language error)
+  * new standards version
+
+ -- Tias Guns <tias@ulyssis.org>  Thu, 05 August 2010 22:37:32 +0200
+
 xinput-calibrator (0.7.0) unstable; urgency=low
 
   * New upstream release (packaging changes, misclick detection)
