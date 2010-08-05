@@ -17,7 +17,8 @@ Description: A generic touchscreen calibration program for X.Org
  xinput_calibrator is a program for calibrating your touchscreen, when using
  the X Window System.
  It currently features:
-  - a minimalistic and intuitive GUI
+  - a minimalist and intuitive GUI
+  - automatic mis-click detection
   - works for any standard Xorg touchscreen driver (uses XInput)
   - can output the calibration in xorg.conf, FDI and udev format
   - can dynamically recalibrate the evdev driver
