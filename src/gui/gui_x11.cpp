@@ -86,6 +86,7 @@ protected:
 
     // X11 vars
     Display* display;
+    int screen_num;
     Window win;
     GC gc;
     XFontStruct* font_info;
@@ -99,6 +100,7 @@ protected:
     bool on_button_press_event(XEvent event);
 
     // Helper functions
+    void set_display_size(int width, int height);
     void redraw();
     void draw_message(const char* msg);
 
@@ -115,6 +117,7 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     if (display == NULL) {
         throw std::runtime_error("Unable to connect to X server");
     }
+    screen_num = DefaultScreen(display);
     // Load font and get font information structure
     font_info = XLoadQueryFont(display, "9x15");
     if (font_info == NULL) {
@@ -126,27 +129,20 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
         }
     }
 
-    // Compute absolute circle centers
-    int screen_num = DefaultScreen(display);
-    display_width = DisplayWidth(display, screen_num);
-    display_height = DisplayHeight(display, screen_num);
-
 #ifdef HAVE_X11_XRANDR
-    // get screensize from xrandr instead
+    // get screensize from xrandr
     int nsizes;
     XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
     if (nsizes != 0) {
-        display_width = randrsize->width;
-        display_height = randrsize->height;
+        set_display_size(randrsize->width, randrsize->height);
+    } else {
+        set_display_size(DisplayWidth(display, screen_num),
+                         DisplayHeight(display, screen_num));
     }
+# else
+    set_display_size(DisplayWidth(display, screen_num),
+                     DisplayHeight(display, screen_num));
 #endif
-
-    const int delta_x = display_width/num_blocks;
-    const int delta_y = display_height/num_blocks;
-    X[UL] = delta_x;                     Y[UL] = delta_y;
-    X[UR] = display_width - delta_x - 1; Y[UR] = delta_y;
-    X[LL] = delta_x;                     Y[LL] = display_height - delta_y - 1;
-    X[LR] = display_width - delta_x - 1; Y[LR] = display_height - delta_y - 1;
 
     // Register events on the window
     XSetWindowAttributes attributes;
@@ -196,10 +192,33 @@ GuiCalibratorX11::~GuiCalibratorX11()
     XCloseDisplay(display);
 }
 
+void GuiCalibratorX11::set_display_size(int width, int height) {
+    display_width = width;
+    display_height = height;
+
+    // Compute absolute circle centers
+    const int delta_x = display_width/num_blocks;
+    const int delta_y = display_height/num_blocks;
+    X[UL] = delta_x;                     Y[UL] = delta_y;
+    X[UR] = display_width - delta_x - 1; Y[UR] = delta_y;
+    X[LL] = delta_x;                     Y[LL] = display_height - delta_y - 1;
+    X[LR] = display_width - delta_x - 1; Y[LR] = display_height - delta_y - 1;
+
+    // reset calibration if already started
+    calibrator->reset();
+}
+
 void GuiCalibratorX11::redraw()
 {
-    // TODO: clear the area first !
-    // (needed when restarting calibration)
+#ifdef HAVE_X11_XRANDR
+    // check that screensize did not change
+    int nsizes;
+    XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
+    if (nsizes != 0 && (display_width != randrsize->width ||
+                        display_height != randrsize->height)) {
+        set_display_size(randrsize->width, randrsize->height);
+    }
+#endif
 
     // Print the text
     int text_height = font_info->ascent + font_info->descent;

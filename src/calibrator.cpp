@@ -97,7 +97,7 @@ bool Calibrator::add_click(int x, int y)
                     printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 1 (X=%i, Y=%i) or click 2 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[1], clicked_y[1], clicked_x[2], clicked_y[2], threshold_misclick);
             }
 
-            num_clicks = 0;
+            reset();
             return false;
         }
     }

@@ -43,6 +43,10 @@ public:
     void set_threshold_misclick(int t);
     // get the number of clicks already registered
     int get_numclicks();
+    // reset clicks
+    void reset() {
+        num_clicks = 0;
+    }
     // add a click with the given coordinates
     bool add_click(int x, int y);
     // calculate and apply the calibration
