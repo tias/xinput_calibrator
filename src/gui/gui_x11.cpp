@@ -24,6 +24,11 @@
 #include <X11/Xutil.h>
 #include <X11/Xos.h> // strncpy, strlen
 
+#ifdef HAVE_X11_XRANDR
+// support for multi-head setups
+#include <X11/extensions/Xrandr.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
@@ -125,6 +130,16 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     int screen_num = DefaultScreen(display);
     display_width = DisplayWidth(display, screen_num);
     display_height = DisplayHeight(display, screen_num);
+
+#ifdef HAVE_X11_XRANDR
+    // get screensize from xrandr instead
+    int nsizes;
+    XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
+    if (nsizes != 0) {
+        display_width = randrsize->width;
+        display_height = randrsize->height;
+    }
+#endif
 
     const int delta_x = display_width/num_blocks;
     const int delta_y = display_height/num_blocks;

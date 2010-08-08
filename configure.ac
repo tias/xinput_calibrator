@@ -64,6 +64,11 @@ AS_IF([test "x$with_gui" = xdefault || test "x$with_gui" = xx11], [
 	PKG_CHECK_MODULES(X11, [x11], with_gui="x11", with_gui="no")
     AC_SUBST(X11_CFLAGS)
     AC_SUBST(X11_LIBS)
+
+    # check for xrandr too
+    PKG_CHECK_MODULES(XRANDR, [xrandr], AC_DEFINE(HAVE_X11_XRANDR, 1), foo="bar")
+    AC_SUBST(XRANDR_CFLAGS)
+    AC_SUBST(XRANDR_LIBS)
 ])
 AM_CONDITIONAL([BUILD_X11], [test "x$with_gui" = xx11])
 
