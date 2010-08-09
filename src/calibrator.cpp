@@ -21,6 +21,12 @@
  * THE SOFTWARE.
  */
 #include <algorithm>
+#include <sys/types.h>
+#include <dirent.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+
 #include "calibrator.hh"
 
 Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0,
@@ -159,4 +165,51 @@ bool Calibrator::finish(int width, int height)
 
     // finish the data, driver/calibrator specific
     return finish_data(axys, swap_xy);
+}
+
+const char* Calibrator::get_sysfs_name()
+{
+    if (is_sysfs_name(device_name))
+        return device_name;
+
+    // TODO: more mechanisms
+
+    return NULL;
+}
+
+bool Calibrator::is_sysfs_name(const char* name) {
+    const char* SYSFS_INPUT="/sys/class/input";
+    const char* SYSFS_DEVNAME="device/name";
+
+    DIR* dp = opendir(SYSFS_INPUT);
+    if (dp == NULL)
+        return false;
+
+    while (dirent* ep = readdir(dp)) {
+        if (strncmp(ep->d_name, "event", strlen("event")) == 0) {
+            // got event name, get its sysfs device name
+            char filename[40]; // actually 35, but hey...
+            (void) sprintf(filename, "%s/%s/%s", SYSFS_INPUT, ep->d_name, SYSFS_DEVNAME);
+
+            std::ifstream ifile(filename);
+            if (ifile.is_open()) {
+                if (!ifile.eof()) {
+                    std::string devname;
+                    std::getline(ifile, devname);
+                    if (devname == name) {
+                        if (verbose)
+                            printf("DEBUG: Found that '%s' is a sysfs name.\n", name);
+                        return true;
+                    }
+                }
+                ifile.close();
+            }
+        }
+    }
+    (void) closedir(dp);
+
+    if (verbose)
+        printf("DEBUG: Name '%s' does not match any in '%s/event*/%s'\n",
+                    name, SYSFS_INPUT, SYSFS_DEVNAME);
+    return false;
 }

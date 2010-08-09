@@ -51,6 +51,9 @@ public:
     bool add_click(int x, int y);
     // calculate and apply the calibration
     bool finish(int width, int height);
+    // get the sysfs name of the device,
+    // returns NULL if it can not be found
+    const char* get_sysfs_name();
 
 protected:
     // check whether the coordinates are along the respective axis
@@ -78,6 +81,9 @@ protected:
     // A lower value forces more precise calibration
     // Set to zero if you don't want this check
     int threshold_misclick;
+
+    // Check whether the given name is a sysfs device name
+    bool is_sysfs_name(const char* name);
 };
 
 #endif
