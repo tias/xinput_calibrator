@@ -43,6 +43,10 @@ if BUILD_GTKMM
 xinput_calibrator_SOURCES = main_gtkmm.cpp
 xinput_calibrator_LDADD = $(XINPUT_LIBS) $(GTKMM_LIBS)
 xinput_calibrator_CXXFLAGS = $(XINPUT_CFLAGS) $(GTKMM_CFLAGS) $(AM_CXXFLAGS)
+
+# only include the needed gtkmm stuff
+# lets hope this has no side-effects
+xinput_calibrator_LDFLAGS = -Wl,--as-needed
 endif
 
 EXTRA_DIST = \
