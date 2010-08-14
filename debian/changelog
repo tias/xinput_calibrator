@@ -1,3 +1,16 @@
+xinput-calibrator (0.7.0-3) unstable; urgency=low
+
+  * Incorporate suggestions from Paul Wise on mentors:
+    - Add header to link_as_needed.patch
+    - Update Standards-Version
+    - close ITP, Closes: #592073
+    - remove comments from debian/rules
+    - do not set DH_VERBOSE in debian/rules
+    - remove README file (upstream for github, not for binary pkg)
+    - language fixes from Paul Wise, quilt until new upstream release
+
+ -- Tias Guns <tias@ulyssis.org>  Sat, 14 Aug 2010 16:24:32 +0200
+
 xinput-calibrator (0.7.0-2) unstable; urgency=low
 
   * add link_as_needed.patch
