@@ -324,7 +324,7 @@ Calibrator* main_common(int argc, char** argv)
     if (fake) {
         // Fake a calibratable device
         device_name = "Fake_device";
-        device_axys = XYinfo(0,0,0,0);
+        device_axys = XYinfo(0,1000,0,1000);
 
         if (verbose) {
             printf("DEBUG: Faking device: %s\n", device_name);
