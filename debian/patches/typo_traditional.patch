@@ -1,0 +1,26 @@
+Description: typo, tranditional instead of traditional (thanks Paul Wise)
+Author: Tias Guns <tias@ulyssis.org>
+Forwarded: yes (I am upstream)
+
+--- a/src/calibrator/calibratorEvdev.cpp
++++ b/src/calibrator/calibratorEvdev.cpp
+@@ -230,7 +230,7 @@
+ 
+     // TODO detect EVDEV version at runtime ?
+     // deliberately not mention HAL way, by the time users run evdev 2.3.0, there will be no more HAL (on linux)
+-    printf("\nIf you have evdev version 2.3.0 or higher, there are 2 more ways: the tranditional way (xorg.conf) and the new way (udev rule):\n");
++    printf("\nIf you have evdev version 2.3.0 or higher, there are 2 more ways: the traditional way (xorg.conf) and the new way (udev rule):\n");
+ 
+     // Xorg.conf output
+     printf("xorg.conf: edit /etc/X11/xorg.conf and add in the 'Section \"InputDevice\"' of your device:\n");
+--- a/src/calibrator/calibratorXorgPrint.cpp
++++ b/src/calibrator/calibratorXorgPrint.cpp
+@@ -46,7 +46,7 @@
+ {
+     // TODO: detect which are applicable at runtime/in the makefile ?
+     printf("\n\n== Applying the calibration ==\n");
+-    printf("There are multiple ways to do this: the tranditional way (xorg.conf), the new way (udev rule) and the soon deprecated way (HAL policy):\n");
++    printf("There are multiple ways to do this: the traditional way (xorg.conf), the new way (udev rule) and the soon deprecated way (HAL policy):\n");
+ 
+     // Xorg.conf output
+     printf("\nxorg.conf: edit /etc/X11/xorg.conf and add in the 'Section \"InputDevice\"' of your device:\n");
