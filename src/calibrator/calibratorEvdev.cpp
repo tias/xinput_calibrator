@@ -126,7 +126,7 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& a
 
             if (verbose) {
                 if (ok)
-                    printf("DEBUG: Succesfully applied axis calibration.\n");
+                    printf("DEBUG: Successfully applied axis calibration.\n");
                 else
                     printf("DEBUG: Failed to apply axis calibration.\n");
             }
@@ -192,7 +192,7 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 
         if (verbose) {
             if (ok)
-                printf("DEBUG: Succesfully swapped X and Y axis.\n");
+                printf("DEBUG: Successfully swapped X and Y axis.\n");
             else
                 printf("DEBUG: Failed to swap X and Y axis.\n");
         }
@@ -205,7 +205,7 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 
     if (verbose) {
         if (ok)
-            printf("DEBUG: Succesfully applied axis calibration.\n");
+            printf("DEBUG: Successfully applied axis calibration.\n");
         else
             printf("DEBUG: Failed to apply axis calibration.\n");
     }
