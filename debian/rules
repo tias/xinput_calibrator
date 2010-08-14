@@ -1,5 +1,4 @@
 #!/usr/bin/make -f
 
 %:
-	test -x configure || ./autogen.sh
 	dh  $@
