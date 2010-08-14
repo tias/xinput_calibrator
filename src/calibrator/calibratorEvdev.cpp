@@ -87,16 +87,9 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& a
         throw WrongCalibratorException("Evdev: Unable to open device");
     }
 
-    // check X Input version >= 1.5
-    XExtensionVersion *version = XGetExtensionVersion(display, INAME);
-    if (version && (version != (XExtensionVersion*) NoSuchExtension)) {
-        if (version->major_version < 1 or
-            (version->major_version == 1 and version->minor_version < 5)) {
-            XFree(version);
-            throw WrongCalibratorException("Evdev: your X server is too old, for dynamic recalibration of evdev you need at least XServer 1.6 and X Input 1.5");
-        }
-        XFree(version);
-    }
+#ifndef HAVE_XI_PROP
+    throw WrongCalibratorException("Evdev: you need at least libXi 1.2 and inputproto 1.5 for dynamic recalibration of evdev.");
+#else
 
     // XGetDeviceProperty vars
     Atom            property;
@@ -173,6 +166,8 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& a
     printf("Calibrating EVDEV driver for \"%s\" id=%i\n", device_name, (int)device_id);
     printf("\tcurrent calibration values (from XInput): min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
                 old_axys.x_min, old_axys.x_max, old_axys.y_min, old_axys.y_max);
+#endif // HAVE_XI_PROP
+
 }
 
 CalibratorEvdev::~CalibratorEvdev () {
@@ -358,6 +353,10 @@ Display *display, const char *name, Bool only_extended)
 int CalibratorEvdev::xinput_do_set_prop(
 Display *display, Atom type, int format, int argc, char **argv)
 {
+#ifndef HAVE_XI_PROP
+    return EXIT_FAILURE;
+#else
+
     Atom          prop;
     Atom          old_type;
     char         *name;
@@ -462,4 +461,6 @@ Display *display, Atom type, int format, int argc, char **argv)
                           data.c, nelements);
     free(data.c);
     return EXIT_SUCCESS;
+#endif // HAVE_XI_PROP
+
 }

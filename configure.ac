@@ -39,9 +39,12 @@ AC_CHECK_HEADERS([stdlib.h string.h])
 AC_HEADER_STDBOOL
 AC_FUNC_STRTOD
 
-PKG_CHECK_MODULES(XINPUT, x11 xext [xi >= 1.2] [inputproto >= 1.5])
+PKG_CHECK_MODULES(XINPUT, x11 xext xi inputproto)
 AC_SUBST(XINPUT_CFLAGS)
 AC_SUBST(XINPUT_LIBS)
+
+PKG_CHECK_MODULES(XI_PROP, [xi >= 1.2] [inputproto >= 1.5],
+			AC_DEFINE(HAVE_XI_PROP, 1, [Xinput properties available]), foo="bar")
 
 
 AC_ARG_WITH([gui], AS_HELP_STRING([--with-gui=default], [Use gtkmm GUI if available, x11 GUI otherwise (default)]),,[with_gui=default])
