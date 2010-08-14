@@ -1,3 +1,8 @@
+Description: Make: add --as-needed ld flag
+  Avoids unnecessary linking, as suggested by Eugene Paskevich
+Author: Tias Guns <tias@ulyssis.org>
+Applied-Upstream: commit:fb22ed1a877444e2c970, http://github.com/tias/xinput_calibrator/commit/fb22ed1a877444e2c97031a00066d411e2d228ee
+
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
 @@ -43,6 +43,10 @@
