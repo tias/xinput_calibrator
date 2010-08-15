@@ -50,20 +50,7 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
 
     // TODO: detect which are applicable at runtime/in the makefile ?
     printf("\n\n== Applying the calibration ==\n");
-    printf("There are multiple ways to do this: the tranditional way (xorg.conf), the new way (xorg.conf.d snippet) and the soon deprecated way (HAL policy):\n");
-
-    // Xorg.conf output
-    printf("\nxorg.conf: edit /etc/X11/xorg.conf and add in the 'Section \"InputDevice\"' of your device:\n");
-    printf("\tOption\t\"MinX\"\t\t\"%d\"\n",
-                new_axys.x_min);
-    printf("\tOption\t\"MaxX\"\t\t\"%d\"\n",
-                new_axys.x_max);
-    printf("\tOption\t\"MinY\"\t\t\"%d\"\n",
-                new_axys.y_min);
-    printf("\tOption\t\"MaxY\"\t\t\"%d\"\n",
-                new_axys.y_max);
-    if (swap_xy != 0)
-        printf("\tOption\t\"SwapXY\"\t\"%d\" # unless it was already set to 1\n", new_swap_xy);
+    printf("There are multiple ways to do this: the new way (xorg.conf.d snippet) and the soon deprecated way (HAL policy):\n");
 
     // xorg.conf.d snippet
     printf("\nxorg.conf.d snippet (RECOMMENDED): copy the snippet below into /etc/X11/xorg.conf.d/99-calibration.conf\n");

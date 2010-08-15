@@ -234,13 +234,6 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     printf("EndSection\n");
     printf("\n");
 
-    // Xorg.conf output
-    printf("xorg.conf: edit /etc/X11/xorg.conf and add in the 'Section \"InputDevice\"' of your device:\n");
-    printf("    Option\t\"Calibration\"\t\t\"%d %d %d %d\"\n",
-                new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    if (swap_xy)
-        printf("    Option\t\"SwapAxes\"\t\"%d\" # unless it was already set to 1\n", new_swap_xy);
-
     return success;
 }
 
