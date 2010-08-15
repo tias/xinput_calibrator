@@ -227,8 +227,10 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     printf("Section \"InputClass\"\n");
     printf("	Identifier	\"calibration\"\n");
     printf("	MatchProduct	\"%s\"\n", device_name);
-    printf("	Option\t\"Calibration\"\t\t\"%d %d %d %d\"\n",
+    printf("	Option	\"Calibration\"	\"%d %d %d %d\"\n",
                 new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    if (swap_xy)
+        printf("	Option	\"SwapAxes\"	\"%d\"\n", new_swap_xy);
     printf("EndSection\n");
     printf("\n");
 
