@@ -49,11 +49,12 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     int new_swap_xy = swap_xy;
 
     // TODO: detect which are applicable at runtime/in the makefile ?
-    printf("\n\n== Applying the calibration ==\n");
-    printf("There are multiple ways to do this: the new way (xorg.conf.d snippet) and the soon deprecated way (HAL policy):\n");
+    printf("\n\n--> How to make the calibration permanent <--\n");
+    printf("On recent systems you can create an xorg.conf.d snippet, on older systems you have to create a HAL policy file:\n\n");
 
     // xorg.conf.d snippet
-    printf("\nxorg.conf.d snippet (RECOMMENDED): copy the snippet below into /etc/X11/xorg.conf.d/99-calibration.conf\n");
+    printf("* xorg.conf.d snippet (RECOMMENDED)\n");
+    printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf'\n");
     printf("Section \"InputClass\"\n");
     printf("	Identifier	\"calibration\"\n");
     printf("	MatchProduct	\"%s\"\n", "%Name_Of_TouchScreen%");
@@ -64,18 +65,20 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     if (swap_xy != 0)
         printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", new_swap_xy);
     printf("EndSection\n");
+    printf("\n");
 
     // HAL policy output
-    printf("\nHAL policy: create the file '/etc/hal/fdi/policy/touchscreen.fdi' with: (replace %%Name_Of_TouchScreen%% appropriately)\n\
-\t<match key=\"info.product\" contains=\"%%Name_Of_TouchScreen%%\">\n\
-\t  <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n\
-\t  <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
-\t  <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
-\t  <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
+    printf("* HAL policy (older systems using HAL)\n");
+    printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n\
+<match key=\"info.product\" contains=\"%%Name_Of_TouchScreen%%\">\n\
+  <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n\
+  <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
+  <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
+  <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
          , new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
     if (swap_xy != 0)
-        printf("\t  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_swap_xy);
-    printf("\t</match>\n");
+        printf("  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_swap_xy);
+    printf("</match>\n");
 
     return true;
 }
