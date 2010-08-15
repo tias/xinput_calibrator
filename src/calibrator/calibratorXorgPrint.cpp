@@ -61,6 +61,19 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     if (swap_xy != 0)
         printf("\tOption\t\"SwapXY\"\t\"%d\" # unless it was already set to 1\n", swap_xy);
 
+    // xorg.conf.d snippet
+    printf("\nxorg.conf.d snippet (RECOMMENDED): copy the snippet below into /etc/X11/xorg.conf.d/99-calibration.conf\n");
+    printf("Section \"InputClass\"\n");
+    printf("	Identifier	\"calibration\"\n");
+    printf("	MatchProduct	\"%s\"\n", "%Name_Of_TouchScreen%");
+    printf("	Option	\"MinX\"	\"%d\"\n", new_axys.x_min);
+    printf("	Option	\"MaxX\"	\"%d\"\n", new_axys.x_max);
+    printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y_min);
+    printf("	Option	\"MaxY\"	\"%d\"\n", new_axys.y_max);
+    if (swap_xy != 0)
+        printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", swap_xy);
+    printf("EndSection\n");
+
     // udev rule
     printf("\nudev rule: create the file '/etc/udev/rules.d/99_touchscreen.rules' with: (replace %%Name_Of_TouchScreen%% appropriately)\n\
 \tACTION!=\"add|change\", GOTO=\"xorg_touchscreen_end\"\n\
