@@ -46,7 +46,7 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
 {
     // TODO: detect which are applicable at runtime/in the makefile ?
     printf("\n\n== Applying the calibration ==\n");
-    printf("There are multiple ways to do this: the tranditional way (xorg.conf), the new way (udev rule) and the soon deprecated way (HAL policy):\n");
+    printf("There are multiple ways to do this: the tranditional way (xorg.conf), the new way (xorg.conf.d snippet) and the soon deprecated way (HAL policy):\n");
 
     // Xorg.conf output
     printf("\nxorg.conf: edit /etc/X11/xorg.conf and add in the 'Section \"InputDevice\"' of your device:\n");
@@ -73,20 +73,6 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     if (swap_xy != 0)
         printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", swap_xy);
     printf("EndSection\n");
-
-    // udev rule
-    printf("\nudev rule: create the file '/etc/udev/rules.d/99_touchscreen.rules' with: (replace %%Name_Of_TouchScreen%% appropriately)\n\
-\tACTION!=\"add|change\", GOTO=\"xorg_touchscreen_end\"\n\
-\tKERNEL!=\"event*\", GOTO=\"xorg_touchscreen_end\"\n\
-\tATTRS{product}!=\"%%Name_Of_TouchScreen%%\", GOTO=\"xorg_touchscreen_end\"\n\
-\tENV{x11_options.minx}=\"%d\"\n\
-\tENV{x11_options.maxx}=\"%d\"\n\
-\tENV{x11_options.miny}=\"%d\"\n\
-\tENV{x11_options.maxy}=\"%d\"\n"
-         , new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    if (swap_xy != 0)
-        printf("\tENV{x11_options.swapxy}=\"%d\"\n", swap_xy);
-    printf("\tLABEL=\"xorg_touchscreen_end\"\n");
 
     // HAL policy output
     printf("\nHAL policy: create the file '/etc/hal/fdi/policy/touchscreen.fdi' with: (replace %%Name_Of_TouchScreen%% appropriately)\n\
