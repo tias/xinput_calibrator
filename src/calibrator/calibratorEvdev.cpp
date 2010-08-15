@@ -213,26 +213,29 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     XSync(display, False);
 
 
-    // on stdout: ways to make calibration permanent
-    printf("\n\n== Saving the calibration ==\n");
-    // create startup script
-    printf("If you have the 'xinput' tool installed, a simple way is to create a script that starts with your X session, containing the following command(s):\n");
-    printf("    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    if (swap_xy)
-        printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_swap_xy);
-    printf("See scripts/xinput_calibrator_pointercal.sh for an example used on mobile devices\n");
+    // TODO: detect which are applicable at runtime/in the makefile ?
+    printf("\n\n--> How to make the calibration permanent <--\n");
+    printf("On recent systems you can create an xorg.conf.d snippet, on older systems you have to create a script with the xinput commands:\n\n");
 
     // xorg.conf.d snippet
-    printf("\nxorg.conf.d snippet (RECOMMENDED): copy the snippet below into /etc/X11/xorg.conf.d/99-calibration.conf\n");
+    printf("* xorg.conf.d snippet (RECOMMENDED)\n");
+    printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf'\n");
     printf("Section \"InputClass\"\n");
     printf("	Identifier	\"calibration\"\n");
     printf("	MatchProduct	\"%s\"\n", device_name);
     printf("	Option	\"Calibration\"	\"%d %d %d %d\"\n",
                 new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    if (swap_xy)
+    if (swap_xy != 0)
         printf("	Option	\"SwapAxes\"	\"%d\"\n", new_swap_xy);
     printf("EndSection\n");
     printf("\n");
+
+    // create startup script
+    printf("* xinput commands (for older systems)\n");
+    printf("  Install the 'xinput' tool and copy the command(s) below in a script that starts with your X session\n");
+    printf("    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    if (swap_xy)
+        printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_swap_xy);
 
     return success;
 }
