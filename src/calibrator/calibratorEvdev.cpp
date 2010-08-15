@@ -213,6 +213,11 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     XSync(display, False);
 
 
+    const char* sysfs_name = get_sysfs_name();
+    bool not_sysfs_name = (sysfs_name == NULL);
+    if (not_sysfs_name)
+        sysfs_name = "!!Name_Of_TouchScreen!!";
+
     // TODO: detect which are applicable at runtime/in the makefile ?
     printf("\n\n--> How to make the calibration permanent <--\n");
     printf("On recent systems you can create an xorg.conf.d snippet, on older systems you have to create a script with the xinput commands:\n\n");
@@ -222,12 +227,14 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf'\n");
     printf("Section \"InputClass\"\n");
     printf("	Identifier	\"calibration\"\n");
-    printf("	MatchProduct	\"%s\"\n", device_name);
+    printf("	MatchProduct	\"%s\"\n", sysfs_name);
     printf("	Option	\"Calibration\"	\"%d %d %d %d\"\n",
                 new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
     if (swap_xy != 0)
         printf("	Option	\"SwapAxes\"	\"%d\"\n", new_swap_xy);
     printf("EndSection\n");
+    if (not_sysfs_name)
+        printf("\nChange '%s' by your device's name, in the snippet above.\n", sysfs_name);
     printf("\n");
 
     // create startup script

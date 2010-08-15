@@ -48,6 +48,12 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     // (unfortunately there is no way to verify this (yet))
     int new_swap_xy = swap_xy;
 
+
+    const char* sysfs_name = get_sysfs_name();
+    bool not_sysfs_name = (sysfs_name == NULL);
+    if (not_sysfs_name)
+        sysfs_name = "!!Name_Of_TouchScreen!!";
+
     // TODO: detect which are applicable at runtime/in the makefile ?
     printf("\n\n--> How to make the calibration permanent <--\n");
     printf("On recent systems you can create an xorg.conf.d snippet, on older systems you have to create a HAL policy file:\n\n");
@@ -57,7 +63,7 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf'\n");
     printf("Section \"InputClass\"\n");
     printf("	Identifier	\"calibration\"\n");
-    printf("	MatchProduct	\"%s\"\n", "%Name_Of_TouchScreen%");
+    printf("	MatchProduct	\"%s\"\n", sysfs_name);
     printf("	Option	\"MinX\"	\"%d\"\n", new_axys.x_min);
     printf("	Option	\"MaxX\"	\"%d\"\n", new_axys.x_max);
     printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y_min);
@@ -70,15 +76,18 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     // HAL policy output
     printf("* HAL policy (older systems using HAL)\n");
     printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n\
-<match key=\"info.product\" contains=\"%%Name_Of_TouchScreen%%\">\n\
+<match key=\"info.product\" contains=\"%s\">\n\
   <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n\
   <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
   <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
   <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
-         , new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+         , sysfs_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
     if (swap_xy != 0)
         printf("  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_swap_xy);
     printf("</match>\n");
+
+    if (not_sysfs_name)
+        printf("\nChange '%s' by your device's name, in the configs above.\n", sysfs_name);
 
     return true;
 }
