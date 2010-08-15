@@ -44,6 +44,10 @@ CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const X
 
 bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
 {
+    // we suppose the previous 'swap_xy' value was 0
+    // (unfortunately there is no way to verify this (yet))
+    int new_swap_xy = swap_xy;
+
     // TODO: detect which are applicable at runtime/in the makefile ?
     printf("\n\n== Applying the calibration ==\n");
     printf("There are multiple ways to do this: the tranditional way (xorg.conf), the new way (xorg.conf.d snippet) and the soon deprecated way (HAL policy):\n");
@@ -59,7 +63,7 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     printf("\tOption\t\"MaxY\"\t\t\"%d\"\n",
                 new_axys.y_max);
     if (swap_xy != 0)
-        printf("\tOption\t\"SwapXY\"\t\"%d\" # unless it was already set to 1\n", swap_xy);
+        printf("\tOption\t\"SwapXY\"\t\"%d\" # unless it was already set to 1\n", new_swap_xy);
 
     // xorg.conf.d snippet
     printf("\nxorg.conf.d snippet (RECOMMENDED): copy the snippet below into /etc/X11/xorg.conf.d/99-calibration.conf\n");
@@ -71,7 +75,7 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y_min);
     printf("	Option	\"MaxY\"	\"%d\"\n", new_axys.y_max);
     if (swap_xy != 0)
-        printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", swap_xy);
+        printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", new_swap_xy);
     printf("EndSection\n");
 
     // HAL policy output
@@ -83,7 +87,7 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
 \t  <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
          , new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
     if (swap_xy != 0)
-        printf("\t  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", swap_xy);
+        printf("\t  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_swap_xy);
     printf("\t</match>\n");
 
     return true;

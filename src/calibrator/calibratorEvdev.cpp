@@ -179,8 +179,8 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 {
     bool success = true;
 
-    // swap x and y: check if we need to swap with: if (swap_xy)
-    // value to swap too is inverse of previous swap value: in new_swap_xy
+    // swap x and y axis, indicated by swap_xy
+    // new value is old value (could have been 0 or 1) swapped:
     int new_swap_xy = 1 - old_swap_xy;
 
     printf("\nDoing dynamic recalibration:\n");
