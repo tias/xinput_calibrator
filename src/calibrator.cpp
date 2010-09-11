@@ -213,3 +213,26 @@ bool Calibrator::is_sysfs_name(const char* name) {
                     name, SYSFS_INPUT, SYSFS_DEVNAME);
     return false;
 }
+
+bool Calibrator::has_xorgconfd_support(Display* dpy) {
+    bool has_support = false;
+
+    Display* display = dpy;
+    if (dpy == NULL) // no connection to reuse
+        display = XOpenDisplay(NULL);
+
+    if (display == NULL) {
+        fprintf(stderr, "Unable to connect to X server\n");
+        exit(1);
+    }
+
+    if (strstr(ServerVendor(display), "X.Org") &&
+        VendorRelease(display) >= 10800000) {
+        has_support = true;
+    }
+
+    if (dpy == NULL) // no connection to reuse
+        XCloseDisplay(display);
+
+    return has_support;
+}

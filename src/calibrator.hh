@@ -84,6 +84,9 @@ protected:
 
     // Check whether the given name is a sysfs device name
     bool is_sysfs_name(const char* name);
+
+    // Check whether the X server has xorg.conf.d support
+    bool has_xorgconfd_support(Display* display=NULL);
 };
 
 #endif
