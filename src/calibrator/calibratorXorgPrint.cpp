@@ -85,7 +85,7 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
 
 
     if (not_sysfs_name)
-        printf("\nChange '%s' by your device's name, in the configs above.\n", sysfs_name);
+        printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);
 
     return true;
 }

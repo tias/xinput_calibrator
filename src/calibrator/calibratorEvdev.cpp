@@ -232,7 +232,7 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
             printf("	Option	\"SwapAxes\"	\"%d\"\n", new_swap_xy);
         printf("EndSection\n");
         if (not_sysfs_name)
-            printf("\nChange '%s' by your device's name, in the snippet above.\n", sysfs_name);
+            printf("\nChange '%s' to your device's name in the snippet above.\n", sysfs_name);
     } else {
         // create startup script
         printf("  Install the 'xinput' tool and copy the command(s) below in a script that starts with your X session\n");
