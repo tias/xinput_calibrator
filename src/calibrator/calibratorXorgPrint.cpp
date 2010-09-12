@@ -28,7 +28,8 @@ class CalibratorXorgPrint: public Calibrator
 {
 public:
     CalibratorXorgPrint(const char* const device_name, const XYinfo& axys,
-        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0);
+        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0,
+        const OutputType output_type=OUTYPE_AUTO);
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
 protected:
@@ -36,8 +37,8 @@ protected:
     bool output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy);
 };
 
-CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick)
-  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick)
+CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type)
+  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type)
 {
     printf("Calibrating standard Xorg driver \"%s\"\n", device_name);
     printf("\tcurrent calibration values: min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
@@ -54,11 +55,24 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     int new_swap_xy = swap_xy;
 
     printf("\n\n--> Making the calibration permanent <--\n");
-    // xorg.conf.d or alternatively hal config
-    if (has_xorgconfd_support()) {
-        success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
-    } else {
-        success &= output_hal(new_axys, swap_xy, new_swap_xy);
+    switch (output_type) {
+        case OUTYPE_AUTO:
+            // xorg.conf.d or alternatively hal config
+            if (has_xorgconfd_support()) {
+                success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+            } else {
+                success &= output_hal(new_axys, swap_xy, new_swap_xy);
+            }
+            break;
+        case OUTYPE_XORGCONFD:
+            success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+            break;
+        case OUTYPE_HAL:
+            success &= output_hal(new_axys, swap_xy, new_swap_xy);
+            break;
+        default:
+            fprintf(stderr, "ERROR: XorgPrint Calibrator does not support the supplied --output-type\n");
+            success = false;
     }
 
     return success;

@@ -34,7 +34,7 @@ public:
      * if the touchscreen is not of the type it supports
      */
     Calibrator(const char* const device_name, const XYinfo& axys,
-        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0);
+        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0, const OutputType output_type=OUTYPE_AUTO);
     ~Calibrator() {}
 
     // set the doubleclick treshold
@@ -81,6 +81,9 @@ protected:
     // A lower value forces more precise calibration
     // Set to zero if you don't want this check
     int threshold_misclick;
+
+    // Type of output
+    OutputType output_type;
 
     // Check whether the given name is a sysfs device name
     bool is_sysfs_name(const char* name);

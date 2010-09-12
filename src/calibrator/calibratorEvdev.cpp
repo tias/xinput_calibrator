@@ -48,7 +48,8 @@ private:
     int old_swap_xy;
 public:
     CalibratorEvdev(const char* const device_name, const XYinfo& axys, const bool verbose,
-        XID device_id=(XID)-1, const int thr_misclick=0, const int thr_doubleclick=0);
+        XID device_id=(XID)-1, const int thr_misclick=0, const int thr_doubleclick=0,
+        const OutputType output_type=OUTYPE_AUTO);
     ~CalibratorEvdev();
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
@@ -65,8 +66,8 @@ protected:
     bool output_xinput(const XYinfo new_axys, int swap_xy, int new_swap_xy);
 };
 
-CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0, XID device_id, const int thr_misclick, const int thr_doubleclick)
-  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick), old_swap_xy(0)
+CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0, XID device_id, const int thr_misclick, const int thr_doubleclick, const OutputType output_type)
+  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type), old_swap_xy(0)
 {
     // init
     display = XOpenDisplay(NULL);
@@ -218,11 +219,24 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 
 
     printf("\n\n--> Making the calibration permanent <--\n");
-    // xorg.conf.d or alternatively xinput commands
-    if (has_xorgconfd_support()) {
-        success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
-    } else {
-        success &= output_xinput(new_axys, swap_xy, new_swap_xy);
+    switch (output_type) {
+        case OUTYPE_AUTO:
+            // xorg.conf.d or alternatively xinput commands
+            if (has_xorgconfd_support()) {
+                success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+            } else {
+                success &= output_xinput(new_axys, swap_xy, new_swap_xy);
+            }
+            break;
+        case OUTYPE_XORGCONFD:
+            success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+            break;
+        case OUTYPE_XINPUT:
+            success &= output_xinput(new_axys, swap_xy, new_swap_xy);
+            break;
+        default:
+            fprintf(stderr, "ERROR: Evdev Calibrator does not support the supplied --output-type\n");
+            success = false;
     }
 
     return success;

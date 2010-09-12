@@ -30,8 +30,8 @@
 #include "calibrator.hh"
 
 Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0,
-    const bool verbose0, const int thr_misclick, const int thr_doubleclick)
-  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0), threshold_doubleclick(thr_doubleclick), threshold_misclick(thr_misclick)
+    const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type0)
+  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0), threshold_doubleclick(thr_doubleclick), threshold_misclick(thr_misclick), output_type(output_type0)
 {
 }
 
