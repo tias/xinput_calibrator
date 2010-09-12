@@ -62,65 +62,31 @@ Useful to test the calibrator without applying the values, and possibly even wit
 .SH "USAGE"
 Run xinput_calibrator in a terminal, as it prints out the calibration values and instructions on standard output.
 .PP 
-The calibrator merely computes the new calibration. In case you use the evdev driver, it will also apply the new calibration for this session. To make the calibration permanent across X restarts, you need to \fBsave the calibration\fR somewhere.
-.PP 
-The calibrator outputs the following 3 alternatives, with the correct values filled in:
+
+After clicking the 4 calibration points, xinput_calibrator will calculate the new calibration values. Depending on the Xorg touchscreen driver you use, the new values can be made permanent in different ways:
 .TP 4
-.B xorg.conf (the traditional way)
-edit /etc/X11/xorg.conf and add in the 'Section "InputDevice"' of your device:
+.B Evdev:
+Automatically recalibrates the driver for this session,
 .br 
-If using the EVDEV driver:
-.br 
-	Option	"Calibration"	"\fImin_x\fP \fImax_x\fP \fImin_y\fP \fImax_y\fP"
-.br 
-	Option	"SwapAxes"	"\fIswap_xy\fP"
-.br 
-Else (evtouch or other driver):
-.br 
-	Option	"MinX"		"\fImin_x\fP"
-.br 
-	Option	"MaxX"		"\fImax_x\fP"
-.br 
-	Option	"MinY"		"\fImin_y\fP"
-.br 
-	Option	"MaxY"		"\fImax_y\fP"
-.br 
-	Option	"SwapXY"		"\fIswap_xy\fP"
+Supports following \-\-output\-types: auto, xorg.conf.d, hal, xinput
 
 .TP 4
-.B HAL policy (the old way)
-create the file '/etc/hal/fdi/policy/touchscreen.fdi' with:
+.B Usbtouchscreen:
+Automatically recalibrates the *kernel module*, saved in /etc/modprobe.conf.local
 .br 
-	<match key="info.product" contains="\fIName_Of_TouchScreen\fR">
-.br 
-	  <merge key="input.x11_options.minx" type="string">\fImin_x\fP</merge>
-.br 
-	  <merge key="input.x11_options.maxx" type="string">\fImax_x\fP</merge>
-.br 
-	  <merge key="input.x11_options.miny" type="string">\fImin_y\fP</merge>
-.br 
-	  <merge key="input.x11_options.maxy" type="string">\fImax_y\fP</merge>
-.br 
-	  <merge key="input.x11_options.swapxy" type="string">\fIswap_xy\fP</merge>
-.br 
-	</match>
-.PP 
-\fIName_Of_TouchScreen\fR is the sysfs name of the device, use 'lshal' to find it.
+Supports following \-\-output\-types: auto
 
 .TP 4
-.B xinput commands, EVDEV only (the manual way)
-If you use the recommended 'evdev' xserver driver, you can use the xinput tool:
+.B Other Xorg touchscreen drivers:
+No automatic calibration possible,
 .br 
-	xinput set\-int\-prop "\fIName_Of_TouchScreen\fR" "Evdev Axis Calibration" 32 \fImin_x\fP \fImax_x\fP \fImin_y\fP \fImax_y\fP
-.br 
-	xinput set\-int\-prop "\fIName_Of_TouchScreen\fR" "Evdev Axes Swap" 8 \fIswap_xy\fR
-.LP 
-\fIName_Of_TouchScreen\fR is the xserver name or id of the device, use 'xinput list' to find it.
+Supports following \-\-output\-types: auto, xorg.conf.d, hal
 .SH "TROUBLESHOOTING"
-Run the calibrator with the \-v option, it will tell you what happens and what goes wrong.
+.B In general,
+run the calibrator with the \fI\-v\fP option, it will tell you what happens and what goes wrong.
 
-.B mis\-click detection
-The calibrator can automatically detect clicks with unreasonable values. This prevents you from ending up with a bogus calibration.
+.B Mis\-click detection,
+the calibrator can automatically detect clicks with unreasonable values. This prevents you from ending up with a bogus calibration.
 .LP 
 If you keep getting the message 'Mis\-click detected, restarting...', one of the following is happening:
   1. you are bad at clicking on crosses, use a stylus or increase the \-\-misclick threshold
