@@ -52,7 +52,8 @@ class CalibratorUsbtouchscreen: public Calibrator
 {
 public:
     CalibratorUsbtouchscreen(const char* const device_name, const XYinfo& axys,
-        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0);
+        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0,
+        const OutputType output_type=OUTYPE_AUTO);
     ~CalibratorUsbtouchscreen();
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
@@ -133,8 +134,8 @@ protected:
     }
 };
 
-CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick)
-  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick)
+CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type)
+  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type)
 {
     if (strcmp(device_name, "Usbtouchscreen") != 0)
         throw WrongCalibratorException("Not a usbtouchscreen device");
@@ -164,6 +165,11 @@ CalibratorUsbtouchscreen::~CalibratorUsbtouchscreen()
 
 bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
 {
+    if (output_type != OUTYPE_AUTO) {
+        fprintf(stderr, "ERROR: Usbtouchscreen Calibrator does not support the supplied --output-type\n");
+        return false;
+    }
+
     // New ranges
     const int range_x = (new_axys.x_max - new_axys.x_min);
     const int range_y = (new_axys.y_max - new_axys.y_min);
@@ -187,7 +193,7 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
     // to keep the for the next boot
     FILE *fid = fopen(modprobe_conf_local, "r");
     if (fid == NULL) {
-        fprintf(stderr, "Error: Can't open '%s' for reading. Make sure you have the necesary rights\n", modprobe_conf_local);
+        fprintf(stderr, "Error: Can't open '%s' for reading. Make sure you have the necessary rights\n", modprobe_conf_local);
         fprintf(stderr, "New calibration data NOT saved\n");
         return false;
     }
@@ -217,7 +223,7 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
 
     fid = fopen(modprobe_conf_local, "w");
     if (fid == NULL) {
-        fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necesary rights\n", modprobe_conf_local);
+        fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", modprobe_conf_local);
         fprintf(stderr, "New calibration data NOT saved\n");
         return false;
     }

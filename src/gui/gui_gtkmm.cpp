@@ -73,6 +73,7 @@ protected:
     bool on_key_press_event(GdkEventKey *event);
 
     // Helper functions
+    void set_display_size(int width, int height);
     void redraw();
     void draw_message(const char* msg);
 };
@@ -84,11 +85,18 @@ CalibrationArea::CalibrationArea(Calibrator* calibrator0)
     add_events(Gdk::KEY_PRESS_MASK | Gdk::BUTTON_PRESS_MASK);
     set_flags(Gtk::CAN_FOCUS);
 
-    // Compute absolute circle centers
-    const Glib::RefPtr<Gdk::Screen> S = get_screen();
-    display_width = S->get_width();
-    display_height = S->get_height();
+    set_display_size(get_width(), get_height());
 
+    // Setup timer for animation
+    sigc::slot<bool> slot = sigc::mem_fun(*this, &CalibrationArea::on_timer_signal);
+    Glib::signal_timeout().connect(slot, time_step);
+}
+
+void CalibrationArea::set_display_size(int width, int height) {
+    display_width = width;
+    display_height = height;
+
+    // Compute absolute circle centers
     const int delta_x = display_width/num_blocks;
     const int delta_y = display_height/num_blocks;
     X[UL] = delta_x;                     Y[UL] = delta_y;
@@ -96,14 +104,18 @@ CalibrationArea::CalibrationArea(Calibrator* calibrator0)
     X[LL] = delta_x;                     Y[LL] = display_height - delta_y - 1;
     X[LR] = display_width - delta_x - 1; Y[LR] = display_height - delta_y - 1;
 
-    // Setup timer for animation
-    sigc::slot<bool> slot = sigc::mem_fun(*this, &CalibrationArea::on_timer_signal);
-    Glib::signal_timeout().connect(slot, time_step);
+    // reset calibration if already started
+    calibrator->reset();
 }
-
 
 bool CalibrationArea::on_expose_event(GdkEventExpose *event)
 {
+    // check that screensize did not change
+    if (display_width != get_width() ||
+         display_height != get_height()) {
+        set_display_size(get_width(), get_height());
+    }
+
     Glib::RefPtr<Gdk::Window> window = get_window();
     if (window) {
         Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
