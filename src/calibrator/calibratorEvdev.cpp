@@ -63,6 +63,7 @@ public:
     int xinput_do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
 protected:
     bool output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy);
+    bool output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy);
     bool output_xinput(const XYinfo new_axys, int swap_xy, int new_swap_xy);
 };
 
@@ -230,6 +231,9 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
             break;
         case OUTYPE_XORGCONFD:
             success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+            break;
+        case OUTYPE_HAL:
+            success &= output_hal(new_axys, swap_xy, new_swap_xy);
             break;
         case OUTYPE_XINPUT:
             success &= output_xinput(new_axys, swap_xy, new_swap_xy);
@@ -478,6 +482,28 @@ bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys, int swap_xy, int n
 
     if (not_sysfs_name)
         printf("\nChange '%s' to your device's name in the snippet above.\n", sysfs_name);
+
+    return true;
+}
+
+bool CalibratorEvdev::output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+{
+    const char* sysfs_name = get_sysfs_name();
+    bool not_sysfs_name = (sysfs_name == NULL);
+    if (not_sysfs_name)
+        sysfs_name = "!!Name_Of_TouchScreen!!";
+
+    // HAL policy output
+    printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n\
+<match key=\"info.product\" contains=\"%s\">\n\
+  <merge key=\"input.x11_options.calibration\" type=\"string\">%d %d %d %d</merge>\n"
+     , sysfs_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    if (swap_xy != 0)
+        printf("  <merge key=\"input.x11_options.swapaxes\" type=\"string\">%d</merge>\n", new_swap_xy);
+    printf("</match>\n");
+
+    if (not_sysfs_name)
+        printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);
 
     return true;
 }
