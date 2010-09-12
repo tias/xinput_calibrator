@@ -64,7 +64,7 @@ Run xinput_calibrator in a terminal, as it prints out the calibration values and
 .PP 
 The calibrator merely computes the new calibration. In case you use the evdev driver, it will also apply the new calibration for this session. To make the calibration permanent across X restarts, you need to \fBsave the calibration\fR somewhere.
 .PP 
-The calibrator outputs the following 4 alternatives, with the correct values filled in:
+The calibrator outputs the following 3 alternatives, with the correct values filled in:
 .TP 4
 .B xorg.conf (the traditional way)
 edit /etc/X11/xorg.conf and add in the 'Section "InputDevice"' of your device:
@@ -86,30 +86,6 @@ Else (evtouch or other driver):
 	Option	"MaxY"		"\fImax_y\fP"
 .br 
 	Option	"SwapXY"		"\fIswap_xy\fP"
-
-.TP 4
-.B udev rule (the new way)
-create the file '/etc/udev/rules.d/99_touchscreen.rules' with:
-.br 
-	ACTION!="add|change", GOTO="xorg_touchscreen_end"
-.br 
-	KERNEL!="event*", GOTO="xorg_touchscreen_end"
-.br 
-	ATTRS{product}!="\fIName_Of_TouchScreen\fR", GOTO="xorg_touchscreen_end"
-.br 
-	ENV{x11_options.minx}="\fImin_x\fP"
-.br 
-	ENV{x11_options.maxx}="\fImax_x\fP"
-.br 
-	ENV{x11_options.miny}="\fImin_y\fP"
-.br 
-	ENV{x11_options.maxy}="\fImax_y\fP"
-.br 
-	ENV{x11_options.swapxy}="\fIswap_xy\fP"
-.br 
-	LABEL="xorg_touchscreen_end"
-.PP 
-\fIName_Of_TouchScreen\fR is the sysfs name of the device, use 'udevadm' to find it.
 
 .TP 4
 .B HAL policy (the old way)
