@@ -10,15 +10,13 @@ xinput_calibrator is a program for calibrating your touchscreen, when using the 
 .PP 
 It currently features:
 .br 
-\- a minimalistic and intuitive GUI (X11 or gtkmm)
-.br 
-\- works for any standard Xorg touchscreen driver (uses XInput to get axis valuators)
+\- works for any standard Xorg touchscreen driver (uses XInput protocol)
 .br 
 \- mis\-click detection (prevents bogus calibration)
 .br 
-\- can output the calibration in xorg.conf, FDI and udev format
+\- dynamically recalibrates the evdev driver
 .br 
-\- can dynamically recalibrate the evdev driver
+\- outputs the calibration as xorg.conf.d snippet or HAL policy file
 .br 
 \- and more
 .PP 
