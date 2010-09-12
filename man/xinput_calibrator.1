@@ -81,17 +81,6 @@ Supports following \-\-output\-types: auto
 No automatic calibration possible,
 .br 
 Supports following \-\-output\-types: auto, xorg.conf.d, hal
-.SH "TROUBLESHOOTING"
-.B In general,
-run the calibrator with the \fI\-v\fP option, it will tell you what happens and what goes wrong.
-
-.B Mis\-click detection,
-the calibrator can automatically detect clicks with unreasonable values. This prevents you from ending up with a bogus calibration.
-.LP 
-If you keep getting the message 'Mis\-click detected, restarting...', one of the following is happening:
-  1. you are bad at clicking on crosses, use a stylus or increase the \-\-misclick threshold
-  2. your device is not properly supported by the kernel, it interprets the clicks wrong
-  3. your screen has a non\-linear deformation, 4\-point calibration can not help you
 .SH "EXAMPLES"
 To run the calibrator, type in your terminal:
 .LP 
@@ -104,6 +93,17 @@ If something goes wrong, or not as expected, turn on verbose messages:
 If you have to manually provide the current calibration values (when using EVDEV, you can use this to reset the calibration first):
 .LP 
     xinput_calibrator \-\-precalib 0 1000 0 1000
+.SH "TROUBLESHOOTING"
+.B In general,
+run the calibrator with the \fI\-v\fP option, it will tell you what happens and what goes wrong.
+
+.B Mis\-click detection,
+the calibrator can automatically detect clicks with unreasonable values. This prevents you from ending up with a bogus calibration.
+.LP 
+If you keep getting the message 'Mis\-click detected, restarting...', one of the following is happening:
+  1. you are bad at clicking on crosses, use a stylus or increase the \-\-misclick threshold
+  2. your device is not properly supported by the kernel, it interprets the clicks wrong
+  3. your screen has a non\-linear deformation, 4\-point calibration can not help you
 .SH "SEE ALSO"
 xinput(1)
 .SH "AUTHORS"
