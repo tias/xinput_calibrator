@@ -31,6 +31,9 @@ public:
         const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0);
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
+protected:
+    bool output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy);
+    bool output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy);
 };
 
 CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick)
@@ -44,45 +47,67 @@ CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const X
 
 bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
 {
+    bool success = true;
+
     // we suppose the previous 'swap_xy' value was 0
     // (unfortunately there is no way to verify this (yet))
     int new_swap_xy = swap_xy;
 
+    printf("\n\n--> Making the calibration permanent <--\n");
+    // xorg.conf.d or alternatively hal config
+    if (has_xorgconfd_support()) {
+        success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+    } else {
+        success &= output_hal(new_axys, swap_xy, new_swap_xy);
+    }
 
+    return success;
+}
+
+bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+{
     const char* sysfs_name = get_sysfs_name();
     bool not_sysfs_name = (sysfs_name == NULL);
     if (not_sysfs_name)
         sysfs_name = "!!Name_Of_TouchScreen!!";
 
-    printf("\n\n--> Making the calibration permanent <--\n");
-    // xorg.conf.d or alternatively hal config
-    if (has_xorgconfd_support()) {
-        // xorg.conf.d snippet
-        printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf'\n");
-        printf("Section \"InputClass\"\n");
-        printf("	Identifier	\"calibration\"\n");
-        printf("	MatchProduct	\"%s\"\n", sysfs_name);
-        printf("	Option	\"MinX\"	\"%d\"\n", new_axys.x_min);
-        printf("	Option	\"MaxX\"	\"%d\"\n", new_axys.x_max);
-        printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y_min);
-        printf("	Option	\"MaxY\"	\"%d\"\n", new_axys.y_max);
-        if (swap_xy != 0)
-            printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", new_swap_xy);
-        printf("EndSection\n");
-    } else {
-        // HAL policy output
-        printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n\
+    // xorg.conf.d snippet
+    printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf'\n");
+    printf("Section \"InputClass\"\n");
+    printf("	Identifier	\"calibration\"\n");
+    printf("	MatchProduct	\"%s\"\n", sysfs_name);
+    printf("	Option	\"MinX\"	\"%d\"\n", new_axys.x_min);
+    printf("	Option	\"MaxX\"	\"%d\"\n", new_axys.x_max);
+    printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y_min);
+    printf("	Option	\"MaxY\"	\"%d\"\n", new_axys.y_max);
+    if (swap_xy != 0)
+        printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", new_swap_xy);
+    printf("EndSection\n");
+
+    if (not_sysfs_name)
+        printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);
+
+    return true;
+}
+
+bool CalibratorXorgPrint::output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+{
+    const char* sysfs_name = get_sysfs_name();
+    bool not_sysfs_name = (sysfs_name == NULL);
+    if (not_sysfs_name)
+        sysfs_name = "!!Name_Of_TouchScreen!!";
+
+    // HAL policy output
+    printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n\
 <match key=\"info.product\" contains=\"%s\">\n\
   <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n\
   <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
   <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
   <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
-         , sysfs_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-        if (swap_xy != 0)
-            printf("  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_swap_xy);
-        printf("</match>\n");
-    }
-
+     , sysfs_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    if (swap_xy != 0)
+        printf("  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_swap_xy);
+    printf("</match>\n");
 
     if (not_sysfs_name)
         printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);

@@ -60,6 +60,9 @@ public:
     Atom xinput_parse_atom(Display *display, const char* name);
     XDeviceInfo* xinput_find_device_info(Display *display, const char* name, Bool only_extended);
     int xinput_do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
+protected:
+    bool output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy);
+    bool output_xinput(const XYinfo new_axys, int swap_xy, int new_swap_xy);
 };
 
 CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0, XID device_id, const int thr_misclick, const int thr_doubleclick)
@@ -213,32 +216,13 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     XSync(display, False);
 
 
-    const char* sysfs_name = get_sysfs_name();
-    bool not_sysfs_name = (sysfs_name == NULL);
-    if (not_sysfs_name)
-        sysfs_name = "!!Name_Of_TouchScreen!!";
 
     printf("\n\n--> Making the calibration permanent <--\n");
     // xorg.conf.d or alternatively xinput commands
     if (has_xorgconfd_support()) {
-        // xorg.conf.d snippet
-        printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf'\n");
-        printf("Section \"InputClass\"\n");
-        printf("	Identifier	\"calibration\"\n");
-        printf("	MatchProduct	\"%s\"\n", sysfs_name);
-        printf("	Option	\"Calibration\"	\"%d %d %d %d\"\n",
-                    new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-        if (swap_xy != 0)
-            printf("	Option	\"SwapAxes\"	\"%d\"\n", new_swap_xy);
-        printf("EndSection\n");
-        if (not_sysfs_name)
-            printf("\nChange '%s' to your device's name in the snippet above.\n", sysfs_name);
+        success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
     } else {
-        // create startup script
-        printf("  Install the 'xinput' tool and copy the command(s) below in a script that starts with your X session\n");
-        printf("    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-        if (swap_xy)
-            printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_swap_xy);
+        success &= output_xinput(new_axys, swap_xy, new_swap_xy);
     }
 
     return success;
@@ -458,4 +442,39 @@ Display *display, Atom type, int format, int argc, char **argv)
     return EXIT_SUCCESS;
 #endif // HAVE_XI_PROP
 
+}
+
+bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+{
+    const char* sysfs_name = get_sysfs_name();
+    bool not_sysfs_name = (sysfs_name == NULL);
+    if (not_sysfs_name)
+        sysfs_name = "!!Name_Of_TouchScreen!!";
+
+    // xorg.conf.d snippet
+    printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf'\n");
+    printf("Section \"InputClass\"\n");
+    printf("	Identifier	\"calibration\"\n");
+    printf("	MatchProduct	\"%s\"\n", sysfs_name);
+    printf("	Option	\"Calibration\"	\"%d %d %d %d\"\n",
+                new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    if (swap_xy != 0)
+        printf("	Option	\"SwapAxes\"	\"%d\"\n", new_swap_xy);
+    printf("EndSection\n");
+
+    if (not_sysfs_name)
+        printf("\nChange '%s' to your device's name in the snippet above.\n", sysfs_name);
+
+    return true;
+}
+
+bool CalibratorEvdev::output_xinput(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+{
+    // create startup script
+    printf("  Install the 'xinput' tool and copy the command(s) below in a script that starts with your X session\n");
+    printf("    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    if (swap_xy)
+        printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_swap_xy);
+
+    return true;
 }
