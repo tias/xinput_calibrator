@@ -19,10 +19,10 @@ BuildRequires: gtkmm24-devel
 xinput_calibrator is a program for calibrating your touchscreen, when using
 the X Window System.
 It currently features:
- - a minimalistic and intuitive GUI
- - works for any standard Xorg touchscreen driver (uses XInput)
- - can output the calibration in xorg.conf, FDI and udev format
- - can dynamically recalibrate the evdev driver
+ - works for any standard Xorg touchscreen driver (uses XInput protocol)
+ - mis-click detection (prevents bogus calibration)
+ - dynamically recalibrates the evdev driver
+ - outputs the calibration as xorg.conf.d snippet or HAL policy file
  - and more
 
 %prep
@@ -46,7 +46,7 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-%doc Changelog README
+%doc Changelog README COPYING
 %{_bindir}/%{name}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/pixmaps/%{name}.svg
