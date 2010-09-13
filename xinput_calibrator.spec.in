@@ -7,7 +7,7 @@ Summary: A generic touchscreen calibration program for X.Org
 Name: %{name}
 Version: %{version}
 Release: %{release}
-Source0: http://github.com/tias/%{name}/tarball/%{name}-%{version}.tar.gz
+Source0: http://github.com/downloads/tias/xinput_calibrator/%{name}-%{version}.tar.gz
 URL: http://www.freedesktop.org/wiki/Software/xinput_calibrator
 License: MIT
 Group: Applications/System
