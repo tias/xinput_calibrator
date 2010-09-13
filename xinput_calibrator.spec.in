@@ -54,6 +54,8 @@ rm -rf %{buildroot}
 %{_mandir}/man1/%{name}.1.gz
 
 %changelog
+* Mon Sep 13 2010 Tias Guns <tias@ulyssis.org> 0.7.5-1
+- New upstream release (older systems, cleaner output)
 * Mon Aug 02 2010 Tias Guns <tias@ulyssis.org> 0.7.0-1
 - New upstream release (packaging changes, misclick detection)
 * Mon Jul 26 2010 Dave Ludlow <dave@adsllc.com> 0.6.2-1
