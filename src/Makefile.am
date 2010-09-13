@@ -35,8 +35,8 @@ bin_PROGRAMS = xinput_calibrator
 # only one of the BUILD_ flags should be set
 if BUILD_X11
 xinput_calibrator_SOURCES = main_x11.cpp
-xinput_calibrator_LDADD = $(XINPUT_LIBS) $(X11_LIBS)
-xinput_calibrator_CXXFLAGS = $(XINPUT_CFLAGS) $(X11_CFLAGS) $(AM_CXXFLAGS)
+xinput_calibrator_LDADD = $(XINPUT_LIBS) $(XRANDR_LIBS) $(X11_LIBS)
+xinput_calibrator_CXXFLAGS = $(XINPUT_CFLAGS) $(X11_CFLAGS) $(XRANDR_CFLAGS) $(AM_CXXFLAGS)
 endif
 
 if BUILD_GTKMM

@@ -29,12 +29,5 @@ SUBDIRS = src man scripts
 
 EXTRA_DIST = autogen.sh Changelog xinput_calibrator.spec
 
-icon_DATA = scripts/xinput_calibrator.svg scripts/xinput_calibrator.xpm
-icondir = $(datadir)/pixmaps
-
-util_DATA = scripts/xinput_calibrator.desktop
-utildir = $(datadir)/applications
-
 dist-rpm: dist-gzip
 	rpmbuild -ta $(PACKAGE)-$(VERSION).tar.gz;
-

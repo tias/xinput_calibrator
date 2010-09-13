@@ -21,11 +21,17 @@
  * THE SOFTWARE.
  */
 #include <algorithm>
+#include <sys/types.h>
+#include <dirent.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+
 #include "calibrator.hh"
 
 Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0,
-    const bool verbose0, const int thr_misclick, const int thr_doubleclick)
-  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0), threshold_doubleclick(thr_doubleclick), threshold_misclick(thr_misclick)
+    const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type0)
+  : device_name(device_name0), old_axys(axys0), verbose(verbose0), num_clicks(0), threshold_doubleclick(thr_doubleclick), threshold_misclick(thr_misclick), output_type(output_type0)
 {
 }
 
@@ -97,7 +103,7 @@ bool Calibrator::add_click(int x, int y)
                     printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 1 (X=%i, Y=%i) or click 2 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[1], clicked_y[1], clicked_x[2], clicked_y[2], threshold_misclick);
             }
 
-            num_clicks = 0;
+            reset();
             return false;
         }
     }
@@ -159,4 +165,74 @@ bool Calibrator::finish(int width, int height)
 
     // finish the data, driver/calibrator specific
     return finish_data(axys, swap_xy);
+}
+
+const char* Calibrator::get_sysfs_name()
+{
+    if (is_sysfs_name(device_name))
+        return device_name;
+
+    // TODO: more mechanisms
+
+    return NULL;
+}
+
+bool Calibrator::is_sysfs_name(const char* name) {
+    const char* SYSFS_INPUT="/sys/class/input";
+    const char* SYSFS_DEVNAME="device/name";
+
+    DIR* dp = opendir(SYSFS_INPUT);
+    if (dp == NULL)
+        return false;
+
+    while (dirent* ep = readdir(dp)) {
+        if (strncmp(ep->d_name, "event", strlen("event")) == 0) {
+            // got event name, get its sysfs device name
+            char filename[40]; // actually 35, but hey...
+            (void) sprintf(filename, "%s/%s/%s", SYSFS_INPUT, ep->d_name, SYSFS_DEVNAME);
+
+            std::ifstream ifile(filename);
+            if (ifile.is_open()) {
+                if (!ifile.eof()) {
+                    std::string devname;
+                    std::getline(ifile, devname);
+                    if (devname == name) {
+                        if (verbose)
+                            printf("DEBUG: Found that '%s' is a sysfs name.\n", name);
+                        return true;
+                    }
+                }
+                ifile.close();
+            }
+        }
+    }
+    (void) closedir(dp);
+
+    if (verbose)
+        printf("DEBUG: Name '%s' does not match any in '%s/event*/%s'\n",
+                    name, SYSFS_INPUT, SYSFS_DEVNAME);
+    return false;
+}
+
+bool Calibrator::has_xorgconfd_support(Display* dpy) {
+    bool has_support = false;
+
+    Display* display = dpy;
+    if (dpy == NULL) // no connection to reuse
+        display = XOpenDisplay(NULL);
+
+    if (display == NULL) {
+        fprintf(stderr, "Unable to connect to X server\n");
+        exit(1);
+    }
+
+    if (strstr(ServerVendor(display), "X.Org") &&
+        VendorRelease(display) >= 10800000) {
+        has_support = true;
+    }
+
+    if (dpy == NULL) // no connection to reuse
+        XCloseDisplay(display);
+
+    return has_support;
 }
