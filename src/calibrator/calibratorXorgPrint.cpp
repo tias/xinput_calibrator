@@ -29,7 +29,7 @@ class CalibratorXorgPrint: public Calibrator
 public:
     CalibratorXorgPrint(const char* const device_name, const XYinfo& axys,
         const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0,
-        const OutputType output_type=OUTYPE_AUTO);
+        const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
 protected:
@@ -37,8 +37,8 @@ protected:
     bool output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy);
 };
 
-CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type)
-  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type)
+CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
+  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type, geometry)
 {
     printf("Calibrating standard Xorg driver \"%s\"\n", device_name);
     printf("\tcurrent calibration values: min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",

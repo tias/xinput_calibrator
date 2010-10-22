@@ -230,7 +230,7 @@ int find_device(const char* pre_device, bool verbose, bool list_devices,
 
 static void usage(char* cmd, unsigned thr_misclick)
 {
-    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--device <device name or id>] [--precalib <minx> <maxx> <miny> <maxy>] [--misclick <nr of pixels>] [--output-type <auto|xorg.conf.d|hal|xinput>] [--fake]\n", cmd);
+    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--device <device name or id>] [--precalib <minx> <maxx> <miny> <maxy>] [--misclick <nr of pixels>] [--output-type <auto|xorg.conf.d|hal|xinput>] [--fake] [--geometry <w>x<h>+<x>+<y>]\n", cmd);
     fprintf(stderr, "\t-h, --help: print this help message\n");
     fprintf(stderr, "\t-v, --verbose: print debug messages during the process\n");
     fprintf(stderr, "\t--list: list calibratable input devices and quit\n");
@@ -240,6 +240,7 @@ static void usage(char* cmd, unsigned thr_misclick)
         thr_misclick);
     fprintf(stderr, "\t--output-type <auto|xorg.conf.d|hal|xinput>: type of config to ouput (auto=automatically detect, default: auto)\n");
     fprintf(stderr, "\t--fake: emulate a fake device (for testing purposes)\n");
+    fprintf(stderr, "\t--geometry: manually provide the geometry for the calibration window\n");
 }
 
 Calibrator* main_common(int argc, char** argv);
@@ -251,6 +252,7 @@ Calibrator* main_common(int argc, char** argv)
     bool precalib = false;
     XYinfo pre_axys;
     const char* pre_device = NULL;
+    const char* geometry = NULL;
     unsigned thr_misclick = 15;
     unsigned thr_doubleclick = 7;
     OutputType output_type = OUTYPE_AUTO;
@@ -336,6 +338,12 @@ Calibrator* main_common(int argc, char** argv)
                 }
             } else
 
+            // specify window geometry?
+            if (strcmp("--geometry", argv[i]) == 0) {
+                geometry = argv[++i];
+                //sscanf(argv[++i],"%dx%d+%d+%d",&win_width,&win_height,&win_xoff,&win_yoff);
+            } else
+
             // Fake calibratable device ?
             if (strcmp("--fake", argv[i]) == 0) {
                 fake = true;
@@ -413,7 +421,7 @@ Calibrator* main_common(int argc, char** argv)
     try {
         // try Usbtouchscreen driver
         return new CalibratorUsbtouchscreen(device_name, device_axys,
-            verbose, thr_misclick, thr_doubleclick, output_type);
+            verbose, thr_misclick, thr_doubleclick, output_type, geometry);
 
     } catch(WrongCalibratorException& x) {
         if (verbose)
@@ -423,7 +431,7 @@ Calibrator* main_common(int argc, char** argv)
     try {
         // next, try Evdev driver (with XID)
         return new CalibratorEvdev(device_name, device_axys, verbose, device_id,
-            thr_misclick, thr_doubleclick, output_type);
+            thr_misclick, thr_doubleclick, output_type, geometry);
 
     } catch(WrongCalibratorException& x) {
         if (verbose)
@@ -432,5 +440,5 @@ Calibrator* main_common(int argc, char** argv)
 
     // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
     return new CalibratorXorgPrint(device_name, device_axys,
-            verbose, thr_misclick, thr_doubleclick, output_type);
+            verbose, thr_misclick, thr_doubleclick, output_type, geometry);
 }
