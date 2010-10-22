@@ -49,7 +49,7 @@ private:
 public:
     CalibratorEvdev(const char* const device_name, const XYinfo& axys, const bool verbose,
         XID device_id=(XID)-1, const int thr_misclick=0, const int thr_doubleclick=0,
-        const OutputType output_type=OUTYPE_AUTO);
+        const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
     ~CalibratorEvdev();
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
@@ -67,8 +67,8 @@ protected:
     bool output_xinput(const XYinfo new_axys, int swap_xy, int new_swap_xy);
 };
 
-CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0, XID device_id, const int thr_misclick, const int thr_doubleclick, const OutputType output_type)
-  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type), old_swap_xy(0)
+CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0, XID device_id, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
+  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type, geometry), old_swap_xy(0)
 {
     // init
     display = XOpenDisplay(NULL);
