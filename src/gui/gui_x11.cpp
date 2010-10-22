@@ -24,6 +24,11 @@
 #include <X11/Xutil.h>
 #include <X11/Xos.h> // strncpy, strlen
 
+#ifdef HAVE_X11_XRANDR
+// support for multi-head setups
+#include <X11/extensions/Xrandr.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
@@ -81,6 +86,7 @@ protected:
 
     // X11 vars
     Display* display;
+    int screen_num;
     Window win;
     GC gc;
     XFontStruct* font_info;
@@ -94,7 +100,9 @@ protected:
     bool on_button_press_event(XEvent event);
 
     // Helper functions
+    void set_display_size(int width, int height);
     void redraw();
+    void draw_message(const char* msg);
 
 private:
     static GuiCalibratorX11* instance;
@@ -109,6 +117,7 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     if (display == NULL) {
         throw std::runtime_error("Unable to connect to X server");
     }
+    screen_num = DefaultScreen(display);
     // Load font and get font information structure
     font_info = XLoadQueryFont(display, "9x15");
     if (font_info == NULL) {
@@ -120,17 +129,20 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
         }
     }
 
-    // Compute absolute circle centers
-    int screen_num = DefaultScreen(display);
-    display_width = 1024; //DisplayWidth(display, screen_num);
-    display_height = 600; //DisplayHeight(display, screen_num);
-
-    const int delta_x = display_width/num_blocks;
-    const int delta_y = display_height/num_blocks;
-    X[UL] = delta_x;                     Y[UL] = delta_y;
-    X[UR] = display_width - delta_x - 1; Y[UR] = delta_y;
-    X[LL] = delta_x;                     Y[LL] = display_height - delta_y - 1;
-    X[LR] = display_width - delta_x - 1; Y[LR] = display_height - delta_y - 1;
+#ifdef HAVE_X11_XRANDR
+    // get screensize from xrandr
+    int nsizes;
+    XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
+    if (nsizes != 0) {
+        set_display_size(randrsize->width, randrsize->height);
+    } else {
+        set_display_size(DisplayWidth(display, screen_num),
+                         DisplayHeight(display, screen_num));
+    }
+# else
+    set_display_size(DisplayWidth(display, screen_num),
+                     DisplayHeight(display, screen_num));
+#endif
 
     // Register events on the window
     XSetWindowAttributes attributes;
@@ -180,8 +192,34 @@ GuiCalibratorX11::~GuiCalibratorX11()
     XCloseDisplay(display);
 }
 
+void GuiCalibratorX11::set_display_size(int width, int height) {
+    display_width = width;
+    display_height = height;
+
+    // Compute absolute circle centers
+    const int delta_x = display_width/num_blocks;
+    const int delta_y = display_height/num_blocks;
+    X[UL] = delta_x;                     Y[UL] = delta_y;
+    X[UR] = display_width - delta_x - 1; Y[UR] = delta_y;
+    X[LL] = delta_x;                     Y[LL] = display_height - delta_y - 1;
+    X[LR] = display_width - delta_x - 1; Y[LR] = display_height - delta_y - 1;
+
+    // reset calibration if already started
+    calibrator->reset();
+}
+
 void GuiCalibratorX11::redraw()
 {
+#ifdef HAVE_X11_XRANDR
+    // check that screensize did not change
+    int nsizes;
+    XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
+    if (nsizes != 0 && (display_width != randrsize->width ||
+                        display_height != randrsize->height)) {
+        set_display_size(randrsize->width, randrsize->height);
+    }
+#endif
+
     // Print the text
     int text_height = font_info->ascent + font_info->descent;
     int text_width = -1;
@@ -258,14 +296,22 @@ bool GuiCalibratorX11::on_timer_signal()
 
 bool GuiCalibratorX11::on_button_press_event(XEvent event)
 {
+    // Clear window, maybe a bit overdone, but easiest for me atm.
+    // (goal is to clear possible message and other clicks)
+    XClearWindow(display, win);
+
     // Handle click
     time_elapsed = 0;
-    calibrator->add_click(event.xbutton.x, event.xbutton.y);
+    bool success = calibrator->add_click(event.xbutton.x, event.xbutton.y);
+
+    if (!success && calibrator->get_numclicks() == 0) {
+        draw_message("Mis-click detected, restarting...");
+    }
 
     // Are we done yet?
     if (calibrator->get_numclicks() >= 4) {
         // Recalibrate
-        bool success = calibrator->finish(display_width, display_height);
+        success = calibrator->finish(display_width, display_height);
 
         if (success) {
             exit(0);
@@ -280,6 +326,21 @@ bool GuiCalibratorX11::on_button_press_event(XEvent event)
     redraw();
 
     return true;
+}
+
+void GuiCalibratorX11::draw_message(const char* msg)
+{
+    int text_height = font_info->ascent + font_info->descent;
+    int text_width = XTextWidth(font_info, msg, strlen(msg));
+
+    int x = (display_width - text_width) / 2;
+    int y = (display_height - text_height) / 2 + clock_radius + 60;
+    XSetForeground(display, gc, pixel[BLACK]);
+    XSetLineAttributes(display, gc, 2, LineSolid, CapRound, JoinRound);
+    XDrawRectangle(display, win, gc, x - 10, y - text_height - 10,
+                text_width + 20, text_height + 25);
+
+    XDrawString(display, win, gc, x, y, msg, strlen(msg));
 }
 
 void GuiCalibratorX11::give_timer_signal()

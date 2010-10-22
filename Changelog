@@ -1,3 +1,34 @@
+xinput_calibrator 0.7.5 [2010-09-12]
+Major features:
+* support multi-head setups in the GUIs (Alexey Kuznetsov)
+* now builds and runs on older systems too
+* output xorg.conf.d snippets (Peter Hutterer)
+* simpler and cleaner output, with --output-type to select output type
+
+Enhancements:
+* only link to needed libraries
+* start --fake with sensible non-zero calibration values
+* various spelling fixes (thanks Paul Wise)
+* remove udev configuration (xorg.conf.d instead, Peter Hutterer)
+* remove bogus partial xorg config output, superseded by xorg.conf.d
+* sysfs name detection, when device name is sysfs name
+* dynamically detect xorg.conf.d support
+* updated manpage
+* icon, license is CC-BY-SA 3.0
+* autotools cleanups (thanks Paul Wise)
+
+xinput_calibrator 0.7.0 [2010-08-01]
+Major features:
+* Automatic mis-click detection !
+* Now compiles only one binary (with gtkmm if availabe, otherwise x11)
+* .desktop file for menu entry
+* Made a tango-based calibration icon
+* Manpage information about making calibration permanent
+Bug fixes/enhancements:
+* A COPYING file to explicitise MIT/X11 license
+* Proper make dist (Thierry Reding)
+* Packaging fixes (David Ludlow)
+
 xinput_calibrator 0.6.1 [2010-03-21]
 Bug fixes/enhancements:
 * More robust device detection: non-master device with axis valuators, in

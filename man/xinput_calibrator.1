@@ -4,21 +4,19 @@
 xinput_calibrator \- A generic touchscreen calibration program for X.Org
 
 .SH "SYNOPSIS"
-.B xinput_calibrator_x11 [OPTIONS]
-.br 
-.B xinput_calibrator_gtkmm [OPTIONS]
+.B xinput_calibrator [OPTIONS]
 .SH "DESCRIPTION"
 xinput_calibrator is a program for calibrating your touchscreen, when using the X Window System.
 .PP 
 It currently features:
 .br 
-\- a minimalistic and intuitive GUI (X11 or gtkmm)
+\- works for any standard Xorg touchscreen driver (uses XInput protocol)
 .br 
-\- works for any standard Xorg touchscreen driver (uses XInput to get axis valuators)
+\- mis\-click detection (prevents bogus calibration)
 .br 
-\- can output the calibration in xorg.conf and FDI format
+\- dynamically recalibrates the evdev driver
 .br 
-\- can dynamically recalibrate the evdev driver
+\- outputs the calibration as xorg.conf.d snippet or HAL policy file
 .br 
 \- and more
 .PP 
@@ -36,22 +34,76 @@ Print debug messages during the process.
 .TP 8
 .B \-\-list
 List the calibratable input devices.
-.PP
+.PP 
+.TP 8
 .B \-\-device \fIdevice_name_or_id\fP
 Select a specific device to calibrate;
-use --list to list the calibratable input devices.
-.PP
+use \-\-list to list the calibratable input devices.
+.PP 
 .TP 8
 .B \-\-precalib \fImin_x\fP \fImax_x\fP \fImin_y\fP \fImax_y\fP
 Manually provide the current calibration setting.
 .br 
-This is usefull if the calibration values are stored in your xorg.conf, but the driver does not export them through XInput (eg, the calibrator can not know these values)
+This is useful if the calibration values are stored in your xorg.conf, but the driver does not export them through XInput (eg. the calibrator can not know these values)
+.PP 
+.TP 8
+.B \-\-misclick \fInr_of_pixels\fP
+set the misclick threshold (0=off, default: 15 pixels)
+.PP 
+.TP 8
+.B \-\-output\-type \fIauto|xorg.conf.d|hal|xinput\fP
+type of config to ouput (auto=automatically detect, default: auto)
 .PP 
 .TP 8
 .B \-\-fake
 Emulate a fake driver (for testing purposes)
 .br 
-Usefull to test the calibrator without applying the values, and possibly even without having a touchscreen.
+Useful to test the calibrator without applying the values, and possibly even without having a touchscreen.
+.SH "USAGE"
+Run xinput_calibrator in a terminal, as it prints out the calibration values and instructions on standard output.
+.PP 
+
+After clicking the 4 calibration points, xinput_calibrator will calculate the new calibration values. Depending on the Xorg touchscreen driver you use, the new values can be made permanent in different ways:
+.TP 4
+.B Evdev:
+Automatically recalibrates the driver for this session,
+.br 
+Supports following \-\-output\-types: auto, xorg.conf.d, hal, xinput
+
+.TP 4
+.B Usbtouchscreen:
+Automatically recalibrates the *kernel module*, saved in /etc/modprobe.conf.local
+.br 
+Supports following \-\-output\-types: auto
+
+.TP 4
+.B Other Xorg touchscreen drivers:
+No automatic calibration possible,
+.br 
+Supports following \-\-output\-types: auto, xorg.conf.d, hal
+.SH "EXAMPLES"
+To run the calibrator, type in your terminal:
+.LP 
+    xinput_calibrator
+.PP 
+If something goes wrong, or not as expected, turn on verbose messages:
+.LP 
+    xinput_calibrator \-v
+.PP 
+If you have to manually provide the current calibration values (when using EVDEV, you can use this to reset the calibration first):
+.LP 
+    xinput_calibrator \-\-precalib 0 1000 0 1000
+.SH "TROUBLESHOOTING"
+.B In general,
+run the calibrator with the \fI\-v\fP option, it will tell you what happens and what goes wrong.
+
+.B Mis\-click detection,
+the calibrator can automatically detect clicks with unreasonable values. This prevents you from ending up with a bogus calibration.
+.LP 
+If you keep getting the message 'Mis\-click detected, restarting...', one of the following is happening:
+  1. you are bad at clicking on crosses, use a stylus or increase the \-\-misclick threshold
+  2. your device is not properly supported by the kernel, it interprets the clicks wrong
+  3. your screen has a non\-linear deformation, 4\-point calibration can not help you
 .SH "SEE ALSO"
 xinput(1)
 .SH "AUTHORS"

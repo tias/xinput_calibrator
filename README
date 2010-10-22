@@ -1,6 +1,6 @@
 xinput calibrator: A generic touchscreen calibration program for X.Org
 
-Version: 0.6.1
+Version: 0.7.5
 Website: http://www.freedesktop.org/wiki/Software/xinput_calibrator
 Source:  http://github.com/tias/xinput_calibrator
 Bugs:    http://github.com/tias/xinput_calibrator/issues
@@ -11,24 +11,22 @@ Build instructions:
 ./autogen.sh
     Sets up build environment, run ./autogen.sh --help to see the build options
     Notable build options:
-    --disable-x11           Disable X11 GUI
-    --disable-gtkmm         Disable GTKMM GUI
+    --with-gui=gtkmm        Use gtkmm GUI
+    --with-gui=x11          Use native x11 GUI
 make
-    Builds the configured and available GUI's
+    Builds the software with the configured GUI
 
 Usage:
 ------
 Simply run:
-    ./xinput_calibrator_x11
-or
-    ./xinput_calibrator_gtkmm
+    xinput_calibrator
 
 For more information, run with --help or check the manpage.
 The scripts/ directory constains scripts to get calibration from hal or use a pointercal file to reapply xinput commands across reboots
 
 
-More information:
------------------
+More about the project:
+-----------------------
 Because all existing calibrators were driver dependent and hard to use, xinput_calibrator was created. The goal of xinput_calibrator is to: 
 * work for any Xorg driver (use Xinput to get axis valuators), 
 * output the calibration as Xorg.conf, HAL policy and udev rule, 
@@ -42,3 +40,5 @@ Starting from v0.4.0, it writes Xorg.conf and (HAL) FDI policy file values, and 
 The v0.5.0 version is written entirely in the X window system, needing no external dependencies. Because of its modular structure, other frontends can be easily created too.
 
 Version v0.6.0 has a proper build system and gained a lot of features thanks to the feedback of different users.
+
+Version 0.7.0 has mis-click detection and proper packaging support: proper make dist, one binary, has manpage, menu entry and icon. DEB and RPM package meta-data in their respective VCS branches.

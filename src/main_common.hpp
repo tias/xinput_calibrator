@@ -56,16 +56,20 @@
  */
 const int num_blocks = 8;
 
-// Threshold to keep the same point from being clicked twice.
-// Set to zero if you don't want this check
-const int click_threshold = 7;
-
 // Names of the points
 enum {
     UL = 0, // Upper-left
     UR = 1, // Upper-right
     LL = 2, // Lower-left
     LR = 3  // Lower-right
+};
+
+// Output types
+enum OutputType {
+    OUTYPE_AUTO,
+    OUTYPE_XORGCONFD,
+    OUTYPE_HAL,
+    OUTYPE_XINPUT
 };
 
 // struct to hold min/max info of the X and Y axis
@@ -224,14 +228,17 @@ int find_device(const char* pre_device, bool verbose, bool list_devices,
     return found;
 }
 
-static void usage(char* cmd)
+static void usage(char* cmd, unsigned thr_misclick)
 {
-    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--device <device name or id>] [--precalib <minx> <maxx> <miny> <maxy>] [--fake]\n", cmd);
+    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--device <device name or id>] [--precalib <minx> <maxx> <miny> <maxy>] [--misclick <nr of pixels>] [--output-type <auto|xorg.conf.d|hal|xinput>] [--fake]\n", cmd);
     fprintf(stderr, "\t-h, --help: print this help message\n");
     fprintf(stderr, "\t-v, --verbose: print debug messages during the process\n");
     fprintf(stderr, "\t--list: list calibratable input devices and quit\n");
     fprintf(stderr, "\t--device <device name or id>: select a specific device to calibrate\n");
-    fprintf(stderr, "\t--precalib: manually provide the current calibration setting (eg the values in xorg.conf)\n");
+    fprintf(stderr, "\t--precalib: manually provide the current calibration setting (eg. the values in xorg.conf)\n");
+    fprintf(stderr, "\t--misclick: set the misclick threshold (0=off, default: %i pixels)\n",
+        thr_misclick);
+    fprintf(stderr, "\t--output-type <auto|xorg.conf.d|hal|xinput>: type of config to ouput (auto=automatically detect, default: auto)\n");
     fprintf(stderr, "\t--fake: emulate a fake device (for testing purposes)\n");
 }
 
@@ -244,6 +251,9 @@ Calibrator* main_common(int argc, char** argv)
     bool precalib = false;
     XYinfo pre_axys;
     const char* pre_device = NULL;
+    unsigned thr_misclick = 15;
+    unsigned thr_doubleclick = 7;
+    OutputType output_type = OUTYPE_AUTO;
 
     // parse input
     if (argc > 1) {
@@ -252,7 +262,7 @@ Calibrator* main_common(int argc, char** argv)
             if (strcmp("-h", argv[i]) == 0 ||
                 strcmp("--help", argv[i]) == 0) {
                 fprintf(stderr, "xinput_calibratior, v%s\n\n", VERSION);
-                usage(argv[0]);
+                usage(argv[0], thr_misclick);
                 exit(0);
             } else
 
@@ -273,7 +283,7 @@ Calibrator* main_common(int argc, char** argv)
                     pre_device = argv[++i];
                 else {
                     fprintf(stderr, "Error: --device needs a device name or id as argument; use --list to list the calibratable input devices.\n\n");
-                    usage(argv[0]);
+                    usage(argv[0], thr_misclick);
                     exit(1);
                 }
             } else
@@ -291,6 +301,41 @@ Calibrator* main_common(int argc, char** argv)
                     pre_axys.y_max = atoi(argv[++i]);
             } else
 
+            // Get mis-click threshold ?
+            if (strcmp("--misclick", argv[i]) == 0) {
+                if (argc > i+1)
+                    thr_misclick = atoi(argv[++i]);
+                else {
+                    fprintf(stderr, "Error: --misclick needs a number (the pixel threshold) as argument. Set to 0 to disable mis-click detection.\n\n");
+                    usage(argv[0], thr_misclick);
+                    exit(1);
+                }
+            } else
+
+            // Get output type ?
+            if (strcmp("--output-type", argv[i]) == 0) {
+                if (argc > i+1) {
+                    i++; // eat it or exit
+                    if (strcmp("auto", argv[i]) == 0)
+                        output_type = OUTYPE_AUTO;
+                    else if (strcmp("xorg.conf.d", argv[i]) == 0)
+                        output_type = OUTYPE_XORGCONFD;
+                    else if (strcmp("hal", argv[i]) == 0)
+                        output_type = OUTYPE_HAL;
+                    else if (strcmp("xinput", argv[i]) == 0)
+                        output_type = OUTYPE_XINPUT;
+                    else {
+                        fprintf(stderr, "Error: --output-type needs one of auto|xorg.conf.d|hal|xinput.\n\n");
+                        usage(argv[0], thr_misclick);
+                        exit(1);
+                    }
+                } else {
+                    fprintf(stderr, "Error: --output-type needs one argument.\n\n");
+                    usage(argv[0], thr_misclick);
+                    exit(1);
+                }
+            } else
+
             // Fake calibratable device ?
             if (strcmp("--fake", argv[i]) == 0) {
                 fake = true;
@@ -299,7 +344,7 @@ Calibrator* main_common(int argc, char** argv)
             // unknown option
             else {
                 fprintf(stderr, "Unknown option: %s\n\n", argv[i]);
-                usage(argv[0]);
+                usage(argv[0], thr_misclick);
                 exit(0);
             }
         }
@@ -313,7 +358,7 @@ Calibrator* main_common(int argc, char** argv)
     if (fake) {
         // Fake a calibratable device
         device_name = "Fake_device";
-        device_axys = XYinfo(0,0,0,0);
+        device_axys = XYinfo(0,1000,0,1000);
 
         if (verbose) {
             printf("DEBUG: Faking device: %s\n", device_name);
@@ -367,7 +412,8 @@ Calibrator* main_common(int argc, char** argv)
     // Different device/driver, different ways to apply the calibration values
     try {
         // try Usbtouchscreen driver
-        return new CalibratorUsbtouchscreen(device_name, device_axys, verbose);
+        return new CalibratorUsbtouchscreen(device_name, device_axys,
+            verbose, thr_misclick, thr_doubleclick, output_type);
 
     } catch(WrongCalibratorException& x) {
         if (verbose)
@@ -376,7 +422,8 @@ Calibrator* main_common(int argc, char** argv)
 
     try {
         // next, try Evdev driver (with XID)
-        return new CalibratorEvdev(device_name, device_axys, verbose, device_id);
+        return new CalibratorEvdev(device_name, device_axys, verbose, device_id,
+            thr_misclick, thr_doubleclick, output_type);
 
     } catch(WrongCalibratorException& x) {
         if (verbose)
@@ -384,5 +431,6 @@ Calibrator* main_common(int argc, char** argv)
     }
 
     // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
-    return new CalibratorXorgPrint(device_name, device_axys, verbose);
+    return new CalibratorXorgPrint(device_name, device_axys,
+            verbose, thr_misclick, thr_doubleclick, output_type);
 }

@@ -23,4 +23,4 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-man_MANS = xinput_calibrator.1
+dist_man_MANS = xinput_calibrator.1

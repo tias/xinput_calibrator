@@ -27,13 +27,18 @@
 class CalibratorXorgPrint: public Calibrator
 {
 public:
-    CalibratorXorgPrint(const char* const device_name, const XYinfo& axys, const bool verbose);
+    CalibratorXorgPrint(const char* const device_name, const XYinfo& axys,
+        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0,
+        const OutputType output_type=OUTYPE_AUTO);
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
+protected:
+    bool output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy);
+    bool output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy);
 };
 
-CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const bool verbose0)
-  : Calibrator(device_name0, axys0, verbose0)
+CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type)
+  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type)
 {
     printf("Calibrating standard Xorg driver \"%s\"\n", device_name);
     printf("\tcurrent calibration values: min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
@@ -43,48 +48,83 @@ CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const X
 
 bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
 {
-    // TODO: detect which are applicable at runtime/in the makefile ?
-    printf("\n\n== Applying the calibration ==\n");
-    printf("There are multiple ways to do this: the tranditional way (xorg.conf), the new way (udev rule) and the soon deprecated way (HAL policy):\n");
+    bool success = true;
 
-    // Xorg.conf output
-    printf("\nxorg.conf: edit /etc/X11/xorg.conf and add in the 'Section \"InputDevice\"' of your device:\n");
-    printf("\tOption\t\"MinX\"\t\t\"%d\"\n",
-                new_axys.x_min);
-    printf("\tOption\t\"MaxX\"\t\t\"%d\"\n",
-                new_axys.x_max);
-    printf("\tOption\t\"MinY\"\t\t\"%d\"\n",
-                new_axys.y_min);
-    printf("\tOption\t\"MaxY\"\t\t\"%d\"\n",
-                new_axys.y_max);
-    if (swap_xy != 0)
-        printf("\tOption\t\"SwapXY\"\t\"%d\" # unless it was already set to 1\n", swap_xy);
+    // we suppose the previous 'swap_xy' value was 0
+    // (unfortunately there is no way to verify this (yet))
+    int new_swap_xy = swap_xy;
 
-    // udev rule
-    printf("\nudev rule: create the file '/etc/udev/rules.d/99_touchscreen.rules' with: (replace %%Name_Of_TouchScreen%% appropriately)\n\
-\tACTION!=\"add|change\", GOTO=\"xorg_touchscreen_end\"\n\
-\tKERNEL!=\"event*\", GOTO=\"xorg_touchscreen_end\"\n\
-\tATTRS{product}!=\"%%Name_Of_TouchScreen%%\", GOTO=\"xorg_touchscreen_end\"\n\
-\tENV{x11_options.minx}=\"%d\"\n\
-\tENV{x11_options.maxx}=\"%d\"\n\
-\tENV{x11_options.miny}=\"%d\"\n\
-\tENV{x11_options.maxy}=\"%d\"\n"
-         , new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    printf("\n\n--> Making the calibration permanent <--\n");
+    switch (output_type) {
+        case OUTYPE_AUTO:
+            // xorg.conf.d or alternatively hal config
+            if (has_xorgconfd_support()) {
+                success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+            } else {
+                success &= output_hal(new_axys, swap_xy, new_swap_xy);
+            }
+            break;
+        case OUTYPE_XORGCONFD:
+            success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+            break;
+        case OUTYPE_HAL:
+            success &= output_hal(new_axys, swap_xy, new_swap_xy);
+            break;
+        default:
+            fprintf(stderr, "ERROR: XorgPrint Calibrator does not support the supplied --output-type\n");
+            success = false;
+    }
+
+    return success;
+}
+
+bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+{
+    const char* sysfs_name = get_sysfs_name();
+    bool not_sysfs_name = (sysfs_name == NULL);
+    if (not_sysfs_name)
+        sysfs_name = "!!Name_Of_TouchScreen!!";
+
+    // xorg.conf.d snippet
+    printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf'\n");
+    printf("Section \"InputClass\"\n");
+    printf("	Identifier	\"calibration\"\n");
+    printf("	MatchProduct	\"%s\"\n", sysfs_name);
+    printf("	Option	\"MinX\"	\"%d\"\n", new_axys.x_min);
+    printf("	Option	\"MaxX\"	\"%d\"\n", new_axys.x_max);
+    printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y_min);
+    printf("	Option	\"MaxY\"	\"%d\"\n", new_axys.y_max);
     if (swap_xy != 0)
-        printf("\tENV{x11_options.swapxy}=\"%d\"\n", swap_xy);
-    printf("\tLABEL=\"xorg_touchscreen_end\"\n");
+        printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", new_swap_xy);
+    printf("EndSection\n");
+
+    if (not_sysfs_name)
+        printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);
+
+    return true;
+}
+
+bool CalibratorXorgPrint::output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+{
+    const char* sysfs_name = get_sysfs_name();
+    bool not_sysfs_name = (sysfs_name == NULL);
+    if (not_sysfs_name)
+        sysfs_name = "!!Name_Of_TouchScreen!!";
 
     // HAL policy output
-    printf("\nHAL policy: create the file '/etc/hal/fdi/policy/touchscreen.fdi' with: (replace %%Name_Of_TouchScreen%% appropriately)\n\
-\t<match key=\"info.product\" contains=\"%%Name_Of_TouchScreen%%\">\n\
-\t  <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n\
-\t  <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
-\t  <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
-\t  <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
-         , new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+    printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n\
+<match key=\"info.product\" contains=\"%s\">\n\
+  <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n\
+  <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
+  <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
+  <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
+     , sysfs_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
     if (swap_xy != 0)
-        printf("\t  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", swap_xy);
-    printf("\t</match>\n");
+        printf("  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_swap_xy);
+    printf("</match>\n");
+
+    if (not_sysfs_name)
+        printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);
 
     return true;
 }
