@@ -24,10 +24,77 @@
 #ifndef _calibrator_hh
 #define _calibrator_hh
 
+#include <stdexcept>
+#include <X11/Xlib.h>
+
+/*
+ * Number of blocks. We partition the screen into 'num_blocks' x 'num_blocks'
+ * rectangles of equal size. We then ask the user to press points that are
+ * located at the corner closes to the center of the four blocks in the corners
+ * of the screen. The following ascii art illustrates the situation. We partition
+ * the screen into 8 blocks in each direction. We then let the user press the
+ * points marked with 'O'.
+ *
+ *   +--+--+--+--+--+--+--+--+
+ *   |  |  |  |  |  |  |  |  |
+ *   +--O--+--+--+--+--+--O--+
+ *   |  |  |  |  |  |  |  |  |
+ *   +--+--+--+--+--+--+--+--+
+ *   |  |  |  |  |  |  |  |  |
+ *   +--+--+--+--+--+--+--+--+
+ *   |  |  |  |  |  |  |  |  |
+ *   +--+--+--+--+--+--+--+--+
+ *   |  |  |  |  |  |  |  |  |
+ *   +--+--+--+--+--+--+--+--+
+ *   |  |  |  |  |  |  |  |  |
+ *   +--+--+--+--+--+--+--+--+
+ *   |  |  |  |  |  |  |  |  |
+ *   +--O--+--+--+--+--+--O--+
+ *   |  |  |  |  |  |  |  |  |
+ *   +--+--+--+--+--+--+--+--+
+ */
+const int num_blocks = 8;
+
+/// struct to hold min/max info of the X and Y axis
+struct XYinfo {
+    int x_min;
+    int x_max;
+    int y_min;
+    int y_max;
+    XYinfo() : x_min(-1), x_max(-1), y_min(-1), y_max(-1) {}
+    XYinfo(int xmi, int xma, int ymi, int yma) :
+         x_min(xmi), x_max(xma), y_min(ymi), y_max(yma) {}
+};
+
+/// Names of the points
+enum {
+    UL = 0, // Upper-left
+    UR = 1, // Upper-right
+    LL = 2, // Lower-left
+    LR = 3,  // Lower-right
+};
+
+/// Output types
+enum OutputType {
+    OUTYPE_AUTO,
+    OUTYPE_XORGCONFD,
+    OUTYPE_HAL,
+    OUTYPE_XINPUT
+};
+
+class WrongCalibratorException : public std::invalid_argument {
+    public:
+        WrongCalibratorException(const std::string& msg = "") :
+            std::invalid_argument(msg) {}
+};
+
 // Abstract base class for calculating new calibration parameters
 class Calibrator
 {
 public:
+    /// Parse arguments and create calibrator
+    static Calibrator* make_calibrator(int argc, char** argv);
+
     /* Constructor for a specific calibrator
      *
      * The constructor will throw an exception,

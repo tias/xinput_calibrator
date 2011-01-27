@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2009 Tias Guns
- * Copyright (c) 2009 Soren Hauberg
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,40 +20,26 @@
  * THE SOFTWARE.
  */
 
-// Must be before Xlib stuff
-#include <gtkmm/main.h>
-#include <gtkmm/window.h>
-#include <cairomm/context.h>
+#ifndef CALIBRATOR_XORGPRINT_HPP
+#define CALIBRATOR_XORGPRINT_HPP
 
 #include "calibrator.hh"
-#include "gui/gtkmm.hpp"
 
-int main(int argc, char** argv)
+/***************************************
+ * Class for generic Xorg driver,
+ * outputs new Xorg.conf and FDI policy, on stdout
+ ***************************************/
+class CalibratorXorgPrint: public Calibrator
 {
-    Calibrator* calibrator = Calibrator::make_calibrator(argc, argv);
+public:
+    CalibratorXorgPrint(const char* const device_name, const XYinfo& axys,
+        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0,
+        const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
 
-    // GTK-mm setup
-    Gtk::Main kit(argc, argv);
+    virtual bool finish_data(const XYinfo new_axys, int swap_xy);
+protected:
+    bool output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy);
+    bool output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy);
+};
 
-    Glib::RefPtr< Gdk::Screen > screen = Gdk::Screen::get_default();
-    //int num_monitors = screen->get_n_monitors(); TODO, multiple monitors?
-    Gdk::Rectangle rect;
-    screen->get_monitor_geometry(0, rect);
-
-    Gtk::Window win;
-    // when no window manager: explicitely take size of full screen
-    win.move(rect.get_x(), rect.get_y());
-    win.resize(rect.get_width(), rect.get_height());
-    // in case of window manager: set as full screen to hide window decorations
-    win.fullscreen();
-
-    CalibrationArea area(calibrator);
-    win.add(area);
-    area.show();
-
-    Gtk::Main::run(win);
-
-    Gtk::Main::quit();
-    delete calibrator;
-    return 0;
-}
+#endif

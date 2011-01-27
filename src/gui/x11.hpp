@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2009 Tias Guns
- * Copyright (c) 2009 Soren Hauberg
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,40 +20,53 @@
  * THE SOFTWARE.
  */
 
-// Must be before Xlib stuff
-#include <gtkmm/main.h>
-#include <gtkmm/window.h>
-#include <cairomm/context.h>
+#ifndef GUI_CALIBRATOR_X11
+#define GUI_CALIBRATOR_X11
 
 #include "calibrator.hh"
-#include "gui/gtkmm.hpp"
 
-int main(int argc, char** argv)
+/*******************************************
+ * X11 class for the the calibration GUI
+ *******************************************/
+class GuiCalibratorX11
 {
-    Calibrator* calibrator = Calibrator::make_calibrator(argc, argv);
+public:
+    static void make_instance(Calibrator* w);
+    static void give_timer_signal();
 
-    // GTK-mm setup
-    Gtk::Main kit(argc, argv);
+protected:
+    GuiCalibratorX11(Calibrator* w);
+    ~GuiCalibratorX11();
 
-    Glib::RefPtr< Gdk::Screen > screen = Gdk::Screen::get_default();
-    //int num_monitors = screen->get_n_monitors(); TODO, multiple monitors?
-    Gdk::Rectangle rect;
-    screen->get_monitor_geometry(0, rect);
+    // Data
+    Calibrator* calibrator;
+    double X[4], Y[4];
+    int display_width, display_height;
+    int time_elapsed;
 
-    Gtk::Window win;
-    // when no window manager: explicitely take size of full screen
-    win.move(rect.get_x(), rect.get_y());
-    win.resize(rect.get_width(), rect.get_height());
-    // in case of window manager: set as full screen to hide window decorations
-    win.fullscreen();
+    // X11 vars
+    Display* display;
+    int screen_num;
+    Window win;
+    GC gc;
+    XFontStruct* font_info;
+    // color mngmt
+    static const int nr_colors = 5;
+    unsigned long pixel[nr_colors];
 
-    CalibrationArea area(calibrator);
-    win.add(area);
-    area.show();
 
-    Gtk::Main::run(win);
+    // Signal handlers
+    bool on_timer_signal();
+    bool on_expose_event();
+    bool on_button_press_event(XEvent event);
 
-    Gtk::Main::quit();
-    delete calibrator;
-    return 0;
-}
+    // Helper functions
+    void set_display_size(int width, int height);
+    void redraw();
+    void draw_message(const char* msg);
+
+private:
+    static GuiCalibratorX11* instance;
+};
+
+#endif

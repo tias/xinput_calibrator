@@ -21,6 +21,13 @@
  * THE SOFTWARE.
  */
 
+#include "calibrator.hh"
+
+// Calibrator implementations
+#include "calibrator/Usbtouchscreen.hpp"
+#include "calibrator/Evdev.hpp"
+#include "calibrator/XorgPrint.hpp"
+
 #include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,70 +36,8 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>
 
-/*
- * Number of blocks. We partition the screen into 'num_blocks' x 'num_blocks'
- * rectangles of equal size. We then ask the user to press points that are
- * located at the corner closes to the center of the four blocks in the corners
- * of the screen. The following ascii art illustrates the situation. We partition
- * the screen into 8 blocks in each direction. We then let the user press the
- * points marked with 'O'.
- *
- *   +--+--+--+--+--+--+--+--+
- *   |  |  |  |  |  |  |  |  |
- *   +--O--+--+--+--+--+--O--+
- *   |  |  |  |  |  |  |  |  |
- *   +--+--+--+--+--+--+--+--+
- *   |  |  |  |  |  |  |  |  |
- *   +--+--+--+--+--+--+--+--+
- *   |  |  |  |  |  |  |  |  |
- *   +--+--+--+--+--+--+--+--+
- *   |  |  |  |  |  |  |  |  |
- *   +--+--+--+--+--+--+--+--+
- *   |  |  |  |  |  |  |  |  |
- *   +--+--+--+--+--+--+--+--+
- *   |  |  |  |  |  |  |  |  |
- *   +--O--+--+--+--+--+--O--+
- *   |  |  |  |  |  |  |  |  |
- *   +--+--+--+--+--+--+--+--+
- */
-const int num_blocks = 8;
-
-// Names of the points
-enum {
-    UL = 0, // Upper-left
-    UR = 1, // Upper-right
-    LL = 2, // Lower-left
-    LR = 3  // Lower-right
-};
-
-// Output types
-enum OutputType {
-    OUTYPE_AUTO,
-    OUTYPE_XORGCONFD,
-    OUTYPE_HAL,
-    OUTYPE_XINPUT
-};
-
-// struct to hold min/max info of the X and Y axis
-struct XYinfo {
-    int x_min;
-    int x_max;
-    int y_min;
-    int y_max;
-    XYinfo() : x_min(-1), x_max(-1), y_min(-1), y_max(-1) {}
-    XYinfo(int xmi, int xma, int ymi, int yma) :
-         x_min(xmi), x_max(xma), y_min(ymi), y_max(yma) {}
-};
-
-class WrongCalibratorException : public std::invalid_argument {
-    public:
-        WrongCalibratorException(const std::string& msg = "") :
-            std::invalid_argument(msg) {}
-};
-
 // strdup: non-ansi
-char* my_strdup(const char* s);
-char* my_strdup(const char* s) {
+static char* my_strdup(const char* s) {
     size_t len = strlen(s) + 1;
     void* p = malloc(len);
 
@@ -102,13 +47,6 @@ char* my_strdup(const char* s) {
     return (char*) memcpy(p, s, len);
 }
 
-// all need struct XYinfo, and some the consts too
-#include "calibrator.cpp"
-#include "calibrator/XorgPrint.cpp"
-#include "calibrator/Evdev.cpp"
-#include "calibrator/Usbtouchscreen.cpp"
-
-
 /**
  * find a calibratable touchscreen device (using XInput)
  *
@@ -116,8 +54,7 @@ char* my_strdup(const char* s) {
  * retuns number of devices found,
  * the data of the device is returned in the last 3 function parameters
  */
-int find_device(const char*, bool, bool, XID&, const char*&, XYinfo&);
-int find_device(const char* pre_device, bool verbose, bool list_devices,
+static int find_device(const char* pre_device, bool verbose, bool list_devices,
         XID& device_id, const char*& device_name, XYinfo& device_axys)
 {
     bool pre_device_is_id = true;
@@ -244,8 +181,7 @@ static void usage(char* cmd, unsigned thr_misclick)
     fprintf(stderr, "\t--geometry: manually provide the geometry (width and height) for the calibration window\n");
 }
 
-Calibrator* main_common(int argc, char** argv);
-Calibrator* main_common(int argc, char** argv)
+Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 {
     bool verbose = false;
     bool list_devices = false;

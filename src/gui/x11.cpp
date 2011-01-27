@@ -19,6 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+#include "gui/x11.hpp"
+
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -33,8 +36,6 @@
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
-
-#include "calibrator.hh"
 
 
 // Timeout parameters
@@ -65,48 +66,13 @@ const char* colors[nr_colors] = {"BLACK", "WHITE", "GRAY", "DIMGRAY", "RED"};
 
 void sigalarm_handler(int num);
 
-
-/*******************************************
- * X11 class for the the calibration GUI
- *******************************************/
-class GuiCalibratorX11
+/// Create singleton instance associated to calibrator w
+void GuiCalibratorX11::make_instance(Calibrator* w)
 {
-public:
-    GuiCalibratorX11(Calibrator* w);
-    ~GuiCalibratorX11();
-    static bool set_instance(GuiCalibratorX11* W);
-    static void give_timer_signal();
+    instance = new GuiCalibratorX11(w);
+}
 
-protected:
-    // Data
-    Calibrator* calibrator;
-    double X[4], Y[4];
-    int display_width, display_height;
-    int time_elapsed;
-
-    // X11 vars
-    Display* display;
-    int screen_num;
-    Window win;
-    GC gc;
-    XFontStruct* font_info;
-    // color mngmt
-    unsigned long pixel[nr_colors];
-
-
-    // Signal handlers
-    bool on_timer_signal();
-    bool on_expose_event();
-    bool on_button_press_event(XEvent event);
-
-    // Helper functions
-    void set_display_size(int width, int height);
-    void redraw();
-    void draw_message(const char* msg);
-
-private:
-    static GuiCalibratorX11* instance;
-};
+// Singleton instance
 GuiCalibratorX11* GuiCalibratorX11::instance = NULL;
 
 
@@ -385,14 +351,6 @@ void GuiCalibratorX11::give_timer_signal()
             }
         }
     }
-}
-
-bool GuiCalibratorX11::set_instance(GuiCalibratorX11* W)
-{
-    bool wasSet = (instance != NULL);
-    instance = W;
-
-    return wasSet;
 }
 
 
