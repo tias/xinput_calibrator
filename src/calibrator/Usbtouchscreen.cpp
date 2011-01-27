@@ -110,7 +110,7 @@ protected:
         char filename[100];
         sprintf(filename, "%s/%s", module_prefix, param);
         FILE *fid = fopen(filename, "w");
-        if (fid == NULL) { 
+        if (fid == NULL) {
             fprintf(stderr, "Could not save parameter '%s'\n", param);
             return;
         }
