@@ -20,8 +20,8 @@
  * THE SOFTWARE.
  */
 
-#include "main_common.hpp"
-#include "gui/gui_x11.cpp"
+#include "main_common.cpp"
+#include "gui/x11.cpp"
 
 int main(int argc, char** argv)
 {

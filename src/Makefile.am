@@ -52,4 +52,4 @@ endif
 EXTRA_DIST = \
 	calibrator.cpp \
 	calibrator.hh \
-	main_common.hpp
+	main_common.cpp

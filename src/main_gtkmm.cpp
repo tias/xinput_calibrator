@@ -27,8 +27,8 @@
 #include <gtkmm/drawingarea.h>
 #include <cairomm/context.h>
 
-#include "main_common.hpp"
-#include "gui/gui_gtkmm.cpp"
+#include "main_common.cpp"
+#include "gui/gtkmm.cpp"
 
 int main(int argc, char** argv)
 {
