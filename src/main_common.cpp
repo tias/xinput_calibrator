@@ -21,6 +21,13 @@
  * THE SOFTWARE.
  */
 
+#include "calibrator.hh"
+
+// Calibrator implementations
+#include "calibrator/Usbtouchscreen.hpp"
+#include "calibrator/Evdev.hpp"
+#include "calibrator/XorgPrint.hpp"
+
 #include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,13 +36,8 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>
 
-#include "main_common.hpp"
-#include "calibrator/calibratorUsbtouchscreen.hpp"
-#include "calibrator/calibratorEvdev.hpp"
-#include "calibrator/calibratorXorgPrint.hpp"
-
 // strdup: non-ansi
-char* my_strdup(const char* s) {
+static char* my_strdup(const char* s) {
     size_t len = strlen(s) + 1;
     void* p = malloc(len);
 
@@ -52,7 +54,7 @@ char* my_strdup(const char* s) {
  * retuns number of devices found,
  * the data of the device is returned in the last 3 function parameters
  */
-int find_device(const char* pre_device, bool verbose, bool list_devices,
+static int find_device(const char* pre_device, bool verbose, bool list_devices,
         XID& device_id, const char*& device_name, XYinfo& device_axys)
 {
     bool pre_device_is_id = true;
@@ -179,7 +181,7 @@ static void usage(char* cmd, unsigned thr_misclick)
     fprintf(stderr, "\t--geometry: manually provide the geometry for the calibration window\n");
 }
 
-Calibrator* main_common(int argc, char** argv)
+Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 {
     bool verbose = false;
     bool list_devices = false;
@@ -198,7 +200,7 @@ Calibrator* main_common(int argc, char** argv)
             // Display help ?
             if (strcmp("-h", argv[i]) == 0 ||
                 strcmp("--help", argv[i]) == 0) {
-                fprintf(stderr, "xinput_calibratior, v%s\n\n", VERSION);
+                fprintf(stderr, "xinput_calibrator, v%s\n\n", VERSION);
                 usage(argv[0], thr_misclick);
                 exit(0);
             } else
@@ -276,7 +278,6 @@ Calibrator* main_common(int argc, char** argv)
             // specify window geometry?
             if (strcmp("--geometry", argv[i]) == 0) {
                 geometry = argv[++i];
-                //sscanf(argv[++i],"%dx%d+%d+%d",&win_width,&win_height,&win_xoff,&win_yoff);
             } else
 
             // Fake calibratable device ?
@@ -294,7 +295,7 @@ Calibrator* main_common(int argc, char** argv)
     }
 
 
-    // Choose the device to calibrate
+    /// Choose the device to calibrate
     XID         device_id   = (XID) -1;
     const char* device_name = NULL;
     XYinfo      device_axys;
