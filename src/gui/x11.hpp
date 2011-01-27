@@ -31,17 +31,16 @@
 class GuiCalibratorX11
 {
 public:
-    GuiCalibratorX11(Calibrator* w);
-    ~GuiCalibratorX11();
-    static bool set_instance(GuiCalibratorX11* W);
+    static void make_instance(Calibrator* w);
     static void give_timer_signal();
 
 protected:
-	static const int nr_colors = 5;
-	static const char* colors[nr_colors];
-    // Data
+    GuiCalibratorX11(Calibrator* w);
+    ~GuiCalibratorX11();
+	
+	// Data
     Calibrator* calibrator;
-    double X[4], Y[4];
+    double X[NUM_POINTS], Y[NUM_POINTS];
     int display_width, display_height;
     int time_elapsed;
 
@@ -51,9 +50,11 @@ protected:
     Window win;
     GC gc;
     XFontStruct* font_info;
-    // color mngmt
-    unsigned long pixel[nr_colors];
 
+	// color management
+	enum { BLACK=0, WHITE=1, GRAY=2, DIMGRAY=3, RED=4, NUM_COLORS };
+	static const char* colors[NUM_COLORS];
+    unsigned long pixel[NUM_COLORS];
 
     // Signal handlers
     bool on_timer_signal();

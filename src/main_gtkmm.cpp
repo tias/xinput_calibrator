@@ -24,15 +24,14 @@
 // Must be before Xlib stuff
 #include <gtkmm/main.h>
 #include <gtkmm/window.h>
-#include <gtkmm/drawingarea.h>
 #include <cairomm/context.h>
 
-#include "main_common.hpp"
-#include "gui/gui_gtkmm.cpp"
+#include "calibrator.hh"
+#include "gui/gtkmm.hpp"
 
 int main(int argc, char** argv)
 {
-    Calibrator* calibrator = main_common(argc, argv);
+    Calibrator* calibrator = Calibrator::make_calibrator(argc, argv);
 
     // GTK-mm setup
     Gtk::Main kit(argc, argv);

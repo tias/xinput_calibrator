@@ -20,15 +20,14 @@
  * THE SOFTWARE.
  */
 
-#include "main_common.hpp"
-#include "gui/gui_x11.cpp"
+#include "calibrator.hh"
+#include "gui/gui_x11.hpp"
 
 int main(int argc, char** argv)
 {
-    Calibrator* calibrator = main_common(argc, argv);
+    Calibrator* calibrator = Calibrator::make_calibrator(argc, argv);
 
-    GuiCalibratorX11 gui(calibrator);
-    GuiCalibratorX11::set_instance(&gui);
+    GuiCalibratorX11::make_instance( calibrator );
 
     // wait for timer signal, processes events
     while(1)

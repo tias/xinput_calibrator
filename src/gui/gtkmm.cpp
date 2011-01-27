@@ -20,13 +20,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include <gtkmm/main.h>
-#include <gtkmm/window.h>
-#include <gtkmm/drawingarea.h>
-#include <cairomm/context.h>
 
-#include "calibrator.hh"
-
+#include "gui/gtkmm.hpp"
 
 // Timeout parameters
 const int time_step = 100;  // in milliseconds
@@ -46,36 +41,6 @@ const std::string help_text[help_lines] = {
     "Press the point, use a stylus to increase precision.",
     "",
     "(To abort, press any key or wait)"
-};
-
-
-/*******************************************
- * GTK-mm class for the the calibration GUI
- *******************************************/
-class CalibrationArea : public Gtk::DrawingArea
-{
-public:
-    CalibrationArea(Calibrator* w);
-
-protected:
-    // Data
-    Calibrator* calibrator;
-    double X[4], Y[4];
-    int display_width, display_height;
-    int time_elapsed;
-
-    const char* message;
-
-    // Signal handlers
-    bool on_timer_signal();
-    bool on_expose_event(GdkEventExpose *event);
-    bool on_button_press_event(GdkEventButton *event);
-    bool on_key_press_event(GdkEventKey *event);
-
-    // Helper functions
-    void set_display_size(int width, int height);
-    void redraw();
-    void draw_message(const char* msg);
 };
 
 CalibrationArea::CalibrationArea(Calibrator* calibrator0)
