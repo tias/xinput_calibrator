@@ -290,7 +290,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 		
         // unknown option
         else {
-		  fprintf(stderr, "Unknown option: %s\n\n", argv[i]);
+		  error ( "Unknown option: %s\n\n", argv[i]);
 		  usage(argv[0], thr_misclick);
 		  exit(0);
 		}
@@ -316,15 +316,15 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 	  if (list_devices) {
 		// printed the list in find_device
 		if (nr_found == 0)
-		  printf("No calibratable devices found.\n");
-		exit(2);
+		  error ("No calibratable devices found.\n");
+		exit(0);
 	  }
 	  
 	  if (nr_found == 0) {
 		if (pre_device == NULL)
-		  fprintf (stderr, "Error: No calibratable devices found.\n");
+		  error ( "Error: No calibratable devices found.\n");
 		else
-		  fprintf (stderr, "Error: Device \"%s\" not found; use --list to list the calibratable input devices.\n", pre_device);
+		  error ( "Error: Device \"%s\" not found; use --list to list the calibratable input devices.\n", pre_device);
 		exit(1);
 		
 	  } else if (nr_found > 1) {
