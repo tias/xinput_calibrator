@@ -40,7 +40,7 @@ private:
 
     int old_swap_xy;
 public:
-    CalibratorEvdev(const char* const device_name, const XYinfo& axys, const bool verbose,
+    CalibratorEvdev(const char* const device_name, const XYinfo& axys,
         XID device_id=(XID)-1, const int thr_misclick=0, const int thr_doubleclick=0,
         const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
     ~CalibratorEvdev();

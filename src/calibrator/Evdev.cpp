@@ -38,8 +38,14 @@
 #define EXIT_FAILURE 0
 #endif
 
-CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0, XID device_id, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
-  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type, geometry), old_swap_xy(0)
+CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
+								const XYinfo& axys0,
+								XID device_id,
+								const int thr_misclick,
+								const int thr_doubleclick,
+								const OutputType output_type,
+								const char* geometry)
+  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry), old_swap_xy(0)
 {
     // init
     display = XOpenDisplay(NULL);

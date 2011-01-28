@@ -33,7 +33,7 @@ class CalibratorUsbtouchscreen: public Calibrator
 {
 public:
     CalibratorUsbtouchscreen(const char* const device_name, const XYinfo& axys,
-        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0,
+         const int thr_misclick=0, const int thr_doubleclick=0,
         const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
     ~CalibratorUsbtouchscreen();
 
