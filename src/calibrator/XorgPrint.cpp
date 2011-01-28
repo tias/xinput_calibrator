@@ -41,7 +41,7 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     // (unfortunately there is no way to verify this (yet))
     int new_swap_xy = swap_xy;
 
-    printf("\n\n--> Making the calibration permanent <--\n");
+    printf("\t--> Making the calibration permanent <--\n");
     switch (output_type) {
         case OUTYPE_AUTO:
             // xorg.conf.d or alternatively hal config
