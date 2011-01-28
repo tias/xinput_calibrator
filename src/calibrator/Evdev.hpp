@@ -53,7 +53,7 @@ public:
     // xinput_ functions (from the xinput project)
     Atom xinput_parse_atom(Display *display, const char* name);
     XDeviceInfo* xinput_find_device_info(Display *display, const char* name, Bool only_extended);
-    int xinput_do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
+    int xinput_do_set_prop(Display *display, Atom type, int format, int argc, const char** argv);
 protected:
     bool output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy);
     bool output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy);
