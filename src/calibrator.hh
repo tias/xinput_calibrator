@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009 Tias Guns
  * Copyright (c) 2009 Soren Hauberg
+ * Copyright (c) 2011 Antoine Hue
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +27,7 @@
 
 #include <stdexcept>
 #include <X11/Xlib.h>
+#include <vector>
 
 /*
  * Number of blocks. We partition the screen into 'num_blocks' x 'num_blocks'
@@ -55,15 +57,23 @@
  */
 const int num_blocks = 8;
 
+struct AxisInfo {
+    int min, max;
+    bool invert;
+    AxisInfo() : min(-1), max(-1), invert(false) { }
+};
+
 /// struct to hold min/max info of the X and Y axis
 struct XYinfo {
-    int x_min;
-    int x_max;
-    int y_min;
-    int y_max;
-    XYinfo() : x_min(-1), x_max(-1), y_min(-1), y_max(-1) {}
-    XYinfo(int xmi, int xma, int ymi, int yma) :
-         x_min(xmi), x_max(xma), y_min(ymi), y_max(yma) {}
+    /// Axis swapped
+    bool swap_xy;
+    /// X, Y axis
+    AxisInfo x, y;
+
+    XYinfo() : swap_xy(false) {}
+
+    XYinfo(int xmi, int xma, int ymi, int yma, bool swap_xy_ = false):
+        swap_xy(swap_xy_) {  x.min = xmi; x.max = xma; y.min = ymi; y.max = yma;}
 };
 
 /// Names of the points
@@ -102,7 +112,6 @@ public:
     /// if the touchscreen is not of the type it supports
     Calibrator(const char* const device_name,
                const XYinfo& axys,
-               const bool verbose,
                const int thr_misclick=0,
                const int thr_doubleclick=0,
                const OutputType output_type=OUTYPE_AUTO,
@@ -111,21 +120,24 @@ public:
     ~Calibrator() {}
 
     /// set the doubleclick treshold
-    void set_threshold_doubleclick(int t);
+    void set_threshold_doubleclick(int t)
+    { threshold_doubleclick = t; }
 
     /// set the misclick treshold
-    void set_threshold_misclick(int t);
+    void set_threshold_misclick(int t)
+    { threshold_misclick = t; }
 
     /// get the number of clicks already registered
-    int get_numclicks();
+    int get_numclicks() const
+    { return clicked.num; }
 
     /// return geometry string or NULL
-    const char* get_geometry();
+    const char* get_geometry() const
+    { return geometry; }
 
     /// reset clicks
-    void reset() {
-        num_clicks = 0;
-    }
+    void reset()
+    {  clicked.num = 0; clicked.x.clear(); clicked.y.clear();}
 
     /// add a click with the given coordinates
     bool add_click(int x, int y);
@@ -136,22 +148,54 @@ public:
     const char* get_sysfs_name();
 
 protected:
-    // check whether the coordinates are along the respective axis
+    /// check whether the coordinates are along the respective axis
     bool along_axis(int xy, int x0, int y0);
 
-    // overloaded function that applies the new calibration
-    virtual bool finish_data(const XYinfo new_axys, int swap_xy) =0;
+    /// Apply new calibration, implementation dependent
+    ///\param[in] swap_xy if true, X and Y axes are swapped
+    ///\param[in] invert_x if true, X axis is inverted
+    ///\param[in] invert_y if true, Y axis is inverted
+    virtual bool finish_data(const XYinfo new_axys ) =0;
+
+    /// Compute calibration on 1 axis
+    void process_axys( int screen_dim, const AxisInfo &previous, std::vector<int> &clicked, AxisInfo &updated );
+
+    /// Check whether the given name is a sysfs device name
+    bool is_sysfs_name(const char* name);
+
+    /// Check whether the X server has xorg.conf.d support
+    bool has_xorgconfd_support(Display* display=NULL);
+
+    /// Write output calibration (to stdout)
+    void output ( const char *format, ... );
+
+    /// Write information to user, if verbose mode activated
+    static void info ( const char *format, ... );
+
+    /// Trace debug information if verbose activated
+    static void trace ( const char *format, ...);
+
+    /// Write error (non fatal)
+    static void error ( const char *format, ...);
+
+    static int find_device(const char* pre_device, bool list_devices,
+            XID& device_id, const char*& device_name, XYinfo& device_axys);
+protected:
+    // be verbose or not
+    static bool verbose;
 
     // name of the device (driver)
     const char* const device_name;
-    // original axys values
+    /// Original values
     XYinfo old_axys;
-    // be verbose or not
-    bool verbose;
-    // nr of clicks registered
-    int num_clicks;
-    // click coordinates
-    int clicked_x[NUM_POINTS], clicked_y[NUM_POINTS];
+
+    /// Clicked values (screen coordinates)
+    struct {
+        /// actual number of clicks registered
+        int num;
+        /// click coordinates
+        std::vector<int> x, y;
+    } clicked;
 
     // Threshold to keep the same point from being clicked twice.
     // Set to zero if you don't want this check
@@ -162,17 +206,11 @@ protected:
     // Set to zero if you don't want this check
     int threshold_misclick;
 
-    // Type of output
+    /// Format or type of output calibration
     OutputType output_type;
 
-    // manually specified geometry string
+    /// manually specified geometry string for the calibration pattern
     const char* geometry;
-
-    // Check whether the given name is a sysfs device name
-    bool is_sysfs_name(const char* name);
-
-    // Check whether the X server has xorg.conf.d support
-    bool has_xorgconfd_support(Display* display=NULL);
 };
 
 #endif

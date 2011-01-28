@@ -35,29 +35,29 @@ class CalibratorEvdev: public Calibrator
 {
 private:
     Display     *display;
-    XDeviceInfo *info;
+    XDeviceInfo *devInfo;
     XDevice     *dev;
 
-    int old_swap_xy;
 public:
-    CalibratorEvdev(const char* const device_name, const XYinfo& axys, const bool verbose,
+    CalibratorEvdev(const char* const device_name, const XYinfo& axys,
         XID device_id=(XID)-1, const int thr_misclick=0, const int thr_doubleclick=0,
         const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
     ~CalibratorEvdev();
 
-    virtual bool finish_data(const XYinfo new_axys, int swap_xy);
+    virtual bool finish_data(const XYinfo new_axys);
 
     bool set_swapxy(const int swap_xy);
+    bool set_invert_xy(bool axisX, const int invert_x, const int invert_y );
     bool set_calibration(const XYinfo new_axys);
 
     // xinput_ functions (from the xinput project)
     Atom xinput_parse_atom(Display *display, const char* name);
     XDeviceInfo* xinput_find_device_info(Display *display, const char* name, Bool only_extended);
-    int xinput_do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
+    int xinput_do_set_prop(Display *display, Atom type, int format, int argc, const char** argv);
 protected:
-    bool output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy);
-    bool output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy);
-    bool output_xinput(const XYinfo new_axys, int swap_xy, int new_swap_xy);
+    bool output_xorgconfd(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y);
+    bool output_hal(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y);
+    bool output_xinput(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y);
 };
 
 #endif
