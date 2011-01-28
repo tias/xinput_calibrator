@@ -37,7 +37,7 @@ public:
         const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
     ~CalibratorUsbtouchscreen();
 
-    virtual bool finish_data(const XYinfo new_axys, int swap_xy);
+    virtual bool finish_data(const XYinfo new_axys);
 
 protected:
     // Globals for kernel parameters from startup.

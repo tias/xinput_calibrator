@@ -77,7 +77,7 @@ CalibratorUsbtouchscreen::~CalibratorUsbtouchscreen()
     write_bool_parameter (p_swap_xy, val_swap_xy);
 }
 
-bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
+bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys)
 {
     if (output_type != OUTYPE_AUTO) {
         fprintf(stderr, "ERROR: Usbtouchscreen Calibrator does not support the supplied --output-type\n");
@@ -85,23 +85,23 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
     }
 
     // New ranges
-    const int range_x = (new_axys.x_max - new_axys.x_min);
-    const int range_y = (new_axys.y_max - new_axys.y_min);
+    const int range_x = (new_axys.x.max - new_axys.x.min);
+    const int range_y = (new_axys.y.max - new_axys.y.min);
     // Should x and y be flipped ?
-    const bool flip_x = (new_axys.x_min > new_axys.x_max);
-    const bool flip_y = (new_axys.y_min > new_axys.y_max);
+    const bool flip_x = (new_axys.x.min > new_axys.x.max);
+    const bool flip_y = (new_axys.y.min > new_axys.y.max);
 
     // Send the estimated parameters to the currently running kernel
     write_int_parameter(p_range_x, range_x);
     write_int_parameter(p_range_y, range_y);
-    write_int_parameter(p_min_x, new_axys.x_min);
-    write_int_parameter(p_max_x, new_axys.x_max);
-    write_int_parameter(p_min_y, new_axys.y_min);
-    write_int_parameter(p_max_y, new_axys.y_max);
+    write_int_parameter(p_min_x, new_axys.x.min);
+    write_int_parameter(p_max_x, new_axys.x.max);
+    write_int_parameter(p_min_y, new_axys.y.min);
+    write_int_parameter(p_max_y, new_axys.y.max);
     write_bool_parameter(p_transform_xy, true);
     write_bool_parameter(p_flip_x, flip_x);
     write_bool_parameter(p_flip_y, flip_y);
-    write_bool_parameter(p_swap_xy, swap_xy);
+    write_bool_parameter(p_swap_xy, new_axys.swap_xy);
 
     // Read, then write calibration parameters to modprobe_conf_local,
     // to keep the for the next boot
@@ -129,10 +129,10 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
     char *new_opt = new char[opt_len];
     sprintf(new_opt, "%s %s=%d %s=%d %s=%d %s=%d %s=%d %s=%d %s=%c %s=%c %s=%c %s=%c\n",
          opt, p_range_x, range_x, p_range_y, range_y,
-         p_min_x, new_axys.x_min, p_min_y, new_axys.y_min,
-         p_max_x, new_axys.x_max, p_max_y, new_axys.y_max,
+         p_min_x, new_axys.x.min, p_min_y, new_axys.y.min,
+         p_max_x, new_axys.x.max, p_max_y, new_axys.y.max,
          p_transform_xy, yesno(true), p_flip_x, yesno(flip_x),
-         p_flip_y, yesno(flip_y), p_swap_xy, yesno(swap_xy));
+         p_flip_y, yesno(flip_y), p_swap_xy, yesno(new_axys.swap_xy));
     new_contents += new_opt;
 
     fid = fopen(modprobe_conf_local, "w");
