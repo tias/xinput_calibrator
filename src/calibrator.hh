@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009 Tias Guns
  * Copyright (c) 2009 Soren Hauberg
+ * Copyright (c) 2011 Antoine Hue
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +27,7 @@
 
 #include <stdexcept>
 #include <X11/Xlib.h>
+#include <vector>
 
 /*
  * Number of blocks. We partition the screen into 'num_blocks' x 'num_blocks'
@@ -55,15 +57,24 @@
  */
 const int num_blocks = 8;
 
+struct AxisInfo {
+    int min, max;
+    bool invert;
+    AxisInfo() : min(-1), max(-1), invert(false) { }
+    AxisInfo(int mi, int ma) : min(mi), max(ma), invert(false) { }
+};
+
 /// struct to hold min/max info of the X and Y axis
 struct XYinfo {
-    int x_min;
-    int x_max;
-    int y_min;
-    int y_max;
-    XYinfo() : x_min(-1), x_max(-1), y_min(-1), y_max(-1) {}
-    XYinfo(int xmi, int xma, int ymi, int yma) :
-         x_min(xmi), x_max(xma), y_min(ymi), y_max(yma) {}
+    /// Axis swapped
+    bool swap_xy;
+    /// X, Y axis
+    AxisInfo x, y;
+
+    XYinfo() : swap_xy(false) {}
+
+    XYinfo(int xmi, int xma, int ymi, int yma, bool swap_xy_ = false):
+        swap_xy(swap_xy_), x(xmi, xma), y(ymi, yma) {}
 };
 
 /// Names of the points
@@ -119,16 +130,15 @@ public:
 
     /// get the number of clicks already registered
     int get_numclicks() const
-    { return num_clicks; }
+    { return clicked.num; }
 
     /// return geometry string or NULL
     const char* get_geometry() const
     { return geometry; }
 
     /// reset clicks
-    void reset() {
-        num_clicks = 0;
-    }
+    void reset()
+    {  clicked.num = 0; clicked.x.clear(); clicked.y.clear();}
 
     /// add a click with the given coordinates
     bool add_click(int x, int y);
@@ -143,7 +153,10 @@ protected:
     bool along_axis(int xy, int x0, int y0);
 
     /// Apply new calibration, implementation dependent
-    virtual bool finish_data(const XYinfo new_axys, int swap_xy) =0;
+    virtual bool finish_data(const XYinfo new_axys) =0;
+
+    /// Compute calibration on 1 axis
+    void process_axys( int screen_dim, const AxisInfo &previous, std::vector<int> &clicked, AxisInfo &updated );
 
     /// Check whether the given name is a sysfs device name
     bool is_sysfs_name(const char* name);
@@ -164,10 +177,13 @@ protected:
     /// Be verbose or not
     static bool verbose;
 
-    // nr of clicks registered
-    int num_clicks;
-    // click coordinates
-    int clicked_x[NUM_POINTS], clicked_y[NUM_POINTS];
+    /// Clicked values (screen coordinates)
+    struct {
+        /// actual number of clicks registered
+        int num;
+        /// click coordinates
+        std::vector<int> x, y;
+    } clicked;
 
     // Threshold to keep the same point from being clicked twice.
     // Set to zero if you don't want this check

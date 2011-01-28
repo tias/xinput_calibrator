@@ -29,33 +29,33 @@ CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const X
 {
     printf("Calibrating standard Xorg driver \"%s\"\n", device_name);
     printf("\tcurrent calibration values: min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
-                old_axys.x_min, old_axys.x_max, old_axys.y_min, old_axys.y_max);
+                old_axys.x.min, old_axys.x.max, old_axys.y.min, old_axys.y.max);
     printf("\tIf these values are estimated wrong, either supply it manually with the --precalib option, or run the 'get_precalib.sh' script to automatically get it (through HAL).\n");
 }
 
-bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
+bool CalibratorXorgPrint::finish_data(const XYinfo new_axys)
 {
     bool success = true;
 
     // we suppose the previous 'swap_xy' value was 0
     // (unfortunately there is no way to verify this (yet))
-    int new_swap_xy = swap_xy;
+    int new_swap_xy = new_axys.swap_xy;
 
     printf("\t--> Making the calibration permanent <--\n");
     switch (output_type) {
         case OUTYPE_AUTO:
             // xorg.conf.d or alternatively hal config
             if (has_xorgconfd_support()) {
-                success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+                success &= output_xorgconfd(new_axys, new_swap_xy);
             } else {
-                success &= output_hal(new_axys, swap_xy, new_swap_xy);
+                success &= output_hal(new_axys, new_swap_xy);
             }
             break;
         case OUTYPE_XORGCONFD:
-            success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+            success &= output_xorgconfd(new_axys, new_swap_xy);
             break;
         case OUTYPE_HAL:
-            success &= output_hal(new_axys, swap_xy, new_swap_xy);
+            success &= output_hal(new_axys, new_swap_xy);
             break;
         default:
             fprintf(stderr, "ERROR: XorgPrint Calibrator does not support the supplied --output-type\n");
@@ -65,7 +65,7 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     return success;
 }
 
-bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys, int new_swap_xy)
 {
     const char* sysfs_name = get_sysfs_name();
     bool not_sysfs_name = (sysfs_name == NULL);
@@ -77,11 +77,11 @@ bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys, int swap_xy, i
     printf("Section \"InputClass\"\n");
     printf("	Identifier	\"calibration\"\n");
     printf("	MatchProduct	\"%s\"\n", sysfs_name);
-    printf("	Option	\"MinX\"	\"%d\"\n", new_axys.x_min);
-    printf("	Option	\"MaxX\"	\"%d\"\n", new_axys.x_max);
-    printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y_min);
-    printf("	Option	\"MaxY\"	\"%d\"\n", new_axys.y_max);
-    if (swap_xy != 0)
+    printf("	Option	\"MinX\"	\"%d\"\n", new_axys.x.min);
+    printf("	Option	\"MaxX\"	\"%d\"\n", new_axys.x.max);
+    printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y.min);
+    printf("	Option	\"MaxY\"	\"%d\"\n", new_axys.y.max);
+    if (new_axys.swap_xy != 0)
         printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", new_swap_xy);
     printf("EndSection\n");
 
@@ -91,7 +91,7 @@ bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys, int swap_xy, i
     return true;
 }
 
-bool CalibratorXorgPrint::output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+bool CalibratorXorgPrint::output_hal(const XYinfo new_axys, int new_swap_xy)
 {
     const char* sysfs_name = get_sysfs_name();
     bool not_sysfs_name = (sysfs_name == NULL);
@@ -105,8 +105,8 @@ bool CalibratorXorgPrint::output_hal(const XYinfo new_axys, int swap_xy, int new
   <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
   <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
   <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
-     , sysfs_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    if (swap_xy != 0)
+     , sysfs_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
+    if (new_axys.swap_xy != 0)
         printf("  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_swap_xy);
     printf("</match>\n");
 
