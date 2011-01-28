@@ -37,7 +37,7 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys)
 {
     bool success = true;
 
-    printf("\n\n--> Making the calibration permanent <--\n");
+    printf("\t--> Making the calibration permanent <--\n");
     switch (output_type) {
         case OUTYPE_AUTO:
             // xorg.conf.d or alternatively hal config

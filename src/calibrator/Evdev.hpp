@@ -35,7 +35,7 @@ class CalibratorEvdev: public Calibrator
 {
 private:
     Display     *display;
-    XDeviceInfo *info;
+    XDeviceInfo *devInfo;
     XDevice     *dev;
 
 public:

@@ -314,7 +314,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             // printed the list in find_device
             if (nr_found == 0)
                 printf("No calibratable devices found.\n");
-            exit(0);
+            exit(2);
         }
 
         if (nr_found == 0) {

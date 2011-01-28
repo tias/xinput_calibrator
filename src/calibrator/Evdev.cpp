@@ -26,7 +26,6 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
-//#include <X11/Xutil.h>
 #include <ctype.h>
 #include <cstdio>
 #include <cstring>
@@ -39,6 +38,7 @@
 #define EXIT_FAILURE 0
 #endif
 
+// Constructor
 CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
                                  const XYinfo& axys0,
                                  XID device_id,
@@ -56,12 +56,12 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
 
     // normaly, we already have the device id
     if (device_id == (XID)-1) {
-        info = xinput_find_device_info(display, device_name, False);
-        if (!info) {
+        devInfo = xinput_find_device_info(display, device_name, False);
+        if (!devInfo) {
             XCloseDisplay(display);
             throw WrongCalibratorException("Evdev: Unable to find device");
         }
-        device_id = info->id;
+        device_id = devInfo->id;
     }
 
     dev = XOpenDevice(display, device_id);
@@ -103,7 +103,7 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
 
             // No axis calibration set, set it to the default one
             // QUIRK: when my machine resumes from a sleep,
-            // the calibration property is no longer exported thourgh xinput, but still active
+            // the calibration property is no longer exported through xinput, but still active
             // not setting the values here would result in a wrong first calibration
             (void) set_calibration(old_axys);
 
@@ -161,11 +161,13 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
 
 }
 
+// Destructor
 CalibratorEvdev::~CalibratorEvdev () {
     XCloseDevice(display, dev);
     XCloseDisplay(display);
 }
 
+// Activate calibrated data and output it
 bool CalibratorEvdev::finish_data(const XYinfo new_axys)
 {
     bool success = true;
@@ -188,9 +190,7 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys)
     // close
     XSync(display, False);
 
-
-
-    printf("\n\n--> Making the calibration permanent <--\n");
+    printf("\t--> Making the calibration permanent <--\n");
     switch (output_type) {
         case OUTYPE_AUTO:
             // xorg.conf.d or alternatively xinput commands
@@ -298,7 +298,8 @@ bool CalibratorEvdev::set_calibration(const XYinfo new_axys)
     return (ret == EXIT_SUCCESS);
 }
 
-Atom CalibratorEvdev::xinput_parse_atom(Display *display, const char *name) {
+Atom CalibratorEvdev::xinput_parse_atom(Display *display, const char *name)
+{
     Bool is_atom = True;
     int i;
 
@@ -345,9 +346,9 @@ Display *display, const char *name, Bool only_extended)
 	         (is_id && devices[loop].id == id))) {
             if (found) {
                 fprintf(stderr,
-	                    "Warning: There are multiple devices named \"%s\".\n"
-	                    "To ensure the correct one is selected, please use "
-	                    "the device ID instead.\n\n", name);
+                        "Warning: There are multiple devices named \"%s\".\n"
+                        "To ensure the correct one is selected, please use "
+                        "the device ID instead.\n\n", name);
                 return NULL;
             } else {
                 found = &devices[loop];
