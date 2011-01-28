@@ -111,16 +111,20 @@ public:
     ~Calibrator() {}
 
     /// set the doubleclick treshold
-    void set_threshold_doubleclick(int t);
+    void set_threshold_doubleclick(int t)
+    { threshold_doubleclick = t; }
 
     /// set the misclick treshold
-    void set_threshold_misclick(int t);
+    void set_threshold_misclick(int t)
+    { threshold_misclick = t; }
 
     /// get the number of clicks already registered
-    int get_numclicks();
+    int get_numclicks() const
+    { return num_clicks; }
 
     /// return geometry string or NULL
-    const char* get_geometry();
+    const char* get_geometry() const
+    { return geometry; }
 
     /// reset clicks
     void reset() {
@@ -136,18 +140,31 @@ public:
     const char* get_sysfs_name();
 
 protected:
-    // check whether the coordinates are along the respective axis
+    /// check whether the coordinates are along the respective axis
     bool along_axis(int xy, int x0, int y0);
 
-    // overloaded function that applies the new calibration
+    /// Apply new calibration, implementation dependent
     virtual bool finish_data(const XYinfo new_axys, int swap_xy) =0;
 
-    // name of the device (driver)
+    /// Check whether the given name is a sysfs device name
+    bool is_sysfs_name(const char* name);
+
+    /// Check whether the X server has xorg.conf.d support
+    bool has_xorgconfd_support(Display* display=NULL);
+
+    static int find_device(const char* pre_device, bool verbose, bool list_devices,
+            XID& device_id, const char*& device_name, XYinfo& device_axys);
+
+protected:
+    /// Name of the device (driver)
     const char* const device_name;
-    // original axys values
+
+    /// Original values
     XYinfo old_axys;
-    // be verbose or not
+
+    /// Be verbose or not
     bool verbose;
+
     // nr of clicks registered
     int num_clicks;
     // click coordinates
@@ -167,12 +184,6 @@ protected:
 
     // manually specified geometry string
     const char* geometry;
-
-    // Check whether the given name is a sysfs device name
-    bool is_sysfs_name(const char* name);
-
-    // Check whether the X server has xorg.conf.d support
-    bool has_xorgconfd_support(Display* display=NULL);
 };
 
 #endif
