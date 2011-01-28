@@ -1,3 +1,9 @@
+xinput-calibrator (7.6.0-tonio73.1) unstable; urgency=low
+
+  * Management of axes inversion. Cleaner output. Better build.
+
+ -- Antoine Hue <ahue@infomed.biz>  Fri, 28 Jan 2011 14:15:34 +0100
+
 xinput-calibrator (0.7.5-1) unstable; urgency=low
 
   * New upstream release (older systems, cleaner output)
