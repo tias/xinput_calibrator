@@ -54,7 +54,7 @@ static char* my_strdup(const char* s) {
  * retuns number of devices found,
  * the data of the device is returned in the last 3 function parameters
  */
-int Calibrator::find_device(const char* pre_device, bool verbose, bool list_devices,
+int Calibrator::find_device(const char* pre_device, bool list_devices,
         XID& device_id, const char*& device_name, XYinfo& device_axys)
 {
     bool pre_device_is_id = true;
@@ -183,7 +183,6 @@ static void usage(char* cmd, unsigned thr_misclick)
 
 Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 {
-    bool verbose = false;
     bool list_devices = false;
     bool fake = false;
     bool precalib = false;
@@ -309,7 +308,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
         }
     } else {
         // Find the right device
-        int nr_found = find_device(pre_device, verbose, list_devices, device_id, device_name, device_axys);
+        int nr_found = find_device(pre_device, list_devices, device_id, device_name, device_axys);
 
         if (list_devices) {
             // printed the list in find_device
@@ -357,7 +356,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     try {
         // try Usbtouchscreen driver
         return new CalibratorUsbtouchscreen(device_name, device_axys,
-            verbose, thr_misclick, thr_doubleclick, output_type, geometry);
+            thr_misclick, thr_doubleclick, output_type, geometry);
 
     } catch(WrongCalibratorException& x) {
         if (verbose)
@@ -366,7 +365,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 
     try {
         // next, try Evdev driver (with XID)
-        return new CalibratorEvdev(device_name, device_axys, verbose, device_id,
+        return new CalibratorEvdev(device_name, device_axys, device_id,
             thr_misclick, thr_doubleclick, output_type, geometry);
 
     } catch(WrongCalibratorException& x) {
@@ -376,5 +375,5 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 
     // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
     return new CalibratorXorgPrint(device_name, device_axys,
-            verbose, thr_misclick, thr_doubleclick, output_type, geometry);
+            thr_misclick, thr_doubleclick, output_type, geometry);
 }

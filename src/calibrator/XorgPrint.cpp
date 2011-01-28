@@ -24,8 +24,8 @@
 
 #include <cstdio>
 
-CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
-  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type, geometry)
+CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
+  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry)
 {
     printf("Calibrating standard Xorg driver \"%s\"\n", device_name);
     printf("\tcurrent calibration values: min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",

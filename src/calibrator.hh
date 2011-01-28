@@ -113,7 +113,6 @@ public:
     /// if the touchscreen is not of the type it supports
     Calibrator(const char* const device_name,
                const XYinfo& axys,
-               const bool verbose,
                const int thr_misclick=0,
                const int thr_doubleclick=0,
                const OutputType output_type=OUTYPE_AUTO,
@@ -165,7 +164,7 @@ protected:
     /// Check whether the X server has xorg.conf.d support
     bool has_xorgconfd_support(Display* display=NULL);
 
-    static int find_device(const char* pre_device, bool verbose, bool list_devices,
+    static int find_device(const char* pre_device, bool list_devices,
             XID& device_id, const char*& device_name, XYinfo& device_axys);
 
 protected:
@@ -176,7 +175,7 @@ protected:
     XYinfo old_axys;
 
     /// Be verbose or not
-    bool verbose;
+    static bool verbose;
 
     /// Clicked values (screen coordinates)
     struct {
