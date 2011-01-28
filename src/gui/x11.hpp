@@ -20,19 +20,54 @@
  * THE SOFTWARE.
  */
 
+#ifndef GUI_CALIBRATOR_X11
+#define GUI_CALIBRATOR_X11
+
 #include "calibrator.hh"
-#include "gui/x11.hpp"
 
-int main(int argc, char** argv)
+/*******************************************
+ * X11 class for the the calibration GUI
+ *******************************************/
+class GuiCalibratorX11
 {
-    Calibrator* calibrator = Calibrator::make_calibrator(argc, argv);
+public:
+    static void make_instance(Calibrator* w);
+    static void give_timer_signal();
 
-    GuiCalibratorX11::make_instance( calibrator );
+protected:
+    GuiCalibratorX11(Calibrator* w);
+    ~GuiCalibratorX11();
+	
+	// Data
+    Calibrator* calibrator;
+    double X[NUM_POINTS], Y[NUM_POINTS];
+    int display_width, display_height;
+    int time_elapsed;
 
-    // wait for timer signal, processes events
-    while(1)
-        pause();
+    // X11 vars
+    Display* display;
+    int screen_num;
+    Window win;
+    GC gc;
+    XFontStruct* font_info;
 
-    delete calibrator;
-    return 0;
-}
+	// color management
+	enum { BLACK=0, WHITE=1, GRAY=2, DIMGRAY=3, RED=4, NUM_COLORS };
+	static const char* colors[NUM_COLORS];
+    unsigned long pixel[NUM_COLORS];
+
+    // Signal handlers
+    bool on_timer_signal();
+    bool on_expose_event();
+    bool on_button_press_event(XEvent event);
+
+    // Helper functions
+    void set_display_size(int width, int height);
+    void redraw();
+    void draw_message(const char* msg);
+
+private:
+    static GuiCalibratorX11* instance;
+};
+
+#endif

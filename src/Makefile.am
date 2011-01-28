@@ -28,19 +28,21 @@ SUBDIRS = \
 	calibrator \
 	gui
 
-AM_CXXFLAGS = -Wall -ansi -pedantic -Wmissing-declarations
+AM_CXXFLAGS = -Wall -ansi -pedantic
 
 bin_PROGRAMS = xinput_calibrator
 
+COMMON_SRCS=calibrator.cpp calibrator/XorgPrint.cpp calibrator/Evdev.cpp calibrator/Usbtouchscreen.cpp main_common.cpp
+
 # only one of the BUILD_ flags should be set
 if BUILD_X11
-xinput_calibrator_SOURCES = main_x11.cpp
+xinput_calibrator_SOURCES = gui/x11.cpp main_x11.cpp $(COMMON_SRCS)
 xinput_calibrator_LDADD = $(XINPUT_LIBS) $(XRANDR_LIBS) $(X11_LIBS)
 xinput_calibrator_CXXFLAGS = $(XINPUT_CFLAGS) $(X11_CFLAGS) $(XRANDR_CFLAGS) $(AM_CXXFLAGS)
 endif
 
 if BUILD_GTKMM
-xinput_calibrator_SOURCES = main_gtkmm.cpp
+xinput_calibrator_SOURCES = gui/gtkmm.cpp main_gtkmm.cpp $(COMMON_SRCS)
 xinput_calibrator_LDADD = $(XINPUT_LIBS) $(GTKMM_LIBS)
 xinput_calibrator_CXXFLAGS = $(XINPUT_CFLAGS) $(GTKMM_CFLAGS) $(AM_CXXFLAGS)
 
@@ -52,4 +54,5 @@ endif
 EXTRA_DIST = \
 	calibrator.cpp \
 	calibrator.hh \
-	main_common.hpp
+	main_common.cpp
+	

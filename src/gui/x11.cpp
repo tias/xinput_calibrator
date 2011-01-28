@@ -19,6 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+#include "gui/x11.hpp"
+
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -34,12 +37,10 @@
 #include <signal.h>
 #include <string.h>
 
-#include "calibrator.hh"
-
 
 // Timeout parameters
 const int time_step = 100;  // in milliseconds
-const int max_time = 15000; // 5000 = 5 sec
+const int max_time = 15000; // in milliseconds, 5000 = 5 sec
 
 // Clock appereance
 const int cross_lines = 25;
@@ -57,58 +58,18 @@ const std::string help_text[help_lines] = {
     "(To abort, press any key or wait)"
 };
 
-// color management
-enum { BLACK=0, WHITE=1, GRAY=2, DIMGRAY=3, RED=4 };
-const int nr_colors = 5;
-const char* colors[nr_colors] = {"BLACK", "WHITE", "GRAY", "DIMGRAY", "RED"};
-
+const char* GuiCalibratorX11::colors[GuiCalibratorX11::NUM_COLORS] = {"BLACK", "WHITE", "GRAY", "DIMGRAY", "RED"};
 
 void sigalarm_handler(int num);
 
-
-/*******************************************
- * X11 class for the the calibration GUI
- *******************************************/
-class GuiCalibratorX11
+/// Create singleton instance associated to calibrator w
+void GuiCalibratorX11::make_instance(Calibrator* w)
 {
-public:
-    GuiCalibratorX11(Calibrator* w);
-    ~GuiCalibratorX11();
-    static bool set_instance(GuiCalibratorX11* W);
-    static void give_timer_signal();
+    instance = new GuiCalibratorX11(w);
+}
 
-protected:
-    // Data
-    Calibrator* calibrator;
-    double X[4], Y[4];
-    int display_width, display_height;
-    int time_elapsed;
-
-    // X11 vars
-    Display* display;
-    int screen_num;
-    Window win;
-    GC gc;
-    XFontStruct* font_info;
-    // color mngmt
-    unsigned long pixel[nr_colors];
-
-
-    // Signal handlers
-    bool on_timer_signal();
-    bool on_expose_event();
-    bool on_button_press_event(XEvent event);
-
-    // Helper functions
-    void set_display_size(int width, int height);
-    void redraw();
-    void draw_message(const char* msg);
-
-private:
-    static GuiCalibratorX11* instance;
-};
+// Singleton instance
 GuiCalibratorX11* GuiCalibratorX11::instance = NULL;
-
 
 GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
   : calibrator(calibrator0), time_elapsed(0)
@@ -144,13 +105,30 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
                      DisplayHeight(display, screen_num));
 #endif
 
+    // window offsets
+    int gx = 0;
+    int gy = 0;
+
+    // parse geometry string
+    const char* geo = calibrator->get_geometry();
+    if (geo != NULL) {
+      int gw,gh;
+      int res = sscanf(geo,"%dx%d+%d+%d",&gw,&gh,&gx,&gy);
+      if (res != 4) {
+        fprintf(stderr,"Warning: error parsing geometry string - using defaults.\n");
+        gx = gy = 0;
+      } else {
+        set_display_size( gw, gh );
+      }
+    }
+
     // Register events on the window
     XSetWindowAttributes attributes;
     attributes.override_redirect = True;
     attributes.event_mask = ExposureMask | KeyPressMask | ButtonPressMask;
 
     win = XCreateWindow(display, RootWindow(display, screen_num),
-                0, 0, display_width, display_height, 0,
+                gx, gy, display_width, display_height, 0,
                 CopyFromParent, InputOutput, CopyFromParent,
                 CWOverrideRedirect | CWEventMask,
                 &attributes);
@@ -164,7 +142,7 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
 
     Colormap colormap = DefaultColormap(display, screen_num);
     XColor color;
-    for (int i = 0; i != nr_colors; i++) {
+    for (int i = 0; i != NUM_COLORS; i++) {
         XParseColor(display, colormap, colors[i], &color);
         XAllocColor(display, colormap, &color);
         pixel[i] = color.pixel;
@@ -216,6 +194,7 @@ void GuiCalibratorX11::redraw()
     XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
     if (nsizes != 0 && (display_width != randrsize->width ||
                         display_height != randrsize->height)) {
+      if (calibrator->get_geometry() == NULL)
         set_display_size(randrsize->width, randrsize->height);
     }
 #endif
@@ -371,14 +350,6 @@ void GuiCalibratorX11::give_timer_signal()
             }
         }
     }
-}
-
-bool GuiCalibratorX11::set_instance(GuiCalibratorX11* W)
-{
-    bool wasSet = (instance != NULL);
-    instance = W;
-
-    return wasSet;
 }
 
 

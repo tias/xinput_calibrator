@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009 Tias Guns
+ * Copyright (c) 2009 Soren Hauberg
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,19 +21,39 @@
  * THE SOFTWARE.
  */
 
+#ifndef GUI_GTKMM_HPP
+#define GUI_GTKMM_HPP
+
+#include <gtkmm/drawingarea.h>
 #include "calibrator.hh"
-#include "gui/x11.hpp"
 
-int main(int argc, char** argv)
+/*******************************************
+ * GTK-mm class for the the calibration GUI
+ *******************************************/
+class CalibrationArea : public Gtk::DrawingArea
 {
-    Calibrator* calibrator = Calibrator::make_calibrator(argc, argv);
+public:
+    CalibrationArea(Calibrator* w);
 
-    GuiCalibratorX11::make_instance( calibrator );
+protected:
+    // Data
+    Calibrator* calibrator;
+    double X[4], Y[4];
+    int display_width, display_height;
+    int time_elapsed;
 
-    // wait for timer signal, processes events
-    while(1)
-        pause();
+    const char* message;
 
-    delete calibrator;
-    return 0;
-}
+    // Signal handlers
+    bool on_timer_signal();
+    bool on_expose_event(GdkEventExpose *event);
+    bool on_button_press_event(GdkEventButton *event);
+    bool on_key_press_event(GdkEventKey *event);
+
+    // Helper functions
+    void set_display_size(int width, int height);
+    void redraw();
+    void draw_message(const char* msg);
+};
+
+#endif

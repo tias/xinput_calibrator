@@ -20,19 +20,27 @@
  * THE SOFTWARE.
  */
 
+#ifndef CALIBRATOR_XORGPRINT_HPP
+#define CALIBRATOR_XORGPRINT_HPP
+
 #include "calibrator.hh"
-#include "gui/x11.hpp"
 
-int main(int argc, char** argv)
+/***************************************
+ * Class for generic Xorg driver,
+ * outputs new Xorg.conf and FDI policy, on stdout
+ ***************************************/
+class CalibratorXorgPrint: public Calibrator
 {
-    Calibrator* calibrator = Calibrator::make_calibrator(argc, argv);
+public:
+    CalibratorXorgPrint(const char* const device_name, const XYinfo& axys,
+        const int thr_misclick=0, const int thr_doubleclick=0,
+        const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
 
-    GuiCalibratorX11::make_instance( calibrator );
+	virtual bool finish_data(const XYinfo new_axys);
+	
+protected:
+  bool output_xorgconfd(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y);
+  bool output_hal(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y);
+};
 
-    // wait for timer signal, processes events
-    while(1)
-        pause();
-
-    delete calibrator;
-    return 0;
-}
+#endif
