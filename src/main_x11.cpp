@@ -21,7 +21,7 @@
  */
 
 #include "calibrator.hh"
-#include "gui/gui_x11.hpp"
+#include "gui/x11.hpp"
 
 int main(int argc, char** argv)
 {

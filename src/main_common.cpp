@@ -54,7 +54,7 @@ static char* my_strdup(const char* s) {
  * retuns number of devices found,
  * the data of the device is returned in the last 3 function parameters
  */
-static int find_device(const char* pre_device, bool verbose, bool list_devices,
+int Calibrator::find_device(const char* pre_device, bool list_devices,
         XID& device_id, const char*& device_name, XYinfo& device_axys)
 {
     bool pre_device_is_id = true;
@@ -62,13 +62,13 @@ static int find_device(const char* pre_device, bool verbose, bool list_devices,
 
     Display* display = XOpenDisplay(NULL);
     if (display == NULL) {
-        fprintf(stderr, "Unable to connect to X server\n");
+        error ( "Unable to connect to X server\n");
         exit(1);
     }
 
-    int xi_opcode, event, error;
-    if (!XQueryExtension(display, "XInputExtension", &xi_opcode, &event, &error)) {
-        fprintf(stderr, "X Input extension not available.\n");
+    int xi_opcode, event, err;
+    if (!XQueryExtension(display, "XInputExtension", &xi_opcode, &event, &err)) {
+        error ( "X Input extension not available.\n");
         exit(1);
     }
 
@@ -77,7 +77,7 @@ static int find_device(const char* pre_device, bool verbose, bool list_devices,
         XExtensionVersion *version = XGetExtensionVersion(display, INAME);
 
         if (version && (version != (XExtensionVersion*) NoSuchExtension)) {
-            printf("DEBUG: %s version is %i.%i\n",
+            trace ("%s version is %i.%i\n",
                 INAME, version->major_version, version->minor_version);
             XFree(version);
         }
@@ -94,9 +94,7 @@ static int find_device(const char* pre_device, bool verbose, bool list_devices,
         }
     }
 
-
-    if (verbose)
-        printf("DEBUG: Skipping virtual master devices and devices without axis valuators.\n");
+    trace ("Skipping virtual master devices and devices without axis valuators.\n");
     int ndevices;
     XDeviceInfoPtr list, slist;
     slist=list=(XDeviceInfoPtr) XListInputDevices (display, &ndevices);
@@ -126,27 +124,25 @@ static int find_device(const char* pre_device, bool verbose, bool list_devices,
                 XAxisInfoPtr ax = (XAxisInfoPtr) V->axes;
 
                 if (V->mode != Absolute) {
-                    if (verbose)
-                        printf("DEBUG: Skipping device '%s' id=%i, does not report Absolute events.\n",
-                            list->name, (int)list->id);
-                } else if (V->num_axes < 2 ||
-                    (ax[0].min_value == -1 && ax[0].max_value == -1) ||
+				  trace ( "Skipping device '%s' id=%i, does not report Absolute events.\n",
+						  list->name, (int)list->id);
+				} else if (V->num_axes < 2 ||
+				  (ax[0].min_value == -1 && ax[0].max_value == -1) ||
                     (ax[1].min_value == -1 && ax[1].max_value == -1)) {
-                    if (verbose)
-                        printf("DEBUG: Skipping device '%s' id=%i, does not have two calibratable axes.\n",
-                            list->name, (int)list->id);
+				  trace ( "Skipping device '%s' id=%i, does not have two calibratable axes.\n",
+						  list->name, (int)list->id);
                 } else {
                     /* a calibratable device (has 2 axis valuators) */
                     found++;
                     device_id = list->id;
                     device_name = my_strdup(list->name);
-                    device_axys.x_min = ax[0].min_value;
-                    device_axys.x_max = ax[0].max_value;
-                    device_axys.y_min = ax[1].min_value;
-                    device_axys.y_max = ax[1].max_value;
+                    device_axys.x.min = ax[0].min_value;
+                    device_axys.x.max = ax[0].max_value;
+                    device_axys.y.min = ax[1].min_value;
+                    device_axys.y.max = ax[1].max_value;
 
                     if (list_devices)
-                        printf("Device \"%s\" id=%i\n", device_name, (int)device_id);
+                        info ("Device \"%s\" id=%i\n", device_name, (int)device_id);
                 }
 
             }
@@ -183,198 +179,197 @@ static void usage(char* cmd, unsigned thr_misclick)
 
 Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 {
-    bool verbose = false;
-    bool list_devices = false;
-    bool fake = false;
-    bool precalib = false;
-    XYinfo pre_axys;
-    const char* pre_device = NULL;
-    const char* geometry = NULL;
-    unsigned thr_misclick = 15;
-    unsigned thr_doubleclick = 7;
-    OutputType output_type = OUTYPE_AUTO;
-
-    // parse input
-    if (argc > 1) {
-        for (int i=1; i!=argc; i++) {
-            // Display help ?
-            if (strcmp("-h", argv[i]) == 0 ||
-                strcmp("--help", argv[i]) == 0) {
-                fprintf(stderr, "xinput_calibrator, v%s\n\n", VERSION);
-                usage(argv[0], thr_misclick);
-                exit(0);
-            } else
-
-            // Verbose output ?
-            if (strcmp("-v", argv[i]) == 0 ||
-                strcmp("--verbose", argv[i]) == 0) {
-                verbose = true;
-            } else
-
-            // Just list devices ?
-            if (strcmp("--list", argv[i]) == 0) {
-                list_devices = true;
-            } else
-
-            // Select specific device ?
-            if (strcmp("--device", argv[i]) == 0) {
-                if (argc > i+1)
-                    pre_device = argv[++i];
-                else {
-                    fprintf(stderr, "Error: --device needs a device name or id as argument; use --list to list the calibratable input devices.\n\n");
-                    usage(argv[0], thr_misclick);
-                    exit(1);
-                }
-            } else
-
-            // Get pre-calibration ?
-            if (strcmp("--precalib", argv[i]) == 0) {
-                precalib = true;
-                if (argc > i+1)
-                    pre_axys.x_min = atoi(argv[++i]);
-                if (argc > i+1)
-                    pre_axys.x_max = atoi(argv[++i]);
-                if (argc > i+1)
-                    pre_axys.y_min = atoi(argv[++i]);
-                if (argc > i+1)
-                    pre_axys.y_max = atoi(argv[++i]);
-            } else
-
-            // Get mis-click threshold ?
-            if (strcmp("--misclick", argv[i]) == 0) {
-                if (argc > i+1)
-                    thr_misclick = atoi(argv[++i]);
-                else {
-                    fprintf(stderr, "Error: --misclick needs a number (the pixel threshold) as argument. Set to 0 to disable mis-click detection.\n\n");
-                    usage(argv[0], thr_misclick);
-                    exit(1);
-                }
-            } else
-
-            // Get output type ?
-            if (strcmp("--output-type", argv[i]) == 0) {
-                if (argc > i+1) {
-                    i++; // eat it or exit
-                    if (strcmp("auto", argv[i]) == 0)
-                        output_type = OUTYPE_AUTO;
-                    else if (strcmp("xorg.conf.d", argv[i]) == 0)
-                        output_type = OUTYPE_XORGCONFD;
-                    else if (strcmp("hal", argv[i]) == 0)
-                        output_type = OUTYPE_HAL;
-                    else if (strcmp("xinput", argv[i]) == 0)
-                        output_type = OUTYPE_XINPUT;
-                    else {
-                        fprintf(stderr, "Error: --output-type needs one of auto|xorg.conf.d|hal|xinput.\n\n");
-                        usage(argv[0], thr_misclick);
-                        exit(1);
-                    }
-                } else {
-                    fprintf(stderr, "Error: --output-type needs one argument.\n\n");
-                    usage(argv[0], thr_misclick);
-                    exit(1);
-                }
-            } else
-
-            // specify window geometry?
-            if (strcmp("--geometry", argv[i]) == 0) {
-                geometry = argv[++i];
-            } else
-
-            // Fake calibratable device ?
-            if (strcmp("--fake", argv[i]) == 0) {
-                fake = true;
-            }
-            
-            // unknown option
-            else {
-                fprintf(stderr, "Unknown option: %s\n\n", argv[i]);
-                usage(argv[0], thr_misclick);
-                exit(0);
-            }
-        }
-    }
-    
+  bool list_devices = false;
+  bool fake = false;
+  bool precalib = false;
+  XYinfo pre_axys;
+  const char* pre_device = NULL;
+  const char* geometry = NULL;
+  unsigned thr_misclick = 15;
+  unsigned thr_doubleclick = 7;
+  OutputType output_type = OUTYPE_AUTO;
+  
+  // parse input
+  for (int i=1; i!=argc; i++) 
+	{
+	  // Display help ?
+	  if (strcmp("-h", argv[i]) == 0 ||
+		strcmp("--help", argv[i]) == 0) 
+	  {
+		error ( "xinput_calibrator, v%s\n\n", VERSION);
+		usage(argv[0], thr_misclick);
+		exit(0);
+	  } else
+		
+		// Verbose output ?
+		if (strcmp("-v", argv[i]) == 0 ||
+		  strcmp("--verbose", argv[i]) == 0) 
+		{
+		  verbose = true;
+		}
+		
+		// Just list devices ?
+		else if (strcmp("--list", argv[i]) == 0) 
+		{
+			list_devices = true;
+		}
+			
+		// Select specific device ?
+		else if (strcmp("--device", argv[i]) == 0) 
+		{
+		  if (argc > i+1)
+			pre_device = argv[++i];
+		  else {
+			error( "--device needs a device name or id as argument; use --list to list the calibratable input devices.\n\n");
+			usage(argv[0], thr_misclick);
+			exit(1);
+		  }
+		}
+		
+		// Get pre-calibration ?
+		else if (strcmp("--precalib", argv[i]) == 0) 
+		{
+		  precalib = true;
+		  if (argc > i+1)
+			pre_axys.x.min = atoi(argv[++i]);
+		  if (argc > i+1)
+			pre_axys.x.max = atoi(argv[++i]);
+		  if (argc > i+1)
+			pre_axys.y.min = atoi(argv[++i]);
+		  if (argc > i+1)
+			pre_axys.y.max = atoi(argv[++i]);
+		} else
+			  
+		// Get mis-click threshold ?
+		if (strcmp("--misclick", argv[i]) == 0) 
+		{
+		  if (argc > i+1)
+			thr_misclick = atoi(argv[++i]);
+		  else {
+			error ( "--misclick needs a number (the pixel threshold) as argument. Set to 0 to disable mis-click detection.\n\n");
+			usage(argv[0], thr_misclick);
+			exit(1);
+		  }
+		}
+		
+		// Get output type ?
+		else  if (strcmp("--output-type", argv[i]) == 0)
+		{
+		  if (argc > i+1) {
+			i++; // eat it or exit
+			if (strcmp("auto", argv[i]) == 0)
+			  output_type = OUTYPE_AUTO;
+			else if (strcmp("xorg.conf.d", argv[i]) == 0)
+			  output_type = OUTYPE_XORGCONFD;
+			else if (strcmp("hal", argv[i]) == 0)
+			  output_type = OUTYPE_HAL;
+			else if (strcmp("xinput", argv[i]) == 0)
+			  output_type = OUTYPE_XINPUT;
+			else 
+			{
+			  error ( "--output-type needs one of auto|xorg.conf.d|hal|xinput.\n\n");
+			  usage(argv[0], thr_misclick);
+			  exit(1);
+			}
+		  } else {
+			error ( "--output-type needs one argument.\n\n");
+			usage(argv[0], thr_misclick);
+			exit(1);
+		  }
+		} else
+		  
+		// specify window geometry?
+		if (strcmp("--geometry", argv[i]) == 0) {
+		  geometry = argv[++i];
+		} else
+		  
+		// Fake calibratable device ?
+		if (strcmp("--fake", argv[i]) == 0) {
+		  fake = true;
+		}
+		
+        // unknown option
+        else {
+		  fprintf(stderr, "Unknown option: %s\n\n", argv[i]);
+		  usage(argv[0], thr_misclick);
+		  exit(0);
+		}
+	}
 
     /// Choose the device to calibrate
     XID         device_id   = (XID) -1;
-    const char* device_name = NULL;
-    XYinfo      device_axys;
-    if (fake) {
-        // Fake a calibratable device
-        device_name = "Fake_device";
-        device_axys = XYinfo(0,1000,0,1000);
-
-        if (verbose) {
-            printf("DEBUG: Faking device: %s\n", device_name);
-        }
-    } else {
-        // Find the right device
-        int nr_found = find_device(pre_device, verbose, list_devices, device_id, device_name, device_axys);
-
-        if (list_devices) {
-            // printed the list in find_device
-            if (nr_found == 0)
-                printf("No calibratable devices found.\n");
-            exit(0);
-        }
-
-        if (nr_found == 0) {
-            if (pre_device == NULL)
-                fprintf (stderr, "Error: No calibratable devices found.\n");
-            else
-                fprintf (stderr, "Error: Device \"%s\" not found; use --list to list the calibratable input devices.\n", pre_device);
-            exit(1);
-
-        } else if (nr_found > 1) {
-            printf ("Warning: multiple calibratable devices found, calibrating last one (%s)\n\tuse --device to select another one.\n", device_name);
-        }
-
-        if (verbose) {
-            printf("DEBUG: Selected device: %s\n", device_name);
-        }
-    }
-
-    // override min/max XY from command line ?
-    if (precalib) {
-        if (pre_axys.x_min != -1)
-            device_axys.x_min = pre_axys.x_min;
-        if (pre_axys.x_max != -1)
-            device_axys.x_max = pre_axys.x_max;
-        if (pre_axys.y_min != -1)
-            device_axys.y_min = pre_axys.y_min;
-        if (pre_axys.y_max != -1)
-            device_axys.y_max = pre_axys.y_max;
-
-        if (verbose) {
-            printf("DEBUG: Setting precalibration: %i, %i, %i, %i\n",
-                device_axys.x_min, device_axys.x_max,
-                device_axys.y_min, device_axys.y_max);
-        }
-    }
-
-
-    // Different device/driver, different ways to apply the calibration values
+	const char* device_name = NULL;
+	XYinfo      device_axys;
+	if (fake) 
+	{
+	  // Fake a calibratable device
+	  device_name = "Fake_device";
+	  device_axys = XYinfo(0, 1000, 0, 1000);
+	  
+	  trace ("Faking device: %s\n", device_name);
+	} 
+	else 
+	{
+	  // Find the right device
+	  int nr_found = find_device(pre_device, list_devices, device_id, device_name, device_axys);
+	  
+	  if (list_devices) {
+		// printed the list in find_device
+		if (nr_found == 0)
+		  printf("No calibratable devices found.\n");
+		exit(2);
+	  }
+	  
+	  if (nr_found == 0) {
+		if (pre_device == NULL)
+		  fprintf (stderr, "Error: No calibratable devices found.\n");
+		else
+		  fprintf (stderr, "Error: Device \"%s\" not found; use --list to list the calibratable input devices.\n", pre_device);
+		exit(1);
+		
+	  } else if (nr_found > 1) {
+		info ("Warning: multiple calibratable devices found, calibrating last one (%s)\n\tuse --device to select another one.\n", device_name);
+	  }
+	  
+	  trace ("Selected device: %s\n", device_name);
+	}
+	
+	// override min/max XY from command line ?
+	if (precalib) {
+	  if (pre_axys.x.min != -1)
+		device_axys.x.min = pre_axys.x.min;
+	  if (pre_axys.x.max != -1)
+		device_axys.x.max = pre_axys.x.max;
+	  if (pre_axys.y.min != -1)
+		device_axys.y.min = pre_axys.y.min;
+	  if (pre_axys.y.max != -1)
+		device_axys.y.max = pre_axys.y.max;
+	  
+	  trace ( "Setting precalibration: %i, %i, %i, %i\n",
+			   device_axys.x.min, device_axys.x.max,
+			   device_axys.y.min, device_axys.y.max);
+	}
+	
+	// Different device/driver, different ways to apply the calibration values
     try {
         // try Usbtouchscreen driver
         return new CalibratorUsbtouchscreen(device_name, device_axys,
-            verbose, thr_misclick, thr_doubleclick, output_type, geometry);
+            thr_misclick, thr_doubleclick, output_type, geometry);
 
     } catch(WrongCalibratorException& x) {
-        if (verbose)
-            printf("DEBUG: Not usbtouchscreen calibrator: %s\n", x.what());
+        trace("Not usbtouchscreen calibrator: %s\n", x.what());
     }
 
     try {
         // next, try Evdev driver (with XID)
-        return new CalibratorEvdev(device_name, device_axys, verbose, device_id,
-            thr_misclick, thr_doubleclick, output_type, geometry);
-
-    } catch(WrongCalibratorException& x) {
-        if (verbose)
-            printf("DEBUG: Not evdev calibrator: %s\n", x.what());
-    }
+        return new CalibratorEvdev(device_name, device_axys, device_id,
+								   thr_misclick, thr_doubleclick, output_type, geometry);
+								   
+	} catch(WrongCalibratorException& x) {
+	  trace ("Not evdev calibrator: %s\n", x.what());
+	}
 
     // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
     return new CalibratorXorgPrint(device_name, device_axys,
-            verbose, thr_misclick, thr_doubleclick, output_type, geometry);
+								   thr_misclick, thr_doubleclick, output_type, geometry);
 }

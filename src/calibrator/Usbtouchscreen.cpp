@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009 Soren Hauberg
+ * Copyright (c) 2011 Antoine Hue
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,67 +49,67 @@ static const char *p_flip_x = "flip_x";
 static const char *p_flip_y = "flip_y";
 static const char *p_swap_xy = "swap_xy";
 
-CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
-  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type, geometry)
+CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const device_name0, const XYinfo& axys0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
+  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry)
 {
     if (strcmp(device_name, "Usbtouchscreen") != 0)
         throw WrongCalibratorException("Not a usbtouchscreen device");
 
     // Reset the currently running kernel
     read_bool_parameter(p_transform_xy, val_transform_xy);
-    read_bool_parameter(p_flip_x, val_flip_x);
-    read_bool_parameter(p_flip_y, val_flip_y);
-    read_bool_parameter(p_swap_xy, val_swap_xy);
+    read_bool_parameter(p_flip_x, old_axys.x.invert);
+	read_bool_parameter(p_flip_y, old_axys.y.invert);
+	read_bool_parameter(p_swap_xy, old_axys.swap_xy);
 
+#if 0 // do not modify current
     write_bool_parameter(p_transform_xy, false);
     write_bool_parameter(p_flip_x, false);
     write_bool_parameter(p_flip_y, false);
     write_bool_parameter(p_swap_xy, false);
-
-    printf("Calibrating Usbtouchscreen, through the kernel module\n");
+#endif
+    info ("Calibrating Usbtouchscreen, through the kernel module\n");
 }
 
 CalibratorUsbtouchscreen::~CalibratorUsbtouchscreen()
 {
+#if 0 // do not modify current
     // Dirty exit, so we restore the parameters of the running kernel
     write_bool_parameter (p_transform_xy, val_transform_xy);
     write_bool_parameter (p_flip_x, val_flip_x);
     write_bool_parameter (p_flip_y, val_flip_y);
     write_bool_parameter (p_swap_xy, val_swap_xy);
+#endif
 }
 
-bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
+bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys)
 {
     if (output_type != OUTYPE_AUTO) {
-        fprintf(stderr, "ERROR: Usbtouchscreen Calibrator does not support the supplied --output-type\n");
+        error ("Usbtouchscreen Calibrator does not support the supplied --output-type\n");
         return false;
     }
 
     // New ranges
-    const int range_x = (new_axys.x_max - new_axys.x_min);
-    const int range_y = (new_axys.y_max - new_axys.y_min);
-    // Should x and y be flipped ?
-    const bool flip_x = (new_axys.x_min > new_axys.x_max);
-    const bool flip_y = (new_axys.y_min > new_axys.y_max);
-
+    const int range_x = (new_axys.x.max - new_axys.x.min);
+    const int range_y = (new_axys.y.max - new_axys.y.min);
+   
     // Send the estimated parameters to the currently running kernel
     write_int_parameter(p_range_x, range_x);
     write_int_parameter(p_range_y, range_y);
-    write_int_parameter(p_min_x, new_axys.x_min);
-    write_int_parameter(p_max_x, new_axys.x_max);
-    write_int_parameter(p_min_y, new_axys.y_min);
-    write_int_parameter(p_max_y, new_axys.y_max);
+    write_int_parameter(p_min_x, new_axys.x.min);
+    write_int_parameter(p_max_x, new_axys.x.max);
+    write_int_parameter(p_min_y, new_axys.y.min);
+    write_int_parameter(p_max_y, new_axys.y.max);
     write_bool_parameter(p_transform_xy, true);
-    write_bool_parameter(p_flip_x, flip_x);
-    write_bool_parameter(p_flip_y, flip_y);
-    write_bool_parameter(p_swap_xy, swap_xy);
+    write_bool_parameter(p_flip_x, new_axys.x.invert);
+	write_bool_parameter(p_flip_y, new_axys.y.invert);
+	write_bool_parameter(p_swap_xy, new_axys.swap_xy);
 
     // Read, then write calibration parameters to modprobe_conf_local,
     // to keep the for the next boot
     FILE *fid = fopen(modprobe_conf_local, "r");
     if (fid == NULL) {
-        fprintf(stderr, "Error: Can't open '%s' for reading. Make sure you have the necessary rights\n", modprobe_conf_local);
-        fprintf(stderr, "New calibration data NOT saved\n");
+        error ( "Can't open '%s' for reading. Make sure you have the necessary rights\n", modprobe_conf_local);
+        error ( "\tNew calibration data NOT saved\n");
         return false;
     }
 
@@ -129,16 +130,16 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
     char *new_opt = new char[opt_len];
     sprintf(new_opt, "%s %s=%d %s=%d %s=%d %s=%d %s=%d %s=%d %s=%c %s=%c %s=%c %s=%c\n",
          opt, p_range_x, range_x, p_range_y, range_y,
-         p_min_x, new_axys.x_min, p_min_y, new_axys.y_min,
-         p_max_x, new_axys.x_max, p_max_y, new_axys.y_max,
-         p_transform_xy, yesno(true), p_flip_x, yesno(flip_x),
-         p_flip_y, yesno(flip_y), p_swap_xy, yesno(swap_xy));
+         p_min_x, new_axys.x.min, p_min_y, new_axys.y.min,
+         p_max_x, new_axys.x.max, p_max_y, new_axys.y.max,
+         p_transform_xy, yesno(true), p_flip_x, yesno(new_axys.x.invert),
+         p_flip_y, yesno(new_axys.y.invert), p_swap_xy, yesno(new_axys.swap_xy));
     new_contents += new_opt;
 
     fid = fopen(modprobe_conf_local, "w");
     if (fid == NULL) {
-        fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", modprobe_conf_local);
-        fprintf(stderr, "New calibration data NOT saved\n");
+        error ( "Can't open '%s' for writing. Make sure you have the necessary rights\n", modprobe_conf_local);
+        error ( "\tNew calibration data NOT saved\n");
         return false;
     }
     fprintf(fid, "%s", new_contents.c_str ());
@@ -154,11 +155,11 @@ void CalibratorUsbtouchscreen::read_int_parameter(const char *param, int &value)
         sprintf(filename, "%s/%s", module_prefix, param);
         FILE *fid = fopen(filename, "r");
         if (fid == NULL) {
-            fprintf(stderr, "Could not read parameter '%s'\n", param);
-            return;
-        }
-
-        dummy = fscanf(fid, "%d", &value);
+		  error ( "Could not read parameter '%s'\n", param);
+		  return;
+		}
+		
+		dummy = fscanf(fid, "%d", &value);
         fclose(fid);
     }
 
@@ -169,7 +170,7 @@ void CalibratorUsbtouchscreen::read_int_parameter(const char *param, int &value)
         sprintf(filename, "%s/%s", module_prefix, param);
         FILE *fid = fopen(filename, "r");
         if (fid == NULL) {
-            fprintf(stderr, "Could not read parameter '%s'\n", param);
+            error ( "Could not read parameter '%s'\n", param);
             return;
         }
 
@@ -186,7 +187,7 @@ void CalibratorUsbtouchscreen::read_int_parameter(const char *param, int &value)
         sprintf(filename, "%s/%s", module_prefix, param);
         FILE *fid = fopen(filename, "w");
         if (fid == NULL) { 
-            fprintf(stderr, "Could not save parameter '%s'\n", param);
+            error ( "Could not save parameter '%s'\n", param);
             return;
         }
 
@@ -195,12 +196,12 @@ void CalibratorUsbtouchscreen::read_int_parameter(const char *param, int &value)
     }
 
 void CalibratorUsbtouchscreen::write_bool_parameter(const char *param, const bool value)
-    {
+{
         char filename[100];
         sprintf(filename, "%s/%s", module_prefix, param);
         FILE *fid = fopen(filename, "w");
         if (fid == NULL) {
-            fprintf(stderr, "Could not save parameter '%s'\n", param);
+            error ("Could not save parameter '%s'\n", param);
             return;
         }
 

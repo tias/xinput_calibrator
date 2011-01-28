@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  */
 
-#include "gui/gui_x11.hpp"
+#include "gui/x11.hpp"
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
