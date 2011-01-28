@@ -47,6 +47,7 @@ public:
     virtual bool finish_data(const XYinfo new_axys);
 
     bool set_swapxy(const int swap_xy);
+    bool set_invert_xy(const int invert_x, const int invert_y);
     bool set_calibration(const XYinfo new_axys);
 
     // xinput_ functions (from the xinput project)
