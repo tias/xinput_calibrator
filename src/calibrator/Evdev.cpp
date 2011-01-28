@@ -104,14 +104,7 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
             // QUIRK: when my machine resumes from a sleep,
             // the calibration property is no longer exported thourgh xinput, but still active
             // not setting the values here would result in a wrong first calibration
-            bool ok = set_calibration(old_axys);
-
-            if (verbose) {
-                if (ok)
-                    printf("DEBUG: Successfully applied axis calibration.\n");
-                else
-                    printf("DEBUG: Failed to apply axis calibration.\n");
-            }
+            (void) set_calibration(old_axys);
 
         } else if (nitems > 0) {
             ptr = data;
@@ -168,29 +161,12 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys)
     printf("\nDoing dynamic recalibration:\n");
     // Evdev Axes Swap
     if (new_axys.swap_xy) {
-        printf("\tSwapping X and Y axis...\n");
-        bool ok = set_swapxy(new_swap_xy);
-        success &= ok;
-
-        if (verbose) {
-            if (ok)
-                printf("DEBUG: Successfully swapped X and Y axis.\n");
-            else
-                printf("DEBUG: Failed to swap X and Y axis.\n");
-        }
+        success &= set_swapxy(new_swap_xy);
     }
 
     // Evdev Axis Calibration
-    printf("\tSetting new calibration data: %d, %d, %d, %d\n", new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
-    bool ok = set_calibration(new_axys);
-    success &= ok;
+    success &= set_calibration(new_axys);
 
-    if (verbose) {
-        if (ok)
-            printf("DEBUG: Successfully applied axis calibration.\n");
-        else
-            printf("DEBUG: Failed to apply axis calibration.\n");
-    }
     // close
     XSync(display, False);
 
@@ -225,28 +201,36 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys)
 
 bool CalibratorEvdev::set_swapxy(const int swap_xy)
 {
+    printf("\tSwapping X and Y axis...\n");
+
     // xinput set-int-prop "divername" "Evdev Axes Swap" 8 0
-    char* arr_cmd[3];
+    const char* arr_cmd[3];
     //arr_cmd[0] = "";
-    char str_prop[50];
-    sprintf(str_prop, "Evdev Axes Swap");
-    arr_cmd[1] = str_prop;
+    arr_cmd[1] = "Evdev Axes Swap";
     char str_swap_xy[20];
-    sprintf(str_swap_xy, "%d", swap_xy);
+    snprintf(str_swap_xy, 20, "%d", swap_xy);
     arr_cmd[2] = str_swap_xy;
 
     int ret = xinput_do_set_prop(display, XA_INTEGER, 8, 3, arr_cmd);
+
+    if (verbose) {
+        if (ret == EXIT_SUCCESS)
+            printf("DEBUG: Successfully set swapped X and Y axes = %d.\n", swap_xy);
+        else
+            printf("DEBUG: Failed to set swap X and Y axes.\n");
+    }
+
     return (ret == EXIT_SUCCESS);
 }
 
 bool CalibratorEvdev::set_calibration(const XYinfo new_axys)
 {
+    printf("\tSetting calibration data: %d, %d, %d, %d\n", new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
+
     // xinput set-int-prop 4 223 32 5 500 8 300
-    char* arr_cmd[6];
+    const char* arr_cmd[6];
     //arr_cmd[0] = "";
-    char str_prop[50];
-    sprintf(str_prop, "Evdev Axis Calibration");
-    arr_cmd[1] = str_prop;
+    arr_cmd[1] = "Evdev Axis Calibration";
     char str_min_x[20];
     sprintf(str_min_x, "%d", new_axys.x.min);
     arr_cmd[2] = str_min_x;
@@ -261,6 +245,14 @@ bool CalibratorEvdev::set_calibration(const XYinfo new_axys)
     arr_cmd[5] = str_max_y;
 
     int ret = xinput_do_set_prop(display, XA_INTEGER, 32, 6, arr_cmd);
+
+    if (verbose) {
+        if (ret == EXIT_SUCCESS)
+            printf("DEBUG: Successfully applied axis calibration.\n");
+        else
+            printf("DEBUG: Failed to apply axis calibration.\n");
+    }
+
     return (ret == EXIT_SUCCESS);
 }
 
@@ -324,8 +316,7 @@ Display *display, const char *name, Bool only_extended)
     return found;
 }
 
-int CalibratorEvdev::xinput_do_set_prop(
-Display *display, Atom type, int format, int argc, char **argv)
+int CalibratorEvdev::xinput_do_set_prop(Display *display, Atom type, int format, int argc, const char **argv)
 {
 #ifndef HAVE_XI_PROP
     return EXIT_FAILURE;
@@ -333,7 +324,7 @@ Display *display, Atom type, int format, int argc, char **argv)
 
     Atom          prop;
     Atom          old_type;
-    char         *name;
+    const char    *name;
     int           i;
     Atom          float_atom;
     int           old_format, nelements = 0;
