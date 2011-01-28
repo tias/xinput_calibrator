@@ -41,26 +41,6 @@ Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0,
     //clicked.y(NUM_POINTS);
 }
 
-void Calibrator::set_threshold_doubleclick(int t)
-{
-    threshold_doubleclick = t;
-}
-
-void Calibrator::set_threshold_misclick(int t)
-{
-    threshold_misclick = t;
-}
-
-int Calibrator::get_numclicks()
-{
-    return clicked.num;
-}
-
-const char* Calibrator::get_geometry()
-{
-    return geometry;
-}
-
 bool Calibrator::add_click(int x, int y)
 {
     // Double-click detection

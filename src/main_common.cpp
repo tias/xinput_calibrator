@@ -54,7 +54,7 @@ static char* my_strdup(const char* s) {
  * retuns number of devices found,
  * the data of the device is returned in the last 3 function parameters
  */
-static int find_device(const char* pre_device, bool verbose, bool list_devices,
+int Calibrator::find_device(const char* pre_device, bool verbose, bool list_devices,
         XID& device_id, const char*& device_name, XYinfo& device_axys)
 {
     bool pre_device_is_id = true;
