@@ -1,0 +1,58 @@
+xinput-calibrator (7.6.0-tonio73.1) unstable; urgency=low
+
+  * Management of axes inversion. Cleaner output. Better build.
+
+ -- Antoine Hue <ahue@infomed.biz>  Fri, 28 Jan 2011 14:15:34 +0100
+
+xinput-calibrator (0.7.5-1) unstable; urgency=low
+
+  * New upstream release (older systems, cleaner output)
+  * remove debian/patches, obsolete by new release
+  * update control file to match cleaned up description in manpage
+  * Incorporated more suggestions from Paul Wise on mentors:
+    - remove debian/docs with README entry
+    - add license of icon (CC-BY-SA 3.0)
+
+ -- Tias Guns <tias@ulyssis.org>  Sun, 12 Sep 2010 21:51:32 +0200
+
+xinput-calibrator (0.7.0-3) unstable; urgency=low
+
+  * Incorporate suggestions from Paul Wise on mentors:
+    - Add header to link_as_needed.patch
+    - Update Standards-Version
+    - close ITP, Closes: #592073
+    - remove comments from debian/rules
+    - do not set DH_VERBOSE in debian/rules
+    - remove README file (upstream for github, not for binary pkg)
+    - language fixes from Paul Wise, quilt until new upstream release
+
+ -- Tias Guns <tias@ulyssis.org>  Sat, 14 Aug 2010 16:24:32 +0200
+
+xinput-calibrator (0.7.0-2) unstable; urgency=low
+
+  * add link_as_needed.patch
+    adds --as-needed ld flag to avoid linking useless gtkmm packages
+    suggested by Eugene Paskevich on debian-mentors
+
+ -- Tias Guns <tias@ulyssis.org>  Wed, 11 Aug 2010 21:57:32 +0200
+
+xinput-calibrator (0.7.0-1) unstable; urgency=low
+
+  * add libgtkmm-2.4-dev to Build-Depends, default for desktop distributions
+    is to use gtkmm gui
+  * update description (add mis-click, remove language error)
+  * new standards version
+
+ -- Tias Guns <tias@ulyssis.org>  Thu, 05 Aug 2010 22:37:32 +0200
+
+xinput-calibrator (0.7.0) unstable; urgency=low
+
+  * New upstream release (packaging changes, misclick detection)
+
+ -- Tias Guns <tias@ulyssis.org>  Mon, 02 Aug 2010 20:57:32 +0200
+
+xinput-calibrator (0.6.1) unstable; urgency=low
+
+  * Initial Package.
+
+ -- Tias Guns <tias@ulyssis.org>  Mon, 10 May 2010 23:28:32 +0200
