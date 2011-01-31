@@ -1,7 +1,9 @@
 #!/usr/bin/make -f
 
+#export DH_VERBOSE=1
+
 %:
 	dh  $@
 
 override_dh_auto_configure:
-	./autogen.sh --with-gui=x11 --prefix=/usr
+	./autogen.sh --prefix=/usr --with-gui=x11
