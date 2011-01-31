@@ -46,6 +46,7 @@ AC_SUBST(XINPUT_LIBS)
 PKG_CHECK_MODULES(XI_PROP, [xi >= 1.2] [inputproto >= 1.5],
 			AC_DEFINE(HAVE_XI_PROP, 1, [Xinput properties available]), foo="bar")
 
+AC_CONFIG_MACRO_DIR([m4])
 
 AC_ARG_WITH([gui], AS_HELP_STRING([--with-gui=default], [Use gtkmm GUI if available, x11 GUI otherwise (default)]),,[with_gui=default])
 AC_ARG_WITH([gui], AS_HELP_STRING([--with-gui=gtkmm], [Use gtkmm GUI]))

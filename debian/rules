@@ -2,3 +2,6 @@
 
 %:
 	dh  $@
+
+override_dh_auto_configure:
+	./autogen.sh --with-gui=x11 --prefix=/usr
