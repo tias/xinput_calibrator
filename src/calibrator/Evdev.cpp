@@ -308,23 +308,19 @@ bool CalibratorEvdev::set_swapxy(const int swap_xy)
     printf("\tSwapping X and Y axis...\n");
 
     // xinput set-int-prop "divername" "Evdev Axes Swap" 8 0
-    const char* arr_cmd[3];
-    //arr_cmd[0] = "";
-    arr_cmd[1] = "Evdev Axes Swap";
-    char str_swap_xy[20];
-    snprintf(str_swap_xy, 20, "%d", swap_xy);
-    arr_cmd[2] = str_swap_xy;
+    int arr_cmd[1];
+    arr_cmd[0] = swap_xy;
 
-    int ret = xinput_do_set_prop(display, XA_INTEGER, 8, 3, arr_cmd);
+    bool ret = xinput_do_set_int_prop("Evdev Axes Swap", display, 8, 1, arr_cmd);
 
     if (verbose) {
-        if (ret == EXIT_SUCCESS)
+        if (ret == true)
             printf("DEBUG: Successfully set swapped X and Y axes = %d.\n", swap_xy);
         else
             printf("DEBUG: Failed to set swap X and Y axes.\n");
     }
 
-    return (ret == EXIT_SUCCESS);
+    return ret;
 }
 
 bool CalibratorEvdev::set_invert_xy(const int invert_x, const int invert_y)
@@ -332,23 +328,20 @@ bool CalibratorEvdev::set_invert_xy(const int invert_x, const int invert_y)
     printf("\tInverting X and/or Y axis...\n");
 
     // xinput set-int-prop "divername" "Evdev Axis Inversion" 8 0 0
-    const char* arr_cmd[3];
-    //arr_cmd[0] = "";
-    arr_cmd[1] =  "Evdev Axis Inversion";
-    char str_val[20];
-    snprintf(str_val, 20, "%d %d", invert_x, invert_y);
-    arr_cmd[2] = str_val;
+    int arr_cmd[2];
+    arr_cmd[0] = invert_x;
+    arr_cmd[1] = invert_y;
 
-    int ret = xinput_do_set_prop(display, XA_INTEGER, 8, 3, arr_cmd);
+    int ret = xinput_do_set_int_prop("Evdev Axis Inversion", display, 8, 2, arr_cmd);
 
     if (verbose) {
-        if (ret == EXIT_SUCCESS)
+        if (ret == true)
             printf("DEBUG: Successfully set invert axis X=%d, Y=%d.\n", invert_x, invert_y);
         else
             printf("DEBUG: Failed to set axis inversion.\n");
     }
 
-    return (ret == EXIT_SUCCESS);
+    return ret;
 }
 
 bool CalibratorEvdev::set_calibration(const XYinfo new_axys)
@@ -356,32 +349,22 @@ bool CalibratorEvdev::set_calibration(const XYinfo new_axys)
     printf("\tSetting calibration data: %d, %d, %d, %d\n", new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
 
     // xinput set-int-prop 4 223 32 5 500 8 300
-    const char* arr_cmd[6];
-    //arr_cmd[0] = "";
-    arr_cmd[1] = "Evdev Axis Calibration";
-    char str_min_x[20];
-    sprintf(str_min_x, "%d", new_axys.x.min);
-    arr_cmd[2] = str_min_x;
-    char str_max_x[20];
-    sprintf(str_max_x, "%d", new_axys.x.max);
-    arr_cmd[3] = str_max_x;
-    char str_min_y[20];
-    sprintf(str_min_y, "%d", new_axys.y.min);
-    arr_cmd[4] = str_min_y;
-    char str_max_y[20];
-    sprintf(str_max_y, "%d", new_axys.y.max);
-    arr_cmd[5] = str_max_y;
+    int arr_cmd[4];
+    arr_cmd[0] = new_axys.x.min;
+    arr_cmd[1] = new_axys.x.max;
+    arr_cmd[2] = new_axys.y.min;
+    arr_cmd[3] = new_axys.y.max;
 
-    int ret = xinput_do_set_prop(display, XA_INTEGER, 32, 6, arr_cmd);
+    int ret = xinput_do_set_int_prop("Evdev Axis Calibration", display, 32, 4, arr_cmd);
 
     if (verbose) {
-        if (ret == EXIT_SUCCESS)
+        if (ret == true)
             printf("DEBUG: Successfully applied axis calibration.\n");
         else
             printf("DEBUG: Failed to apply axis calibration.\n");
     }
 
-    return (ret == EXIT_SUCCESS);
+    return ret;
 }
 
 Atom CalibratorEvdev::xinput_parse_atom(Display *display, const char *name)
@@ -445,20 +428,23 @@ Display *display, const char *name, Bool only_extended)
     return found;
 }
 
-int CalibratorEvdev::xinput_do_set_prop(Display *display, Atom type, int format, int argc, const char **argv)
+// Set Integer property on  X
+bool CalibratorEvdev::xinput_do_set_int_prop( const char * name,
+                                         Display *display,
+                                         int format,
+                                         int argc,
+                                         const int *argv )
 {
 #ifndef HAVE_XI_PROP
-    return EXIT_FAILURE;
+    return false;
 #else
 
     Atom          prop;
     Atom          old_type;
-    const char    *name;
     int           i;
-    Atom          float_atom;
-    int           old_format, nelements = 0;
+    int           old_format;
     unsigned long act_nitems, bytes_after;
-    char         *endptr;
+
     union {
         unsigned char *c;
         short *s;
@@ -466,95 +452,56 @@ int CalibratorEvdev::xinput_do_set_prop(Display *display, Atom type, int format,
         Atom *a;
     } data;
 
-    if (argc < 3)
+    if (argc < 1)
     {
-        fprintf(stderr, "Wrong usage of xinput_do_set_prop, need at least 3 arguments\n");
-        return EXIT_FAILURE;
+        fprintf(stderr, "Wrong usage of xinput_do_set_prop, need at least 1 arguments\n");
+        return false;
     }
-
-    name = argv[1];
 
     prop = xinput_parse_atom(display, name);
 
     if (prop == None) {
         fprintf(stderr, "invalid property %s\n", name);
-        return EXIT_FAILURE;
+        return false;
     }
 
-    float_atom = XInternAtom(display, "FLOAT", False);
-
-    nelements = argc - 2;
-    if (type == None || format == 0) {
+    if ( format == 0) {
         if (XGetDeviceProperty(display, dev, prop, 0, 0, False, AnyPropertyType,
                                &old_type, &old_format, &act_nitems,
                                &bytes_after, &data.c) != Success) {
             fprintf(stderr, "failed to get property type and format for %s\n",
                     name);
-            return EXIT_FAILURE;
+            return false;
         } else {
-            if (type == None)
-                type = old_type;
-            if (format == 0)
-                format = old_format;
+            format = old_format;
         }
 
         XFree(data.c);
     }
 
-    if (type == None) {
-        fprintf(stderr, "property %s doesn't exist, you need to specify "
-                "its type and format\n", name);
-        return EXIT_FAILURE;
+    data.c = (unsigned char*)calloc(argc, sizeof(long));
+
+    for (i = 0; i < argc; i++) {
+      switch (format) {
+        case 8:
+            data.c[i] = argv[i];
+        case 16:
+            data.s[i] = argv[i];
+            break;
+        case 32:
+            data.l[i] = argv[i];
+            break;
+
+        default:
+            fprintf(stderr, "unexpected size for property %s\n", name);
+            return false;
+      }
     }
 
-    data.c = (unsigned char*)calloc(nelements, sizeof(long));
-
-    for (i = 0; i < nelements; i++)
-    {
-        if (type == XA_INTEGER) {
-            switch (format)
-            {
-                case 8:
-                    data.c[i] = atoi(argv[2 + i]);
-                    break;
-                case 16:
-                    data.s[i] = atoi(argv[2 + i]);
-                    break;
-                case 32:
-                    data.l[i] = atoi(argv[2 + i]);
-                    break;
-                default:
-                    fprintf(stderr, "unexpected size for property %s", name);
-                    return EXIT_FAILURE;
-            }
-        } else if (type == float_atom) {
-            if (format != 32) {
-                fprintf(stderr, "unexpected format %d for property %s\n",
-                        format, name);
-                return EXIT_FAILURE;
-            }
-            *(float *)(data.l + i) = strtod(argv[2 + i], &endptr);
-            if (endptr == argv[2 + i]) {
-                fprintf(stderr, "argument %s could not be parsed\n", argv[2 + i]);
-                return EXIT_FAILURE;
-            }
-        } else if (type == XA_ATOM) {
-            if (format != 32) {
-                fprintf(stderr, "unexpected format %d for property %s\n",
-                        format, name);
-                return EXIT_FAILURE;
-            }
-            data.a[i] = xinput_parse_atom(display, argv[2 + i]);
-        } else {
-            fprintf(stderr, "unexpected type for property %s\n", name);
-            return EXIT_FAILURE;
-        }
-    }
-
-    XChangeDeviceProperty(display, dev, prop, type, format, PropModeReplace,
-                          data.c, nelements);
+    XChangeDeviceProperty(display, dev, prop, XA_INTEGER, format, PropModeReplace,
+                      data.c, argc);
     free(data.c);
-    return EXIT_SUCCESS;
+    return true;
 #endif // HAVE_XI_PROP
 
 }
