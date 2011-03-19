@@ -38,13 +38,16 @@ int main(int argc, char** argv)
     Gtk::Main kit(argc, argv);
 
     Glib::RefPtr< Gdk::Screen > screen = Gdk::Screen::get_default();
-    int num_monitors = screen->get_n_monitors();
+    //int num_monitors = screen->get_n_monitors(); TODO, multiple monitors?
     Gdk::Rectangle rect;
     screen->get_monitor_geometry(0, rect);
 
     Gtk::Window win;
+    // when no window manager: explicitely take size of full screen
     win.move(rect.get_x(), rect.get_y());
     win.resize(rect.get_width(), rect.get_height());
+    // in case of window manager: set as full screen to hide window decorations
+    win.fullscreen();
 
     CalibrationArea area(calibrator);
     win.add(area);
