@@ -40,7 +40,7 @@
 
 // Timeout parameters
 const int time_step = 100;  // in milliseconds
-const int max_time = 15000; // in milliseconds, 5000 = 5 sec
+const int max_time = 60000; // in milliseconds, 60000 = 60 sec
 
 // Clock appereance
 const int cross_lines = 25;
@@ -258,7 +258,7 @@ bool GuiCalibratorX11::on_timer_signal()
 {
     time_elapsed += time_step;
     if (time_elapsed > max_time) {
-        exit(0);
+        exit(1);
     }
 
     // Update clock
