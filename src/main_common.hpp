@@ -230,7 +230,7 @@ int find_device(const char* pre_device, bool verbose, bool list_devices,
 
 static void usage(char* cmd, unsigned thr_misclick)
 {
-    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--device <device name or id>] [--precalib <minx> <maxx> <miny> <maxy>] [--misclick <nr of pixels>] [--output-type <auto|xorg.conf.d|hal|xinput>] [--fake] [--geometry <w>x<h>+<x>+<y>]\n", cmd);
+    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--device <device name or id>] [--precalib <minx> <maxx> <miny> <maxy>] [--misclick <nr of pixels>] [--output-type <auto|xorg.conf.d|hal|xinput>] [--fake] [--geometry <w>x<h>]\n", cmd);
     fprintf(stderr, "\t-h, --help: print this help message\n");
     fprintf(stderr, "\t-v, --verbose: print debug messages during the process\n");
     fprintf(stderr, "\t--list: list calibratable input devices and quit\n");
@@ -240,7 +240,7 @@ static void usage(char* cmd, unsigned thr_misclick)
         thr_misclick);
     fprintf(stderr, "\t--output-type <auto|xorg.conf.d|hal|xinput>: type of config to ouput (auto=automatically detect, default: auto)\n");
     fprintf(stderr, "\t--fake: emulate a fake device (for testing purposes)\n");
-    fprintf(stderr, "\t--geometry: manually provide the geometry for the calibration window\n");
+    fprintf(stderr, "\t--geometry: manually provide the geometry (width and height) for the calibration window\n");
 }
 
 Calibrator* main_common(int argc, char** argv);
@@ -341,7 +341,7 @@ Calibrator* main_common(int argc, char** argv)
             // specify window geometry?
             if (strcmp("--geometry", argv[i]) == 0) {
                 geometry = argv[++i];
-                //sscanf(argv[++i],"%dx%d+%d+%d",&win_width,&win_height,&win_xoff,&win_yoff);
+                //sscanf(argv[++i],"%dx%d",&win_width,&win_height);
             } else
 
             // Fake calibratable device ?
