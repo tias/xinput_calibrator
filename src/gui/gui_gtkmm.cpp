@@ -85,7 +85,20 @@ CalibrationArea::CalibrationArea(Calibrator* calibrator0)
     add_events(Gdk::KEY_PRESS_MASK | Gdk::BUTTON_PRESS_MASK);
     set_flags(Gtk::CAN_FOCUS);
 
-    set_display_size(get_width(), get_height());
+    // parse geometry string
+    const char* geo = calibrator->get_geometry();
+    if (geo != NULL) {
+        int gw,gh;
+        int res = sscanf(geo,"%dx%d",&gw,&gh);
+        if (res != 2) {
+            fprintf(stderr,"Warning: error parsing geometry string - using defaults.\n");
+            geo = NULL;
+        } else {
+            set_display_size( gw, gh );
+        }
+    }
+    if (geo == NULL)
+        set_display_size(get_width(), get_height());
 
     // Setup timer for animation
     sigc::slot<bool> slot = sigc::mem_fun(*this, &CalibrationArea::on_timer_signal);
@@ -110,9 +123,10 @@ void CalibrationArea::set_display_size(int width, int height) {
 
 bool CalibrationArea::on_expose_event(GdkEventExpose *event)
 {
-    // check that screensize did not change
-    if (display_width != get_width() ||
-         display_height != get_height()) {
+    // check that screensize did not change (if no manually specified geometry)
+    if (calibrator->get_geometry() == NULL &&
+         (display_width != get_width() ||
+         display_height != get_height()) ) {
         set_display_size(get_width(), get_height());
     }
 
