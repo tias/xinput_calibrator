@@ -60,8 +60,16 @@ const int num_blocks = 8;
 struct AxisInfo {
     int min, max;
     bool invert;
+
     AxisInfo() : min(-1), max(-1), invert(false) { }
-    AxisInfo(int mi, int ma) : min(mi), max(ma), invert(false) { }
+    AxisInfo(int mi, int ma, bool inv = false) :
+        min(mi), max(ma), invert(inv) { }
+    AxisInfo(const AxisInfo& old) :
+        min(old.min), max(old.max), invert(old.invert) { }
+
+    void do_invert() {
+        invert = !invert;
+    }
 };
 
 /// struct to hold min/max info of the X and Y axis
@@ -73,8 +81,16 @@ struct XYinfo {
 
     XYinfo() : swap_xy(false) {}
 
-    XYinfo(int xmi, int xma, int ymi, int yma, bool swap_xy_ = false):
-        swap_xy(swap_xy_), x(xmi, xma), y(ymi, yma) {}
+    XYinfo(int xmi, int xma, int ymi, int yma, bool swap_xy_ = false,
+        bool inv_x = false, bool inv_y = false) :
+        swap_xy(swap_xy_), x(xmi, xma, inv_x), y(ymi, yma, inv_y) {}
+
+    XYinfo(const XYinfo& old) :
+        swap_xy(old.swap_xy), x(old.x), y(old.y) {}
+
+    void do_swap_xy() {
+        swap_xy = !swap_xy;
+    }
 };
 
 /// Names of the points
