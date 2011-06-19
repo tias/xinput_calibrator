@@ -137,12 +137,18 @@ bool Calibrator::finish(int width, int height)
         return false;
     }
 
-    XYinfo new_axys; // new axys origin and scaling
+    // new axys origin and scaling
+    // based on old_axys: inversion/swapping is relative to the old axys
+    XYinfo new_axys(old_axys);
 
     // Should x and y be swapped?
-    new_axys.swap_xy = (abs (clicked.x[UL] - clicked.x[UR]) < abs (clicked.y[UL] - clicked.y[UR]));
+    bool do_swap_xy = false;
+    if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
+        do_swap_xy = true;
+        new_axys.do_swap_xy();
+    }
 
-    if (new_axys.swap_xy) {
+    if (do_swap_xy) {
         std::swap(clicked.x[LL], clicked.x[UR]);
         std::swap(clicked.y[LL], clicked.y[UR]);
     }
@@ -167,7 +173,7 @@ bool Calibrator::finish(int width, int height)
 
 
     // If x and y has to be swapped we also have to swap the parameters
-    if (new_axys.swap_xy) {
+    if (do_swap_xy) {
         std::swap(new_axys.x.min, new_axys.y.max);
         std::swap(new_axys.y.min, new_axys.x.max);
     }

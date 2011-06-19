@@ -54,9 +54,9 @@ public:
     XDeviceInfo* xinput_find_device_info(Display *display, const char* name, Bool only_extended);
     int xinput_do_set_prop(Display *display, Atom type, int format, int argc, const char** argv);
 protected:
-    bool output_xorgconfd(const XYinfo new_axys, int new_swap_xy);
-    bool output_hal(const XYinfo new_axys, int new_swap_xy);
-    bool output_xinput(const XYinfo new_axys, int new_swap_xy);
+    bool output_xorgconfd(const XYinfo new_axys);
+    bool output_hal(const XYinfo new_axys);
+    bool output_xinput(const XYinfo new_axys);
 };
 
 #endif
