@@ -144,13 +144,30 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
                      DisplayHeight(display, screen_num));
 #endif
 
+    // window offsets
+    int gx = 0;
+    int gy = 0;
+
+    // parse geometry string
+    const char* geo = calibrator->get_geometry();
+    if (geo != NULL) {
+      int gw,gh;
+      int res = sscanf(geo,"%dx%d+%d+%d",&gw,&gh,&gx,&gy);
+      if (res != 4) {
+        fprintf(stderr,"Warning: error parsing geometry string - using defaults.\n");
+        gx = gy = 0;
+      } else {
+        set_display_size( gw, gh );
+      }
+    }
+
     // Register events on the window
     XSetWindowAttributes attributes;
     attributes.override_redirect = True;
     attributes.event_mask = ExposureMask | KeyPressMask | ButtonPressMask;
 
     win = XCreateWindow(display, RootWindow(display, screen_num),
-                0, 0, display_width, display_height, 0,
+                gx, gy, display_width, display_height, 0,
                 CopyFromParent, InputOutput, CopyFromParent,
                 CWOverrideRedirect | CWEventMask,
                 &attributes);
@@ -216,6 +233,7 @@ void GuiCalibratorX11::redraw()
     XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
     if (nsizes != 0 && (display_width != randrsize->width ||
                         display_height != randrsize->height)) {
+      if (calibrator->get_geometry() == NULL)
         set_display_size(randrsize->width, randrsize->height);
     }
 #endif

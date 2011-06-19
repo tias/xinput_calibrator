@@ -34,7 +34,7 @@ public:
      * if the touchscreen is not of the type it supports
      */
     Calibrator(const char* const device_name, const XYinfo& axys,
-        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0, const OutputType output_type=OUTYPE_AUTO);
+        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0, const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
     ~Calibrator() {}
 
     // set the doubleclick treshold
@@ -43,6 +43,8 @@ public:
     void set_threshold_misclick(int t);
     // get the number of clicks already registered
     int get_numclicks();
+    // return geometry string or NULL
+    const char* get_geometry(); 
     // reset clicks
     void reset() {
         num_clicks = 0;
@@ -84,6 +86,9 @@ protected:
 
     // Type of output
     OutputType output_type;
+
+		// manually specified geometry string
+		const char* geometry;
 
     // Check whether the given name is a sysfs device name
     bool is_sysfs_name(const char* name);

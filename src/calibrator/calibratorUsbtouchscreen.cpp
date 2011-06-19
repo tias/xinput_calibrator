@@ -53,7 +53,7 @@ class CalibratorUsbtouchscreen: public Calibrator
 public:
     CalibratorUsbtouchscreen(const char* const device_name, const XYinfo& axys,
         const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0,
-        const OutputType output_type=OUTYPE_AUTO);
+        const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
     ~CalibratorUsbtouchscreen();
 
     virtual bool finish_data(const XYinfo new_axys, int swap_xy);
@@ -134,8 +134,8 @@ protected:
     }
 };
 
-CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type)
-  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type)
+CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
+  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type, geometry)
 {
     if (strcmp(device_name, "Usbtouchscreen") != 0)
         throw WrongCalibratorException("Not a usbtouchscreen device");
