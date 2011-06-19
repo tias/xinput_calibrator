@@ -156,14 +156,10 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys)
 {
     bool success = true;
 
-    // swap x and y axis, indicated by swap_xy
-    // new value is old value (could have been 0 or 1) swapped:
-    int new_swap_xy = 1 - old_axys.swap_xy;
-
     printf("\nDoing dynamic recalibration:\n");
     // Evdev Axes Swap
-    if (new_axys.swap_xy) {
-        success &= set_swapxy(new_swap_xy);
+    if (old_axys.swap_xy != new_axys.swap_xy) {
+        success &= set_swapxy(new_axys.swap_xy);
     }
 
     // Evdev Axis Calibration
@@ -177,19 +173,19 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys)
         case OUTYPE_AUTO:
             // xorg.conf.d or alternatively xinput commands
             if (has_xorgconfd_support()) {
-                success &= output_xorgconfd(new_axys, new_swap_xy);
+                success &= output_xorgconfd(new_axys);
             } else {
-                success &= output_xinput(new_axys, new_swap_xy);
+                success &= output_xinput(new_axys);
             }
             break;
         case OUTYPE_XORGCONFD:
-            success &= output_xorgconfd(new_axys, new_swap_xy);
+            success &= output_xorgconfd(new_axys);
             break;
         case OUTYPE_HAL:
-            success &= output_hal(new_axys, new_swap_xy);
+            success &= output_hal(new_axys);
             break;
         case OUTYPE_XINPUT:
-            success &= output_xinput(new_axys, new_swap_xy);
+            success &= output_xinput(new_axys);
             break;
         default:
             fprintf(stderr, "ERROR: Evdev Calibrator does not support the supplied --output-type\n");
@@ -431,7 +427,7 @@ int CalibratorEvdev::xinput_do_set_prop(Display *display, Atom type, int format,
 
 }
 
-bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys, int new_swap_xy)
+bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys)
 {
     const char* sysfs_name = get_sysfs_name();
     bool not_sysfs_name = (sysfs_name == NULL);
@@ -445,8 +441,7 @@ bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys, int new_swap_xy)
     printf("	MatchProduct	\"%s\"\n", sysfs_name);
     printf("	Option	\"Calibration\"	\"%d %d %d %d\"\n",
                 new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
-    if (new_axys.swap_xy != 0)
-        printf("	Option	\"SwapAxes\"	\"%d\"\n", new_swap_xy);
+    printf("	Option	\"SwapAxes\"	\"%d\"\n", new_axys.swap_xy);
     printf("EndSection\n");
 
     if (not_sysfs_name)
@@ -455,7 +450,7 @@ bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys, int new_swap_xy)
     return true;
 }
 
-bool CalibratorEvdev::output_hal(const XYinfo new_axys, int new_swap_xy)
+bool CalibratorEvdev::output_hal(const XYinfo new_axys)
 {
     const char* sysfs_name = get_sysfs_name();
     bool not_sysfs_name = (sysfs_name == NULL);
@@ -467,8 +462,7 @@ bool CalibratorEvdev::output_hal(const XYinfo new_axys, int new_swap_xy)
 <match key=\"info.product\" contains=\"%s\">\n\
   <merge key=\"input.x11_options.calibration\" type=\"string\">%d %d %d %d</merge>\n"
      , sysfs_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
-    if (new_axys.swap_xy != 0)
-        printf("  <merge key=\"input.x11_options.swapaxes\" type=\"string\">%d</merge>\n", new_swap_xy);
+    printf("  <merge key=\"input.x11_options.swapaxes\" type=\"string\">%d</merge>\n", new_axys.swap_xy);
     printf("</match>\n");
 
     if (not_sysfs_name)
@@ -477,13 +471,12 @@ bool CalibratorEvdev::output_hal(const XYinfo new_axys, int new_swap_xy)
     return true;
 }
 
-bool CalibratorEvdev::output_xinput(const XYinfo new_axys, int new_swap_xy)
+bool CalibratorEvdev::output_xinput(const XYinfo new_axys)
 {
     // create startup script
     printf("  Install the 'xinput' tool and copy the command(s) below in a script that starts with your X session\n");
     printf("    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
-    if (new_axys.swap_xy)
-        printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_swap_xy);
+    printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_axys.swap_xy);
 
     return true;
 }
