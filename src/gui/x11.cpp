@@ -95,7 +95,12 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     int nsizes;
     XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
     if (nsizes != 0) {
-        set_display_size(randrsize->width, randrsize->height);
+        Rotation current = 0;
+        XRRRotations(display, screen_num, &current);
+        bool rot = current & RR_Rotate_90 || current & RR_Rotate_270;
+        int width = rot ? randrsize->height : randrsize->width;
+        int height = rot ? randrsize->width : randrsize->height;
+        set_display_size(width, height);
     } else {
         set_display_size(DisplayWidth(display, screen_num),
                          DisplayHeight(display, screen_num));
@@ -183,17 +188,31 @@ void GuiCalibratorX11::set_display_size(int width, int height) {
 
 void GuiCalibratorX11::redraw()
 {
-#ifdef HAVE_X11_XRANDR
     if (calibrator->get_geometry() == NULL) {
+        int width;
+        int height;
+#ifdef HAVE_X11_XRANDR
         // check that screensize did not change
         int nsizes;
         XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
-        if (nsizes != 0 && (display_width != randrsize->width ||
-                    display_height != randrsize->height)) {
-            set_display_size(randrsize->width, randrsize->height);
+        if (nsizes != 0) {
+            Rotation current = 0;
+            XRRRotations(display, screen_num, &current);
+            bool rot = current & RR_Rotate_90 || current & RR_Rotate_270;
+            width = rot ? randrsize->height : randrsize->width;
+            height = rot ? randrsize->width : randrsize->height;
+        } else {
+            width = DisplayWidth(display, screen_num);
+            height = DisplayHeight(display, screen_num);
+        }
+#else
+        width = DisplayWidth(display, screen_num);
+        height = DisplayHeight(display, screen_num);
+#endif
+        if (display_width != width || display_height != height) {
+            set_display_size(width, height);
         }
     }
-#endif
 
     // Print the text
     int text_height = font_info->ascent + font_info->descent;
