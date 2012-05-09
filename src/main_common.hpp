@@ -186,31 +186,46 @@ int find_device(const char* pre_device, bool verbose, bool list_devices,
             {
                 XValuatorInfoPtr V = (XValuatorInfoPtr) any;
                 XAxisInfoPtr ax = (XAxisInfoPtr) V->axes;
+                unsigned int axis_count = 0;
 
                 if (V->mode != Absolute) {
                     if (verbose)
                         printf("DEBUG: Skipping device '%s' id=%i, does not report Absolute events.\n",
                             list->name, (int)list->id);
-                } else if (V->num_axes < 2 ||
-                    (ax[0].min_value == -1 && ax[0].max_value == -1) ||
-                    (ax[1].min_value == -1 && ax[1].max_value == -1)) {
-                    if (verbose)
-                        printf("DEBUG: Skipping device '%s' id=%i, does not have two calibratable axes.\n",
-                            list->name, (int)list->id);
                 } else {
-                    /* a calibratable device (has 2 axis valuators) */
-                    found++;
-                    device_id = list->id;
-                    device_name = my_strdup(list->name);
-                    device_axys.x_min = ax[0].min_value;
-                    device_axys.x_max = ax[0].max_value;
-                    device_axys.y_min = ax[1].min_value;
-                    device_axys.y_max = ax[1].max_value;
+                    for (int k=0; k<V->num_axes; k++)
+                        if (! (ax[k].min_value == -1 && ax[k].max_value == -1))
+                            axis_count++;
 
-                    if (list_devices)
-                        printf("Device \"%s\" id=%i\n", device_name, (int)device_id);
-                }
+                    if (axis_count < 2) {
+                        if (verbose)
+                            printf("DEBUG: Skipping device '%s' id=%i, does not have two calibratable axes (%u).\n",
+                                list->name, (int)list->id, axis_count);
+		    /* Note that devices with more than eight calibratable axes
+		     * can be calibrated explicitly, but will not be
+		     * automatically selected for calibration.  This heuristic
+		     * causes some devices that are not really pointer devices
+		     * but sometimes appear to be (e.g. some USB keyboards) to
+		     * be skipped.
+                     */
+                    } else if (pre_device == NULL && axis_count > 8) {
+                        if (verbose)
+                            printf("DEBUG: Skipping device '%s' id=%i, has more than eight calibratable axes (%u).\n",
+                                list->name, (int)list->id, axis_count);
+                    } else {
+                        /* a calibratable device */
+                        found++;
+                        device_id = list->id;
+                        device_name = my_strdup(list->name);
+                        device_axys.x_min = ax[0].min_value;
+                        device_axys.x_max = ax[0].max_value;
+                        device_axys.y_min = ax[1].min_value;
+                        device_axys.y_max = ax[1].max_value;
 
+                        if (list_devices)
+                            printf("Device \"%s\" id=%i\n", device_name, (int)device_id);
+                    }
+		}
             }
 
             /*
