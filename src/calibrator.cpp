@@ -187,8 +187,28 @@ bool Calibrator::finish(int width, int height)
         std::swap(clicked_x[LR], clicked_y[LR]);
     }
 
+    const bool invert_x = (clicked_x[UR] < clicked_x[UL]);
+    if (invert_x) {
+        if (verbose)
+            printf("DEBUG: X axis is inverted.\n");
+        std::swap(clicked_x[UL], clicked_x[UR]);
+        std::swap(clicked_y[UL], clicked_y[UR]);
+        std::swap(clicked_x[LL], clicked_x[LR]);
+        std::swap(clicked_y[LL], clicked_y[LR]);
+    }
+
+    const bool invert_y = (clicked_y[LL] < clicked_y[UL]);
+    if (invert_y) {
+        if (verbose)
+            printf("DEBUG: Y axis is inverted.\n");
+        std::swap(clicked_x[UL], clicked_x[LL]);
+        std::swap(clicked_y[UL], clicked_y[LL]);
+        std::swap(clicked_x[UR], clicked_x[LR]);
+        std::swap(clicked_y[UR], clicked_y[LR]);
+    }
+
     if (verbose) {
-        printf("DEBUG: After swapping:\n");
+        printf("DEBUG: After swapping & inversion:\n");
         printf("DEBUG: Upper Left:  (%u, %u)\n", clicked_x[UL], clicked_y[UL]);
         printf("DEBUG: Upper Right: (%u, %u)\n", clicked_x[UR], clicked_y[UR]);
         printf("DEBUG: Lower Left:  (%u, %u)\n", clicked_x[LL], clicked_y[LL]);
@@ -221,7 +241,7 @@ bool Calibrator::finish(int width, int height)
                axys.x_min, axys.x_max, axys.y_min, axys.y_max);
 
     // finish the data, driver/calibrator specific
-    return finish_data(axys, swap_xy);
+    return finish_data(axys, swap_xy, invert_x, invert_y);
 }
 
 const char* Calibrator::get_sysfs_name()

@@ -56,7 +56,7 @@ public:
         const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
     ~CalibratorUsbtouchscreen();
 
-    virtual bool finish_data(const XYinfo new_axys, int swap_xy);
+    virtual bool finish_data(const XYinfo new_axys, int swap_xy, int invert_x, int invert_y);
 
 protected:
     // Globals for kernel parameters from startup.
@@ -163,7 +163,7 @@ CalibratorUsbtouchscreen::~CalibratorUsbtouchscreen()
     write_bool_parameter (p_swap_xy, val_swap_xy);
 }
 
-bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
+bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy, int invert_x, int invert_y)
 {
     if (output_type != OUTYPE_AUTO) {
         fprintf(stderr, "ERROR: Usbtouchscreen Calibrator does not support the supplied --output-type\n");
@@ -174,8 +174,8 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
     const int range_x = (new_axys.x_max - new_axys.x_min);
     const int range_y = (new_axys.y_max - new_axys.y_min);
     // Should x and y be flipped ?
-    const bool flip_x = (new_axys.x_min > new_axys.x_max);
-    const bool flip_y = (new_axys.y_min > new_axys.y_max);
+    const bool flip_x = invert_x;
+    const bool flip_y = invert_y;
 
     // Send the estimated parameters to the currently running kernel
     write_int_parameter(p_range_x, range_x);
