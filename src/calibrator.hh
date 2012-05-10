@@ -62,7 +62,7 @@ protected:
     bool along_axis(int xy, int x0, int y0);
 
     // overloaded function that applies the new calibration
-    virtual bool finish_data(const XYinfo new_axys, int swap_xy) =0;
+    virtual bool finish_data(const XYinfo new_axys, int swap_xy, int invert_x, int invert_y) =0;
 
     // name of the device (driver)
     const char* const device_name;

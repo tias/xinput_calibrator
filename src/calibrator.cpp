@@ -129,47 +129,119 @@ inline bool Calibrator::along_axis(int xy, int x0, int y0)
             (abs(xy - y0) <= threshold_misclick));
 }
 
+static int scale_value(int val, int src_min, int src_max, int dst_min, int dst_max)
+{
+    int new_val;
+    const int src_range = src_max - src_min;
+    const int dst_range = dst_max - dst_min;
+    const float scale = (float)dst_range / (float)src_range;
+    new_val = (scale * (float)(val - src_min)) + dst_min;
+    if (new_val > dst_max)
+        new_val = dst_max;
+    else if (new_val < dst_min)
+        new_val = dst_min;
+    return new_val;
+}
+
 bool Calibrator::finish(int width, int height)
 {
     if (get_numclicks() != 4) {
         return false;
     }
 
+    if (verbose) {
+        printf("DEBUG: Screen: %dx%d\n", width, height);
+        printf("DEBUG: Upper Left:  (%u, %u)\n", clicked_x[UL], clicked_y[UL]);
+        printf("DEBUG: Upper Right: (%u, %u)\n", clicked_x[UR], clicked_y[UR]);
+        printf("DEBUG: Lower Left:  (%u, %u)\n", clicked_x[LL], clicked_y[LL]);
+        printf("DEBUG: Lower Right: (%u, %u)\n", clicked_x[LR], clicked_y[LR]);
+    }
+
+    // Convert from screen coordinates to device coordinates.
+    clicked_x[UL] = scale_value(clicked_x[UL], 0, width, old_axys.x_min, old_axys.x_max);
+    clicked_x[UR] = scale_value(clicked_x[UR], 0, width, old_axys.x_min, old_axys.x_max);
+    clicked_x[LL] = scale_value(clicked_x[LL], 0, width, old_axys.x_min, old_axys.x_max);
+    clicked_x[LR] = scale_value(clicked_x[LR], 0, width, old_axys.x_min, old_axys.x_max);
+
+    clicked_y[UL] = scale_value(clicked_y[UL], 0, height, old_axys.y_min, old_axys.y_max);
+    clicked_y[UR] = scale_value(clicked_y[UR], 0, height, old_axys.y_min, old_axys.y_max);
+    clicked_y[LL] = scale_value(clicked_y[LL], 0, height, old_axys.y_min, old_axys.y_max);
+    clicked_y[LR] = scale_value(clicked_y[LR], 0, height, old_axys.y_min, old_axys.y_max);
+
+    if (verbose) {
+        printf("DEBUG: After conversion to device coordinates:\n");
+        printf("DEBUG: Upper Left:  (%u, %u)\n", clicked_x[UL], clicked_y[UL]);
+        printf("DEBUG: Upper Right: (%u, %u)\n", clicked_x[UR], clicked_y[UR]);
+        printf("DEBUG: Lower Left:  (%u, %u)\n", clicked_x[LL], clicked_y[LL]);
+        printf("DEBUG: Lower Right: (%u, %u)\n", clicked_x[LR], clicked_y[LR]);
+    }
+
     // Should x and y be swapped?
-    const bool swap_xy = (abs (clicked_x [UL] - clicked_x [UR]) < abs (clicked_y [UL] - clicked_y [UR]));
+    const bool swap_xy = (abs(clicked_x[UL] - clicked_x[UR]) < abs(clicked_y[UL] - clicked_y[UR]));
     if (swap_xy) {
-        std::swap(clicked_x[LL], clicked_x[UR]);
-        std::swap(clicked_y[LL], clicked_y[UR]);
+        if (verbose)
+            printf("DEBUG: Axes are swapped.\n");
+        std::swap(clicked_x[UL], clicked_y[UL]);
+        std::swap(clicked_x[UR], clicked_y[UR]);
+        std::swap(clicked_x[LL], clicked_y[LL]);
+        std::swap(clicked_x[LR], clicked_y[LR]);
     }
 
-    // Compute min/max coordinates.
+    const bool invert_x = (clicked_x[UR] < clicked_x[UL]);
+    if (invert_x) {
+        if (verbose)
+            printf("DEBUG: X axis is inverted.\n");
+        std::swap(clicked_x[UL], clicked_x[UR]);
+        std::swap(clicked_y[UL], clicked_y[UR]);
+        std::swap(clicked_x[LL], clicked_x[LR]);
+        std::swap(clicked_y[LL], clicked_y[LR]);
+    }
+
+    const bool invert_y = (clicked_y[LL] < clicked_y[UL]);
+    if (invert_y) {
+        if (verbose)
+            printf("DEBUG: Y axis is inverted.\n");
+        std::swap(clicked_x[UL], clicked_x[LL]);
+        std::swap(clicked_y[UL], clicked_y[LL]);
+        std::swap(clicked_x[UR], clicked_x[LR]);
+        std::swap(clicked_y[UR], clicked_y[LR]);
+    }
+
+    if (verbose) {
+        printf("DEBUG: After swapping & inversion:\n");
+        printf("DEBUG: Upper Left:  (%u, %u)\n", clicked_x[UL], clicked_y[UL]);
+        printf("DEBUG: Upper Right: (%u, %u)\n", clicked_x[UR], clicked_y[UR]);
+        printf("DEBUG: Lower Left:  (%u, %u)\n", clicked_x[LL], clicked_y[LL]);
+        printf("DEBUG: Lower Right: (%u, %u)\n", clicked_x[LR], clicked_y[LR]);
+    }
+
     XYinfo axys;
-    // These are scaled using the values of old_axys
-    const float scale_x = (old_axys.x_max - old_axys.x_min)/(float)width;
-    axys.x_min = ((clicked_x[UL] + clicked_x[LL]) * scale_x/2) + old_axys.x_min;
-    axys.x_max = ((clicked_x[UR] + clicked_x[LR]) * scale_x/2) + old_axys.x_min;
-    const float scale_y = (old_axys.y_max - old_axys.y_min)/(float)height;
-    axys.y_min = ((clicked_y[UL] + clicked_y[UR]) * scale_y/2) + old_axys.y_min;
-    axys.y_max = ((clicked_y[LL] + clicked_y[LR]) * scale_y/2) + old_axys.y_min;
 
-    // Add/subtract the offset that comes from not having the points in the
-    // corners (using the same coordinate system they are currently in)
-    const int delta_x = (axys.x_max - axys.x_min) / (float)(num_blocks - 2);
-    axys.x_min -= delta_x;
-    axys.x_max += delta_x;
-    const int delta_y = (axys.y_max - axys.y_min) / (float)(num_blocks - 2);
-    axys.y_min -= delta_y;
-    axys.y_max += delta_y;
+    // Calculate average values for min/max.
+    axys.x_min = ((float)(clicked_x[UL] + clicked_x[LL]) / 2.0);
+    axys.x_max = ((float)(clicked_x[UR] + clicked_x[LR]) / 2.0);
+    axys.y_min = ((float)(clicked_y[UL] + clicked_y[UR]) / 2.0);
+    axys.y_max = ((float)(clicked_y[LL] + clicked_y[LR]) / 2.0);
 
+    if (verbose)
+        printf("DEBUG: Averaged values [%u:%u], [%u:%u]:\n",
+               axys.x_min, axys.x_max, axys.y_min, axys.y_max);
 
-    // If x and y has to be swapped we also have to swap the parameters
-    if (swap_xy) {
-        std::swap(axys.x_min, axys.y_max);
-        std::swap(axys.y_min, axys.x_max);
-    }
+    // Scale values out to the actual screen corners.
+    float scale = 1.0 / (float)(num_blocks - 2);
+    int x_delta = scale * (float)(axys.x_max - axys.x_min);
+    axys.x_min -= x_delta;
+    axys.x_max += x_delta;
+    int y_delta = scale * (float)(axys.y_max - axys.y_min);
+    axys.y_min -= y_delta;
+    axys.y_max += y_delta;
+
+    if (verbose)
+        printf("DEBUG: Final values [%u:%u], [%u:%u]:\n",
+               axys.x_min, axys.x_max, axys.y_min, axys.y_max);
 
     // finish the data, driver/calibrator specific
-    return finish_data(axys, swap_xy);
+    return finish_data(axys, swap_xy, invert_x, invert_y);
 }
 
 const char* Calibrator::get_sysfs_name()
