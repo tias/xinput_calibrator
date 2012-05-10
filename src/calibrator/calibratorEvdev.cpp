@@ -46,15 +46,17 @@ private:
     XDevice     *dev;
 
     int old_swap_xy;
+    int old_invert_x, old_invert_y;
 public:
     CalibratorEvdev(const char* const device_name, const XYinfo& axys, const bool verbose,
         XID device_id=(XID)-1, const int thr_misclick=0, const int thr_doubleclick=0,
         const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
     ~CalibratorEvdev();
 
-    virtual bool finish_data(const XYinfo new_axys, int swap_xy);
+    virtual bool finish_data(const XYinfo new_axys, int swap_xy, int invert_x, int invert_y);
 
     bool set_swapxy(const int swap_xy);
+    bool set_inversion(const int invert_x, const int invert_y);
     bool set_calibration(const XYinfo new_axys);
 
     // xinput_ functions (from the xinput project)
@@ -62,9 +64,9 @@ public:
     XDeviceInfo* xinput_find_device_info(Display *display, const char* name, Bool only_extended);
     int xinput_do_set_prop(Display *display, Atom type, int format, int argc, char* argv[]);
 protected:
-    bool output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy);
-    bool output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy);
-    bool output_xinput(const XYinfo new_axys, int swap_xy, int new_swap_xy);
+    bool output_xorgconfd(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y);
+    bool output_hal(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y);
+    bool output_xinput(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y);
 };
 
 CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0, XID device_id, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
@@ -165,6 +167,22 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& a
                 printf("DEBUG: Read axes swap value of %i.\n", old_swap_xy);
         }
     }
+
+    // get "Evdev Axis Inversion" property
+    property = xinput_parse_atom(display, "Evdev Axis Inversion");
+    if (XGetDeviceProperty(display, dev, property, 0, 1000, False,
+                           AnyPropertyType, &act_type, &act_format,
+                           &nitems, &bytes_after, &data) == Success)
+    {
+        if (act_format == 8 && act_type == XA_INTEGER && nitems == 2) {
+            old_invert_x = *((char*)data);
+            old_invert_y = *((char*)data + 1);
+
+            if (verbose)
+                printf("DEBUG: Read axis inversion value of (%i, %i).\n", old_invert_x, old_invert_y);
+        }
+    }
+
     // TODO? evdev < 2.3.2 with swap_xy had a bug which calibrated before swapping (eg X calib on Y axis)
     // see http://cgit.freedesktop.org/xorg/driver/xf86-input-evdev/commit/?h=evdev-2.3-branch&id=3772676fd65065b43a94234127537ab5030b09f8
 
@@ -180,13 +198,12 @@ CalibratorEvdev::~CalibratorEvdev () {
     XCloseDisplay(display);
 }
 
-bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
+bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy, int invert_x, int invert_y)
 {
     bool success = true;
 
     // swap x and y axis, indicated by swap_xy
-    // new value is old value (could have been 0 or 1) swapped:
-    int new_swap_xy = 1 - old_swap_xy;
+    int new_swap_xy = swap_xy ? (1 - old_swap_xy) : old_swap_xy;
 
     printf("\nDoing dynamic recalibration:\n");
     // Evdev Axes Swap
@@ -200,6 +217,23 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
                 printf("DEBUG: Successfully swapped X and Y axis.\n");
             else
                 printf("DEBUG: Failed to swap X and Y axis.\n");
+        }
+    }
+
+    int new_invert_x = invert_x ? (1 - old_invert_x) : old_invert_x;
+    int new_invert_y = invert_y ? (1 - old_invert_y) : old_invert_y;
+
+    // Evdev Axis Inversion
+    if (invert_x || invert_y) {
+        printf("\tSetting axis inversion...\n");
+        bool ok = set_inversion(new_invert_x, new_invert_y);
+        success &= ok;
+
+        if (verbose) {
+            if (ok)
+                printf("DEBUG: Successfully set inversion.\n");
+            else
+                printf("DEBUG: Failed to set inversion.\n");
         }
     }
 
@@ -224,19 +258,19 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
         case OUTYPE_AUTO:
             // xorg.conf.d or alternatively xinput commands
             if (has_xorgconfd_support()) {
-                success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+                success &= output_xorgconfd(new_axys, new_swap_xy, new_invert_x, new_invert_y);
             } else {
-                success &= output_xinput(new_axys, swap_xy, new_swap_xy);
+                success &= output_xinput(new_axys, new_swap_xy, new_invert_x, new_invert_y);
             }
             break;
         case OUTYPE_XORGCONFD:
-            success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+            success &= output_xorgconfd(new_axys, new_swap_xy, new_invert_x, new_invert_y);
             break;
         case OUTYPE_HAL:
-            success &= output_hal(new_axys, swap_xy, new_swap_xy);
+            success &= output_hal(new_axys, new_swap_xy, new_invert_x, new_invert_y);
             break;
         case OUTYPE_XINPUT:
-            success &= output_xinput(new_axys, swap_xy, new_swap_xy);
+            success &= output_xinput(new_axys, new_swap_xy, new_invert_x, new_invert_y);
             break;
         default:
             fprintf(stderr, "ERROR: Evdev Calibrator does not support the supplied --output-type\n");
@@ -259,6 +293,25 @@ bool CalibratorEvdev::set_swapxy(const int swap_xy)
     arr_cmd[2] = str_swap_xy;
 
     int ret = xinput_do_set_prop(display, XA_INTEGER, 8, 3, arr_cmd);
+    return (ret == EXIT_SUCCESS);
+}
+
+bool CalibratorEvdev::set_inversion(const int invert_x, const int invert_y)
+{
+    char* arr_cmd[4];
+    char str_prop[50];
+    sprintf(str_prop, "Evdev Axis Inversion");
+    arr_cmd[1] = str_prop;
+
+    char str_invert_x[20];
+    sprintf(str_invert_x, "%d", invert_x);
+    arr_cmd[2] = str_invert_x;
+
+    char str_invert_y[20];
+    sprintf(str_invert_y, "%d", invert_y);
+    arr_cmd[3] = str_invert_y;
+
+    int ret = xinput_do_set_prop(display, XA_INTEGER, 8, 4, arr_cmd);
     return (ret == EXIT_SUCCESS);
 }
 
@@ -462,7 +515,7 @@ Display *display, Atom type, int format, int argc, char **argv)
 
 }
 
-bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y)
 {
     const char* sysfs_name = get_sysfs_name();
     bool not_sysfs_name = (sysfs_name == NULL);
@@ -476,8 +529,12 @@ bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys, int swap_xy, int n
     printf("	MatchProduct	\"%s\"\n", sysfs_name);
     printf("	Option	\"Calibration\"	\"%d %d %d %d\"\n",
                 new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    if (swap_xy != 0)
+    if (new_swap_xy)
         printf("	Option	\"SwapAxes\"	\"%d\"\n", new_swap_xy);
+    if (new_invert_x)
+        printf("	Option	\"InvertX\"	\"%d\"\n", new_invert_x);
+    if (new_invert_y)
+        printf("	Option	\"InvertY\"	\"%d\"\n", new_invert_y);
     printf("EndSection\n");
 
     if (not_sysfs_name)
@@ -486,7 +543,7 @@ bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys, int swap_xy, int n
     return true;
 }
 
-bool CalibratorEvdev::output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+bool CalibratorEvdev::output_hal(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y)
 {
     const char* sysfs_name = get_sysfs_name();
     bool not_sysfs_name = (sysfs_name == NULL);
@@ -498,8 +555,12 @@ bool CalibratorEvdev::output_hal(const XYinfo new_axys, int swap_xy, int new_swa
 <match key=\"info.product\" contains=\"%s\">\n\
   <merge key=\"input.x11_options.calibration\" type=\"string\">%d %d %d %d</merge>\n"
      , sysfs_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    if (swap_xy != 0)
+    if (new_swap_xy)
         printf("  <merge key=\"input.x11_options.swapaxes\" type=\"string\">%d</merge>\n", new_swap_xy);
+    if (new_invert_x)
+        printf("  <merge key=\"input.x11_options.invertx\" type=\"string\">%d</merge>\n", new_invert_x);
+    if (new_invert_y)
+        printf("  <merge key=\"input.x11_options.inverty\" type=\"string\">%d</merge>\n", new_invert_y);
     printf("</match>\n");
 
     if (not_sysfs_name)
@@ -508,13 +569,15 @@ bool CalibratorEvdev::output_hal(const XYinfo new_axys, int swap_xy, int new_swa
     return true;
 }
 
-bool CalibratorEvdev::output_xinput(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+bool CalibratorEvdev::output_xinput(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y)
 {
     // create startup script
     printf("  Install the 'xinput' tool and copy the command(s) below in a script that starts with your X session\n");
     printf("    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    if (swap_xy)
+    if (new_swap_xy)
         printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_swap_xy);
+    if (new_invert_x || new_invert_y)
+        printf("    xinput set-int-prop \"%s\" \"Evdev Axis Inversion\" 8 %d %d\n", device_name, new_invert_x, new_invert_y);
 
     return true;
 }

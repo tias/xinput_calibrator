@@ -31,10 +31,10 @@ public:
         const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0,
         const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
 
-    virtual bool finish_data(const XYinfo new_axys, int swap_xy);
+    virtual bool finish_data(const XYinfo new_axys, int swap_xy, int invert_x, int invert_y);
 protected:
-    bool output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy);
-    bool output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy);
+    bool output_xorgconfd(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y);
+    bool output_hal(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y);
 };
 
 CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
@@ -46,29 +46,31 @@ CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const X
     printf("\tIf these values are estimated wrong, either supply it manually with the --precalib option, or run the 'get_precalib.sh' script to automatically get it (through HAL).\n");
 }
 
-bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
+bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy, int invert_x, int invert_y)
 {
     bool success = true;
 
-    // we suppose the previous 'swap_xy' value was 0
+    // we assume these were previously 0
     // (unfortunately there is no way to verify this (yet))
     int new_swap_xy = swap_xy;
+    int new_invert_x = invert_x;
+    int new_invert_y = invert_y;
 
     printf("\n\n--> Making the calibration permanent <--\n");
     switch (output_type) {
         case OUTYPE_AUTO:
             // xorg.conf.d or alternatively hal config
             if (has_xorgconfd_support()) {
-                success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+                success &= output_xorgconfd(new_axys, new_swap_xy, new_invert_x, new_invert_y);
             } else {
-                success &= output_hal(new_axys, swap_xy, new_swap_xy);
+                success &= output_hal(new_axys, new_swap_xy, new_invert_x, new_invert_y);
             }
             break;
         case OUTYPE_XORGCONFD:
-            success &= output_xorgconfd(new_axys, swap_xy, new_swap_xy);
+            success &= output_xorgconfd(new_axys, new_swap_xy, new_invert_x, new_invert_y);
             break;
         case OUTYPE_HAL:
-            success &= output_hal(new_axys, swap_xy, new_swap_xy);
+            success &= output_hal(new_axys, new_swap_xy, new_invert_x, new_invert_y);
             break;
         default:
             fprintf(stderr, "ERROR: XorgPrint Calibrator does not support the supplied --output-type\n");
@@ -78,7 +80,7 @@ bool CalibratorXorgPrint::finish_data(const XYinfo new_axys, int swap_xy)
     return success;
 }
 
-bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y)
 {
     const char* sysfs_name = get_sysfs_name();
     bool not_sysfs_name = (sysfs_name == NULL);
@@ -94,8 +96,12 @@ bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys, int swap_xy, i
     printf("	Option	\"MaxX\"	\"%d\"\n", new_axys.x_max);
     printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y_min);
     printf("	Option	\"MaxY\"	\"%d\"\n", new_axys.y_max);
-    if (swap_xy != 0)
+    if (new_swap_xy != 0)
         printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", new_swap_xy);
+    if (new_invert_x != 0)
+        printf("	Option	\"InvertX\"	\"%d\" # unless it was already set to 1\n", new_invert_x);
+    if (new_invert_y != 0)
+        printf("	Option	\"InvertY\"	\"%d\" # unless it was already set to 1\n", new_invert_y);
     printf("EndSection\n");
 
     if (not_sysfs_name)
@@ -104,7 +110,7 @@ bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys, int swap_xy, i
     return true;
 }
 
-bool CalibratorXorgPrint::output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy)
+bool CalibratorXorgPrint::output_hal(const XYinfo new_axys, int new_swap_xy, int new_invert_x, int new_invert_y)
 {
     const char* sysfs_name = get_sysfs_name();
     bool not_sysfs_name = (sysfs_name == NULL);
@@ -119,8 +125,12 @@ bool CalibratorXorgPrint::output_hal(const XYinfo new_axys, int swap_xy, int new
   <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
   <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
      , sysfs_name, new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    if (swap_xy != 0)
+    if (new_swap_xy != 0)
         printf("  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_swap_xy);
+    if (new_invert_x != 0)
+        printf("  <merge key=\"input.x11_options.swapx\" type=\"string\">%d</merge>\n", new_invert_x);
+    if (new_invert_y != 0)
+        printf("  <merge key=\"input.x11_options.swapy\" type=\"string\">%d</merge>\n", new_invert_y);
     printf("</match>\n");
 
     if (not_sysfs_name)
