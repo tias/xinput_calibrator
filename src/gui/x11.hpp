@@ -60,6 +60,7 @@ protected:
     bool on_timer_signal();
     bool on_expose_event();
     bool on_button_press_event(XEvent event);
+    bool on_key_press_event(XEvent event);
 
     // Helper functions
     void set_display_size(int width, int height);
