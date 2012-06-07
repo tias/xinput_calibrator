@@ -25,7 +25,6 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
-//#include <X11/Xutil.h>
 #include <ctype.h>
 #include <cstdio>
 #include <cstring>
@@ -38,8 +37,15 @@
 #define EXIT_FAILURE 0
 #endif
 
-CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& axys0, const bool verbose0, XID device_id, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
-  : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type, geometry), old_swap_xy(0)
+// Constructor
+CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
+                                 const XYinfo& axys0,
+                                 XID device_id,
+                                 const int thr_misclick,
+                                 const int thr_doubleclick,
+                                 const OutputType output_type,
+                                 const char* geometry)
+  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry), old_swap_xy(0)
 {
     // init
     display = XOpenDisplay(NULL);
@@ -49,12 +55,12 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& a
 
     // normaly, we already have the device id
     if (device_id == (XID)-1) {
-        info = xinput_find_device_info(display, device_name, False);
-        if (!info) {
+        devInfo = xinput_find_device_info(display, device_name, False);
+        if (!devInfo) {
             XCloseDisplay(display);
             throw WrongCalibratorException("Evdev: Unable to find device");
         }
-        device_id = info->id;
+        device_id = devInfo->id;
     }
 
     dev = XOpenDevice(display, device_id);
@@ -96,16 +102,9 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& a
 
             // No axis calibration set, set it to the default one
             // QUIRK: when my machine resumes from a sleep,
-            // the calibration property is no longer exported thourgh xinput, but still active
+            // the calibration property is no longer exported through xinput, but still active
             // not setting the values here would result in a wrong first calibration
-            bool ok = set_calibration(old_axys);
-
-            if (verbose) {
-                if (ok)
-                    printf("DEBUG: Successfully applied axis calibration.\n");
-                else
-                    printf("DEBUG: Failed to apply axis calibration.\n");
-            }
+            (void) set_calibration(old_axys);
 
         } else if (nitems > 0) {
             ptr = data;
@@ -146,11 +145,13 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0, const XYinfo& a
 
 }
 
+// Destructor
 CalibratorEvdev::~CalibratorEvdev () {
     XCloseDevice(display, dev);
     XCloseDisplay(display);
 }
 
+// Activate calibrated data and output it
 bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 {
     bool success = true;
@@ -162,35 +163,16 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
     printf("\nDoing dynamic recalibration:\n");
     // Evdev Axes Swap
     if (swap_xy) {
-        printf("\tSwapping X and Y axis...\n");
-        bool ok = set_swapxy(new_swap_xy);
-        success &= ok;
-
-        if (verbose) {
-            if (ok)
-                printf("DEBUG: Successfully swapped X and Y axis.\n");
-            else
-                printf("DEBUG: Failed to swap X and Y axis.\n");
-        }
+        success &= set_swapxy(new_swap_xy);
     }
 
     // Evdev Axis Calibration
-    printf("\tSetting new calibration data: %d, %d, %d, %d\n", new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
-    bool ok = set_calibration(new_axys);
-    success &= ok;
+    success &= set_calibration(new_axys);
 
-    if (verbose) {
-        if (ok)
-            printf("DEBUG: Successfully applied axis calibration.\n");
-        else
-            printf("DEBUG: Failed to apply axis calibration.\n");
-    }
     // close
     XSync(display, False);
 
-
-
-    printf("\n\n--> Making the calibration permanent <--\n");
+    printf("\t--> Making the calibration permanent <--\n");
     switch (output_type) {
         case OUTYPE_AUTO:
             // xorg.conf.d or alternatively xinput commands
@@ -219,28 +201,36 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys, int swap_xy)
 
 bool CalibratorEvdev::set_swapxy(const int swap_xy)
 {
+    printf("\tSwapping X and Y axis...\n");
+
     // xinput set-int-prop "divername" "Evdev Axes Swap" 8 0
-    char* arr_cmd[3];
+    const char* arr_cmd[3];
     //arr_cmd[0] = "";
-    char str_prop[50];
-    sprintf(str_prop, "Evdev Axes Swap");
-    arr_cmd[1] = str_prop;
+    arr_cmd[1] = "Evdev Axes Swap";
     char str_swap_xy[20];
-    sprintf(str_swap_xy, "%d", swap_xy);
+    snprintf(str_swap_xy, 20, "%d", swap_xy);
     arr_cmd[2] = str_swap_xy;
 
     int ret = xinput_do_set_prop(display, XA_INTEGER, 8, 3, arr_cmd);
+
+    if (verbose) {
+        if (ret == EXIT_SUCCESS)
+            printf("DEBUG: Successfully set swapped X and Y axes = %d.\n", swap_xy);
+        else
+            printf("DEBUG: Failed to set swap X and Y axes.\n");
+    }
+
     return (ret == EXIT_SUCCESS);
 }
 
 bool CalibratorEvdev::set_calibration(const XYinfo new_axys)
 {
+    printf("\tSetting calibration data: %d, %d, %d, %d\n", new_axys.x_min, new_axys.x_max, new_axys.y_min, new_axys.y_max);
+
     // xinput set-int-prop 4 223 32 5 500 8 300
-    char* arr_cmd[6];
+    const char* arr_cmd[6];
     //arr_cmd[0] = "";
-    char str_prop[50];
-    sprintf(str_prop, "Evdev Axis Calibration");
-    arr_cmd[1] = str_prop;
+    arr_cmd[1] = "Evdev Axis Calibration";
     char str_min_x[20];
     sprintf(str_min_x, "%d", new_axys.x_min);
     arr_cmd[2] = str_min_x;
@@ -255,10 +245,19 @@ bool CalibratorEvdev::set_calibration(const XYinfo new_axys)
     arr_cmd[5] = str_max_y;
 
     int ret = xinput_do_set_prop(display, XA_INTEGER, 32, 6, arr_cmd);
+
+    if (verbose) {
+        if (ret == EXIT_SUCCESS)
+            printf("DEBUG: Successfully applied axis calibration.\n");
+        else
+            printf("DEBUG: Failed to apply axis calibration.\n");
+    }
+
     return (ret == EXIT_SUCCESS);
 }
 
-Atom CalibratorEvdev::xinput_parse_atom(Display *display, const char *name) {
+Atom CalibratorEvdev::xinput_parse_atom(Display *display, const char *name)
+{
     Bool is_atom = True;
     int i;
 
@@ -305,9 +304,9 @@ Display *display, const char *name, Bool only_extended)
 	         (is_id && devices[loop].id == id))) {
             if (found) {
                 fprintf(stderr,
-	                    "Warning: There are multiple devices named \"%s\".\n"
-	                    "To ensure the correct one is selected, please use "
-	                    "the device ID instead.\n\n", name);
+                        "Warning: There are multiple devices named \"%s\".\n"
+                        "To ensure the correct one is selected, please use "
+                        "the device ID instead.\n\n", name);
                 return NULL;
             } else {
                 found = &devices[loop];
@@ -318,8 +317,7 @@ Display *display, const char *name, Bool only_extended)
     return found;
 }
 
-int CalibratorEvdev::xinput_do_set_prop(
-Display *display, Atom type, int format, int argc, char **argv)
+int CalibratorEvdev::xinput_do_set_prop(Display *display, Atom type, int format, int argc, const char **argv)
 {
 #ifndef HAVE_XI_PROP
     return EXIT_FAILURE;
@@ -327,7 +325,7 @@ Display *display, Atom type, int format, int argc, char **argv)
 
     Atom          prop;
     Atom          old_type;
-    char         *name;
+    const char    *name;
     int           i;
     Atom          float_atom;
     int           old_format, nelements = 0;

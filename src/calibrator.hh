@@ -72,6 +72,7 @@ enum {
     UR = 1, // Upper-right
     LL = 2, // Lower-left
     LR = 3,  // Lower-right
+    NUM_POINTS
 };
 
 /// Output types
@@ -88,59 +89,85 @@ class WrongCalibratorException : public std::invalid_argument {
             std::invalid_argument(msg) {}
 };
 
-// Abstract base class for calculating new calibration parameters
+/// Base class for calculating new calibration parameters
 class Calibrator
 {
 public:
     /// Parse arguments and create calibrator
     static Calibrator* make_calibrator(int argc, char** argv);
 
-    /* Constructor for a specific calibrator
-     *
-     * The constructor will throw an exception,
-     * if the touchscreen is not of the type it supports
-     */
-    Calibrator(const char* const device_name, const XYinfo& axys,
-        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0, const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
+    /// Constructor
+    ///
+    /// The constructor will throw an exception,
+    /// if the touchscreen is not of the type it supports
+    Calibrator(const char* const device_name,
+               const XYinfo& axys,
+               const int thr_misclick=0,
+               const int thr_doubleclick=0,
+               const OutputType output_type=OUTYPE_AUTO,
+               const char* geometry=0);
+
     ~Calibrator() {}
 
-    // set the doubleclick treshold
-    void set_threshold_doubleclick(int t);
-    // set the misclick treshold
-    void set_threshold_misclick(int t);
-    // get the number of clicks already registered
-    int get_numclicks();
-    // return geometry string or NULL
-    const char* get_geometry();
-    // reset clicks
+    /// set the doubleclick treshold
+    void set_threshold_doubleclick(int t)
+    { threshold_doubleclick = t; }
+
+    /// set the misclick treshold
+    void set_threshold_misclick(int t)
+    { threshold_misclick = t; }
+
+    /// get the number of clicks already registered
+    int get_numclicks() const
+    { return num_clicks; }
+
+    /// return geometry string or NULL
+    const char* get_geometry() const
+    { return geometry; }
+
+    /// reset clicks
     void reset() {
         num_clicks = 0;
     }
-    // add a click with the given coordinates
+
+    /// add a click with the given coordinates
     bool add_click(int x, int y);
-    // calculate and apply the calibration
+    /// calculate and apply the calibration
     bool finish(int width, int height);
-    // get the sysfs name of the device,
-    // returns NULL if it can not be found
+    /// get the sysfs name of the device,
+    /// returns NULL if it can not be found
     const char* get_sysfs_name();
 
 protected:
-    // check whether the coordinates are along the respective axis
+    /// check whether the coordinates are along the respective axis
     bool along_axis(int xy, int x0, int y0);
 
-    // overloaded function that applies the new calibration
+    /// Apply new calibration, implementation dependent
     virtual bool finish_data(const XYinfo new_axys, int swap_xy) =0;
 
-    // name of the device (driver)
+    /// Check whether the given name is a sysfs device name
+    bool is_sysfs_name(const char* name);
+
+    /// Check whether the X server has xorg.conf.d support
+    bool has_xorgconfd_support(Display* display=NULL);
+
+    static int find_device(const char* pre_device, bool list_devices,
+            XID& device_id, const char*& device_name, XYinfo& device_axys);
+
+protected:
+    /// Name of the device (driver)
     const char* const device_name;
-    // original axys values
+
+    /// Original values
     XYinfo old_axys;
-    // be verbose or not
-    bool verbose;
+
+    /// Be verbose or not
+    static bool verbose;
+
     // nr of clicks registered
     int num_clicks;
     // click coordinates
-    int clicked_x[4], clicked_y[4];
+    int clicked_x[NUM_POINTS], clicked_y[NUM_POINTS];
 
     // Threshold to keep the same point from being clicked twice.
     // Set to zero if you don't want this check
@@ -156,12 +183,6 @@ protected:
 
     // manually specified geometry string
     const char* geometry;
-
-    // Check whether the given name is a sysfs device name
-    bool is_sysfs_name(const char* name);
-
-    // Check whether the X server has xorg.conf.d support
-    bool has_xorgconfd_support(Display* display=NULL);
 };
 
 #endif

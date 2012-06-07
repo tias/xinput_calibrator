@@ -54,7 +54,7 @@ static char* my_strdup(const char* s) {
  * retuns number of devices found,
  * the data of the device is returned in the last 3 function parameters
  */
-static int find_device(const char* pre_device, bool verbose, bool list_devices,
+int Calibrator::find_device(const char* pre_device, bool list_devices,
         XID& device_id, const char*& device_name, XYinfo& device_axys)
 {
     bool pre_device_is_id = true;
@@ -183,7 +183,6 @@ static void usage(char* cmd, unsigned thr_misclick)
 
 Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 {
-    bool verbose = false;
     bool list_devices = false;
     bool fake = false;
     bool precalib = false;
@@ -200,7 +199,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             // Display help ?
             if (strcmp("-h", argv[i]) == 0 ||
                 strcmp("--help", argv[i]) == 0) {
-                fprintf(stderr, "xinput_calibratior, v%s\n\n", VERSION);
+                fprintf(stderr, "xinput_calibrator, v%s\n\n", VERSION);
                 usage(argv[0], thr_misclick);
                 exit(0);
             } else
@@ -278,7 +277,6 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             // specify window geometry?
             if (strcmp("--geometry", argv[i]) == 0) {
                 geometry = argv[++i];
-                //sscanf(argv[++i],"%dx%d",&win_width,&win_height);
             } else
 
             // Fake calibratable device ?
@@ -296,7 +294,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     }
 
 
-    // Choose the device to calibrate
+    /// Choose the device to calibrate
     XID         device_id   = (XID) -1;
     const char* device_name = NULL;
     XYinfo      device_axys;
@@ -310,13 +308,13 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
         }
     } else {
         // Find the right device
-        int nr_found = find_device(pre_device, verbose, list_devices, device_id, device_name, device_axys);
+        int nr_found = find_device(pre_device, list_devices, device_id, device_name, device_axys);
 
         if (list_devices) {
             // printed the list in find_device
             if (nr_found == 0)
                 printf("No calibratable devices found.\n");
-            exit(0);
+            exit(2);
         }
 
         if (nr_found == 0) {
@@ -358,7 +356,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     try {
         // try Usbtouchscreen driver
         return new CalibratorUsbtouchscreen(device_name, device_axys,
-            verbose, thr_misclick, thr_doubleclick, output_type, geometry);
+            thr_misclick, thr_doubleclick, output_type, geometry);
 
     } catch(WrongCalibratorException& x) {
         if (verbose)
@@ -367,7 +365,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 
     try {
         // next, try Evdev driver (with XID)
-        return new CalibratorEvdev(device_name, device_axys, verbose, device_id,
+        return new CalibratorEvdev(device_name, device_axys, device_id,
             thr_misclick, thr_doubleclick, output_type, geometry);
 
     } catch(WrongCalibratorException& x) {
@@ -377,5 +375,5 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 
     // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
     return new CalibratorXorgPrint(device_name, device_axys,
-            verbose, thr_misclick, thr_doubleclick, output_type, geometry);
+            thr_misclick, thr_doubleclick, output_type, geometry);
 }

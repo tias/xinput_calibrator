@@ -40,7 +40,7 @@
 
 // Timeout parameters
 const int time_step = 100;  // in milliseconds
-const int max_time = 15000; // 5000 = 5 sec
+const int max_time = 15000; // in milliseconds, 5000 = 5 sec
 
 // Clock appereance
 const int cross_lines = 25;
@@ -58,11 +58,7 @@ const std::string help_text[help_lines] = {
     "(To abort, press any key or wait)"
 };
 
-// color management
-enum { BLACK=0, WHITE=1, GRAY=2, DIMGRAY=3, RED=4 };
-const int nr_colors = 5;
-const char* colors[nr_colors] = {"BLACK", "WHITE", "GRAY", "DIMGRAY", "RED"};
-
+const char* GuiCalibratorX11::colors[GuiCalibratorX11::NUM_COLORS] = {"BLACK", "WHITE", "GRAY", "DIMGRAY", "RED"};
 
 void sigalarm_handler(int num);
 
@@ -74,7 +70,6 @@ void GuiCalibratorX11::make_instance(Calibrator* w)
 
 // Singleton instance
 GuiCalibratorX11* GuiCalibratorX11::instance = NULL;
-
 
 GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
   : calibrator(calibrator0), time_elapsed(0)
@@ -142,7 +137,7 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
 
     Colormap colormap = DefaultColormap(display, screen_num);
     XColor color;
-    for (int i = 0; i != nr_colors; i++) {
+    for (int i = 0; i != NUM_COLORS; i++) {
         XParseColor(display, colormap, colors[i], &color);
         XAllocColor(display, colormap, &color);
         pixel[i] = color.pixel;
