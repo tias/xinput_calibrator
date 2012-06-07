@@ -40,7 +40,7 @@ protected:
 
     // Data
     Calibrator* calibrator;
-    double X[4], Y[4];
+    double X[NUM_POINTS], Y[NUM_POINTS];
     int display_width, display_height;
     int time_elapsed;
 

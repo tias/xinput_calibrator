@@ -72,6 +72,7 @@ enum {
     UR = 1, // Upper-right
     LL = 2, // Lower-left
     LR = 3,  // Lower-right
+    NUM_POINTS
 };
 
 /// Output types
@@ -140,7 +141,7 @@ protected:
     // nr of clicks registered
     int num_clicks;
     // click coordinates
-    int clicked_x[4], clicked_y[4];
+    int clicked_x[NUM_POINTS], clicked_y[NUM_POINTS];
 
     // Threshold to keep the same point from being clicked twice.
     // Set to zero if you don't want this check
