@@ -89,40 +89,50 @@ class WrongCalibratorException : public std::invalid_argument {
             std::invalid_argument(msg) {}
 };
 
-// Abstract base class for calculating new calibration parameters
+/// Base class for calculating new calibration parameters
 class Calibrator
 {
 public:
     /// Parse arguments and create calibrator
     static Calibrator* make_calibrator(int argc, char** argv);
 
-    /* Constructor for a specific calibrator
-     *
-     * The constructor will throw an exception,
-     * if the touchscreen is not of the type it supports
-     */
-    Calibrator(const char* const device_name, const XYinfo& axys,
-        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0, const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
+    /// Constructor
+    ///
+    /// The constructor will throw an exception,
+    /// if the touchscreen is not of the type it supports
+    Calibrator(const char* const device_name,
+               const XYinfo& axys,
+               const bool verbose,
+               const int thr_misclick=0,
+               const int thr_doubleclick=0,
+               const OutputType output_type=OUTYPE_AUTO,
+               const char* geometry=0);
+
     ~Calibrator() {}
 
-    // set the doubleclick treshold
+    /// set the doubleclick treshold
     void set_threshold_doubleclick(int t);
-    // set the misclick treshold
+
+    /// set the misclick treshold
     void set_threshold_misclick(int t);
-    // get the number of clicks already registered
+
+    /// get the number of clicks already registered
     int get_numclicks();
-    // return geometry string or NULL
+
+    /// return geometry string or NULL
     const char* get_geometry();
-    // reset clicks
+
+    /// reset clicks
     void reset() {
         num_clicks = 0;
     }
-    // add a click with the given coordinates
+
+    /// add a click with the given coordinates
     bool add_click(int x, int y);
-    // calculate and apply the calibration
+    /// calculate and apply the calibration
     bool finish(int width, int height);
-    // get the sysfs name of the device,
-    // returns NULL if it can not be found
+    /// get the sysfs name of the device,
+    /// returns NULL if it can not be found
     const char* get_sysfs_name();
 
 protected:

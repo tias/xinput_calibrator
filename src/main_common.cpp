@@ -200,7 +200,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             // Display help ?
             if (strcmp("-h", argv[i]) == 0 ||
                 strcmp("--help", argv[i]) == 0) {
-                fprintf(stderr, "xinput_calibratior, v%s\n\n", VERSION);
+                fprintf(stderr, "xinput_calibrator, v%s\n\n", VERSION);
                 usage(argv[0], thr_misclick);
                 exit(0);
             } else
@@ -278,7 +278,6 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             // specify window geometry?
             if (strcmp("--geometry", argv[i]) == 0) {
                 geometry = argv[++i];
-                //sscanf(argv[++i],"%dx%d",&win_width,&win_height);
             } else
 
             // Fake calibratable device ?
@@ -296,7 +295,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     }
 
 
-    // Choose the device to calibrate
+    /// Choose the device to calibrate
     XID         device_id   = (XID) -1;
     const char* device_name = NULL;
     XYinfo      device_axys;

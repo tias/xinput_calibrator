@@ -40,7 +40,7 @@
 
 // Timeout parameters
 const int time_step = 100;  // in milliseconds
-const int max_time = 15000; // 5000 = 5 sec
+const int max_time = 15000; // in milliseconds, 5000 = 5 sec
 
 // Clock appereance
 const int cross_lines = 25;
@@ -70,7 +70,6 @@ void GuiCalibratorX11::make_instance(Calibrator* w)
 
 // Singleton instance
 GuiCalibratorX11* GuiCalibratorX11::instance = NULL;
-
 
 GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
   : calibrator(calibrator0), time_elapsed(0)
