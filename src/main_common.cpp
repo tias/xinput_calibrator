@@ -140,10 +140,10 @@ int Calibrator::find_device(const char* pre_device, bool list_devices,
                     found++;
                     device_id = list->id;
                     device_name = my_strdup(list->name);
-                    device_axys.x_min = ax[0].min_value;
-                    device_axys.x_max = ax[0].max_value;
-                    device_axys.y_min = ax[1].min_value;
-                    device_axys.y_max = ax[1].max_value;
+                    device_axys.x.min = ax[0].min_value;
+                    device_axys.x.max = ax[0].max_value;
+                    device_axys.y.min = ax[1].min_value;
+                    device_axys.y.max = ax[1].max_value;
 
                     if (list_devices)
                         printf("Device \"%s\" id=%i\n", device_name, (int)device_id);
@@ -230,13 +230,13 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             if (strcmp("--precalib", argv[i]) == 0) {
                 precalib = true;
                 if (argc > i+1)
-                    pre_axys.x_min = atoi(argv[++i]);
+                    pre_axys.x.min = atoi(argv[++i]);
                 if (argc > i+1)
-                    pre_axys.x_max = atoi(argv[++i]);
+                    pre_axys.x.max = atoi(argv[++i]);
                 if (argc > i+1)
-                    pre_axys.y_min = atoi(argv[++i]);
+                    pre_axys.y.min = atoi(argv[++i]);
                 if (argc > i+1)
-                    pre_axys.y_max = atoi(argv[++i]);
+                    pre_axys.y.max = atoi(argv[++i]);
             } else
 
             // Get mis-click threshold ?
@@ -335,19 +335,19 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 
     // override min/max XY from command line ?
     if (precalib) {
-        if (pre_axys.x_min != -1)
-            device_axys.x_min = pre_axys.x_min;
-        if (pre_axys.x_max != -1)
-            device_axys.x_max = pre_axys.x_max;
-        if (pre_axys.y_min != -1)
-            device_axys.y_min = pre_axys.y_min;
-        if (pre_axys.y_max != -1)
-            device_axys.y_max = pre_axys.y_max;
+        if (pre_axys.x.min != -1)
+            device_axys.x.min = pre_axys.x.min;
+        if (pre_axys.x.max != -1)
+            device_axys.x.max = pre_axys.x.max;
+        if (pre_axys.y.min != -1)
+            device_axys.y.min = pre_axys.y.min;
+        if (pre_axys.y.max != -1)
+            device_axys.y.max = pre_axys.y.max;
 
         if (verbose) {
             printf("DEBUG: Setting precalibration: %i, %i, %i, %i\n",
-                device_axys.x_min, device_axys.x_max,
-                device_axys.y_min, device_axys.y_max);
+                device_axys.x.min, device_axys.x.max,
+                device_axys.y.min, device_axys.y.max);
         }
     }
 

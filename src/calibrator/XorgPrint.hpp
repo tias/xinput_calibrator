@@ -36,10 +36,11 @@ public:
         const int thr_misclick=0, const int thr_doubleclick=0,
         const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
 
-    virtual bool finish_data(const XYinfo new_axys, int swap_xy);
+    virtual bool finish_data(const XYinfo new_axys);
+
 protected:
-    bool output_xorgconfd(const XYinfo new_axys, int swap_xy, int new_swap_xy);
-    bool output_hal(const XYinfo new_axys, int swap_xy, int new_swap_xy);
+    bool output_xorgconfd(const XYinfo new_axys);
+    bool output_hal(const XYinfo new_axys);
 };
 
 #endif

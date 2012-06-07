@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009 Tias Guns
  * Copyright (c) 2009 Soren Hauberg
+ * Copyright (c) 2011 Antoine Hue
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,23 +35,28 @@ bool Calibrator::verbose = false;
 
 Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0,
     const int thr_misclick, const int thr_doubleclick, const OutputType output_type0, const char* geometry0)
-: device_name(device_name0), old_axys(axys0), num_clicks(0),
-	threshold_doubleclick(thr_doubleclick), threshold_misclick(thr_misclick),
-	output_type(output_type0), geometry(geometry0)
+: device_name(device_name0),
+    threshold_doubleclick(thr_doubleclick), threshold_misclick(thr_misclick),
+    output_type(output_type0), geometry(geometry0)
 {
+    old_axys = axys0;
+
+    clicked.num = 0;
+    //clicked.x(NUM_POINTS);
+    //clicked.y(NUM_POINTS);
 }
 
 bool Calibrator::add_click(int x, int y)
 {
     // Double-click detection
-    if (threshold_doubleclick > 0 && num_clicks > 0) {
-        int i = num_clicks-1;
+    if (threshold_doubleclick > 0 && clicked.num > 0) {
+        int i = clicked.num - 1;
         while (i >= 0) {
-            if (abs(x - clicked_x[i]) <= threshold_doubleclick
-                && abs(y - clicked_y[i]) <= threshold_doubleclick) {
+            if (abs(x - clicked.x[i]) <= threshold_doubleclick
+                && abs(y - clicked.y[i]) <= threshold_doubleclick) {
                 if (verbose) {
                     printf("DEBUG: Not adding click %i (X=%i, Y=%i): within %i pixels of previous click\n",
-                        num_clicks, x, y, threshold_doubleclick);
+                         clicked.num, x, y, threshold_doubleclick);
                 }
                 return false;
             }
@@ -59,51 +65,62 @@ bool Calibrator::add_click(int x, int y)
     }
 
     // Mis-click detection
-    if (threshold_misclick > 0 && num_clicks > 0) {
+    if (threshold_misclick > 0 && clicked.num > 0) {
         bool misclick = true;
 
-        if (num_clicks == 1) {
-            // check that along one axis of first point
-            if (along_axis(x,clicked_x[0],clicked_y[0]) ||
-                along_axis(y,clicked_x[0],clicked_y[0]))
-                misclick = false;
-        } else if (num_clicks == 2) {
-            // check that along other axis of first point than second point
-            if ((along_axis(y,clicked_x[0],clicked_y[0]) &&
-                 along_axis(clicked_x[1],clicked_x[0],clicked_y[0])) ||
-                (along_axis(x,clicked_x[0],clicked_y[0]) &&
-                 along_axis(clicked_y[1],clicked_x[0],clicked_y[0])))
-                misclick = false;
-        } else if (num_clicks == 3) {
-            // check that along both axis of second and third point
-            if ((along_axis(x,clicked_x[1],clicked_y[1]) &&
-                 along_axis(y,clicked_x[2],clicked_y[2])) ||
-                (along_axis(y,clicked_x[1],clicked_y[1]) &&
-                 along_axis(x,clicked_x[2],clicked_y[2])))
-                misclick = false;
+        switch (clicked.num) {
+            case 1:
+                // check that along one axis of first point
+                if (along_axis(x,clicked.x[UL],clicked.y[UL]) ||
+                        along_axis(y,clicked.x[UL],clicked.y[UL]))
+                {
+                    misclick = false;
+                } else if (verbose) {
+                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) (threshold=%i)\n",
+                            clicked.num, x, y, clicked.x[UL], clicked.y[UL], threshold_misclick);
+                }
+                break;
+
+            case 2:
+                // check that along other axis of first point than second point
+                if ((along_axis( y, clicked.x[UL], clicked.y[UL])
+                            && along_axis( clicked.x[UR], clicked.x[UL], clicked.y[UL]))
+                        || (along_axis( x, clicked.x[UL], clicked.y[UL])
+                            && along_axis( clicked.y[UR], clicked.x[UL], clicked.y[UL])))
+                {
+                    misclick = false;
+                } else if (verbose) {
+                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) or click 1 (X=%i, Y=%i) (threshold=%i)\n",
+                            clicked.num, x, y, clicked.x[UL], clicked.y[UL], clicked.x[UR], clicked.y[UR], threshold_misclick);
+                }
+                break;
+
+            case 3:
+                // check that along both axis of second and third point
+                if ( ( along_axis( x, clicked.x[UR], clicked.y[UR])
+                            &&   along_axis( y, clicked.x[LL], clicked.y[LL]) )
+                        ||( along_axis( y, clicked.x[UR], clicked.y[UR])
+                            &&  along_axis( x, clicked.x[LL], clicked.y[LL]) ) )
+                {
+                    misclick = false;
+                } else if (verbose) {
+                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 1 (X=%i, Y=%i) or click 2 (X=%i, Y=%i) (threshold=%i)\n",
+                            clicked.num, x, y, clicked.x[UR], clicked.y[UR], clicked.x[LL], clicked.y[LL], threshold_misclick);
+                }
         }
 
         if (misclick) {
-            if (verbose) {
-                if (num_clicks == 1)
-                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[0], clicked_y[0], threshold_misclick);
-                else if (num_clicks == 2)
-                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 0 (X=%i, Y=%i) or click 1 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[0], clicked_y[0], clicked_x[1], clicked_y[1], threshold_misclick);
-                else if (num_clicks == 3)
-                    printf("DEBUG: Mis-click detected, click %i (X=%i, Y=%i) not aligned with click 1 (X=%i, Y=%i) or click 2 (X=%i, Y=%i) (threshold=%i)\n", num_clicks, x, y, clicked_x[1], clicked_y[1], clicked_x[2], clicked_y[2], threshold_misclick);
-            }
-
             reset();
             return false;
         }
     }
 
-    clicked_x[num_clicks] = x;
-    clicked_y[num_clicks] = y;
-    num_clicks++;
+    clicked.x.push_back(x);
+    clicked.y.push_back(y);
+    clicked.num++;
 
     if (verbose)
-        printf("DEBUG: Adding click %i (X=%i, Y=%i)\n", num_clicks-1, x, y);
+        printf("DEBUG: Adding click %i (X=%i, Y=%i)\n", clicked.num-1, x, y);
 
     return true;
 }
@@ -116,45 +133,53 @@ inline bool Calibrator::along_axis(int xy, int x0, int y0)
 
 bool Calibrator::finish(int width, int height)
 {
-    if (get_numclicks() != 4) {
+    if (get_numclicks() != NUM_POINTS) {
         return false;
     }
 
+    // new axys origin and scaling
+    // based on old_axys: inversion/swapping is relative to the old axys
+    XYinfo new_axys(old_axys);
+
     // Should x and y be swapped?
-    const bool swap_xy = (abs (clicked_x [UL] - clicked_x [UR]) < abs (clicked_y [UL] - clicked_y [UR]));
-    if (swap_xy) {
-        std::swap(clicked_x[LL], clicked_x[UR]);
-        std::swap(clicked_y[LL], clicked_y[UR]);
+    bool do_swap_xy = false;
+    if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
+        do_swap_xy = true;
+        new_axys.do_swap_xy();
+    }
+
+    if (do_swap_xy) {
+        std::swap(clicked.x[LL], clicked.x[UR]);
+        std::swap(clicked.y[LL], clicked.y[UR]);
     }
 
     // Compute min/max coordinates.
-    XYinfo axys;
     // These are scaled using the values of old_axys
-    const float scale_x = (old_axys.x_max - old_axys.x_min)/(float)width;
-    axys.x_min = ((clicked_x[UL] + clicked_x[LL]) * scale_x/2) + old_axys.x_min;
-    axys.x_max = ((clicked_x[UR] + clicked_x[LR]) * scale_x/2) + old_axys.x_min;
-    const float scale_y = (old_axys.y_max - old_axys.y_min)/(float)height;
-    axys.y_min = ((clicked_y[UL] + clicked_y[UR]) * scale_y/2) + old_axys.y_min;
-    axys.y_max = ((clicked_y[LL] + clicked_y[LR]) * scale_y/2) + old_axys.y_min;
+    const float scale_x = (old_axys.x.max - old_axys.x.min)/(float)width;
+    new_axys.x.min = ((clicked.x[UL] + clicked.x[LL]) * scale_x/2) + old_axys.x.min;
+    new_axys.x.max = ((clicked.x[UR] + clicked.x[LR]) * scale_x/2) + old_axys.x.min;
+    const float scale_y = (old_axys.y.max - old_axys.y.min)/(float)height;
+    new_axys.y.min = ((clicked.y[UL] + clicked.y[UR]) * scale_y/2) + old_axys.y.min;
+    new_axys.y.max = ((clicked.y[LL] + clicked.y[LR]) * scale_y/2) + old_axys.y.min;
 
     // Add/subtract the offset that comes from not having the points in the
     // corners (using the same coordinate system they are currently in)
-    const int delta_x = (axys.x_max - axys.x_min) / (float)(num_blocks - 2);
-    axys.x_min -= delta_x;
-    axys.x_max += delta_x;
-    const int delta_y = (axys.y_max - axys.y_min) / (float)(num_blocks - 2);
-    axys.y_min -= delta_y;
-    axys.y_max += delta_y;
+    const int delta_x = (new_axys.x.max - new_axys.x.min) / (float)(num_blocks - 2);
+    new_axys.x.min -= delta_x;
+    new_axys.x.max += delta_x;
+    const int delta_y = (new_axys.y.max - new_axys.y.min) / (float)(num_blocks - 2);
+    new_axys.y.min -= delta_y;
+    new_axys.y.max += delta_y;
 
 
     // If x and y has to be swapped we also have to swap the parameters
-    if (swap_xy) {
-        std::swap(axys.x_min, axys.y_max);
-        std::swap(axys.y_min, axys.x_max);
+    if (do_swap_xy) {
+        std::swap(new_axys.x.min, new_axys.y.max);
+        std::swap(new_axys.y.min, new_axys.x.max);
     }
 
     // finish the data, driver/calibrator specific
-    return finish_data(axys, swap_xy);
+    return finish_data(new_axys);
 }
 
 const char* Calibrator::get_sysfs_name()
