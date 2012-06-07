@@ -21,40 +21,39 @@
  * THE SOFTWARE.
  */
 
-// Must be before Xlib stuff
-#include <gtkmm/main.h>
-#include <gtkmm/window.h>
-#include <cairomm/context.h>
+#ifndef GUI_GTKMM_HPP
+#define GUI_GTKMM_HPP
 
+#include <gtkmm/drawingarea.h>
 #include "calibrator.hh"
-#include "gui/gtkmm.hpp"
 
-int main(int argc, char** argv)
+/*******************************************
+ * GTK-mm class for the the calibration GUI
+ *******************************************/
+class CalibrationArea : public Gtk::DrawingArea
 {
-    Calibrator* calibrator = Calibrator::make_calibrator(argc, argv);
+public:
+    CalibrationArea(Calibrator* w);
 
-    // GTK-mm setup
-    Gtk::Main kit(argc, argv);
+protected:
+    // Data
+    Calibrator* calibrator;
+    double X[4], Y[4];
+    int display_width, display_height;
+    int time_elapsed;
 
-    Glib::RefPtr< Gdk::Screen > screen = Gdk::Screen::get_default();
-    //int num_monitors = screen->get_n_monitors(); TODO, multiple monitors?
-    Gdk::Rectangle rect;
-    screen->get_monitor_geometry(0, rect);
+    const char* message;
 
-    Gtk::Window win;
-    // when no window manager: explicitely take size of full screen
-    win.move(rect.get_x(), rect.get_y());
-    win.resize(rect.get_width(), rect.get_height());
-    // in case of window manager: set as full screen to hide window decorations
-    win.fullscreen();
+    // Signal handlers
+    bool on_timer_signal();
+    bool on_expose_event(GdkEventExpose *event);
+    bool on_button_press_event(GdkEventButton *event);
+    bool on_key_press_event(GdkEventKey *event);
 
-    CalibrationArea area(calibrator);
-    win.add(area);
-    area.show();
+    // Helper functions
+    void set_display_size(int width, int height);
+    void redraw();
+    void draw_message(const char* msg);
+};
 
-    Gtk::Main::run(win);
-
-    Gtk::Main::quit();
-    delete calibrator;
-    return 0;
-}
+#endif

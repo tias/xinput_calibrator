@@ -25,7 +25,7 @@
 #include <dirent.h>
 #include <iostream>
 #include <fstream>
-#include <string>
+#include <cstring>
 
 #include "calibrator.hh"
 

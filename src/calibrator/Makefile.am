@@ -1,4 +1,4 @@
 EXTRA_DIST = \
-	calibratorEvdev.cpp \
-	calibratorUsbtouchscreen.cpp \
-	calibratorXorgPrint.cpp
+	Evdev.cpp \
+	Usbtouchscreen.cpp \
+	XorgPrint.cpp

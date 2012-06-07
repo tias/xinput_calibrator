@@ -19,120 +19,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include <string>
+
+#include "calibrator/Usbtouchscreen.hpp"
+
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 
 /*************************
  * Variables for usbtouchscreen specifically
  *************************/
 // The file to which the calibration parameters are saved.
 // (XXX: is this distribution dependend?)
-const char *modprobe_conf_local = "/etc/modprobe.conf.local";
+static const char *modprobe_conf_local = "/etc/modprobe.conf.local";
 
 // Prefix to the kernel path where we can set the parameters
-const char *module_prefix = "/sys/module/usbtouchscreen/parameters";
+static const char *module_prefix = "/sys/module/usbtouchscreen/parameters";
 
 // Names of kernel parameters
-const char *p_range_x = "range_x";
-const char *p_range_y = "range_y";
-const char *p_min_x = "min_x";
-const char *p_min_y = "min_y";
-const char *p_max_x = "max_x";
-const char *p_max_y = "max_y";
-const char *p_transform_xy = "transform_xy";
-const char *p_flip_x = "flip_x";
-const char *p_flip_y = "flip_y";
-const char *p_swap_xy = "swap_xy";
-
-
-/**********************************
- * Class for usbtouchscreen driver,
- * writes output parameters to running kernel and to modprobe.conf
- **********************************/
-class CalibratorUsbtouchscreen: public Calibrator
-{
-public:
-    CalibratorUsbtouchscreen(const char* const device_name, const XYinfo& axys,
-        const bool verbose, const int thr_misclick=0, const int thr_doubleclick=0,
-        const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
-    ~CalibratorUsbtouchscreen();
-
-    virtual bool finish_data(const XYinfo new_axys, int swap_xy);
-
-protected:
-    // Globals for kernel parameters from startup.
-    // We revert to these if the program aborts
-    bool val_transform_xy, val_flip_x, val_flip_y, val_swap_xy;
-
-    // Helper functions
-    char yesno(const bool value)
-    {
-        if (value)
-            return 'Y';
-        else
-            return 'N';
-    }
-
-    void read_int_parameter(const char *param, int &value)
-    {
-        int dummy;
-        char filename[100];
-        sprintf(filename, "%s/%s", module_prefix, param);
-        FILE *fid = fopen(filename, "r");
-        if (fid == NULL) {
-            fprintf(stderr, "Could not read parameter '%s'\n", param);
-            return;
-        }
-
-        dummy = fscanf(fid, "%d", &value);
-        fclose(fid);
-    }
-
-    void read_bool_parameter(const char *param, bool &value)
-    {
-        char *dummy;
-        char filename[100];
-        sprintf(filename, "%s/%s", module_prefix, param);
-        FILE *fid = fopen(filename, "r");
-        if (fid == NULL) {
-            fprintf(stderr, "Could not read parameter '%s'\n", param);
-            return;
-        }
-
-        char val[3];
-        dummy = fgets(val, 2, fid);
-        fclose(fid);
-
-        value = (val[0] == yesno(true));
-    }
-
-    void write_int_parameter(const char *param, const int value)
-    {
-        char filename[100];
-        sprintf(filename, "%s/%s", module_prefix, param);
-        FILE *fid = fopen(filename, "w");
-        if (fid == NULL) { 
-            fprintf(stderr, "Could not save parameter '%s'\n", param);
-            return;
-        }
-
-        fprintf(fid, "%d", value);
-        fclose(fid);
-    }
-
-    void write_bool_parameter(const char *param, const bool value)
-    {
-        char filename[100];
-        sprintf(filename, "%s/%s", module_prefix, param);
-        FILE *fid = fopen(filename, "w");
-        if (fid == NULL) {
-            fprintf(stderr, "Could not save parameter '%s'\n", param);
-            return;
-        }
-
-        fprintf(fid, "%c", yesno (value));
-        fclose(fid);
-    }
-};
+static const char *p_range_x = "range_x";
+static const char *p_range_y = "range_y";
+static const char *p_min_x = "min_x";
+static const char *p_min_y = "min_y";
+static const char *p_max_x = "max_x";
+static const char *p_max_y = "max_y";
+static const char *p_transform_xy = "transform_xy";
+static const char *p_flip_x = "flip_x";
+static const char *p_flip_y = "flip_y";
+static const char *p_swap_xy = "swap_xy";
 
 CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const device_name0, const XYinfo& axys0, const bool verbose0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry)
   : Calibrator(device_name0, axys0, verbose0, thr_misclick, thr_doubleclick, output_type, geometry)
@@ -231,4 +145,64 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys, int swap_xy)
     fclose(fid);
 
     return true;
+}
+
+void CalibratorUsbtouchscreen::read_int_parameter(const char *param, int &value)
+{
+    int dummy;
+    char filename[100];
+    sprintf(filename, "%s/%s", module_prefix, param);
+    FILE *fid = fopen(filename, "r");
+    if (fid == NULL) {
+        fprintf(stderr, "Could not read parameter '%s'\n", param);
+        return;
+    }
+
+    dummy = fscanf(fid, "%d", &value);
+    fclose(fid);
+}
+
+void CalibratorUsbtouchscreen::read_bool_parameter(const char *param, bool &value)
+{
+    char *dummy;
+    char filename[100];
+    sprintf(filename, "%s/%s", module_prefix, param);
+    FILE *fid = fopen(filename, "r");
+    if (fid == NULL) {
+        fprintf(stderr, "Could not read parameter '%s'\n", param);
+        return;
+    }
+
+    char val[3];
+    dummy = fgets(val, 2, fid);
+    fclose(fid);
+        value = (val[0] == yesno(true));
+}
+
+void CalibratorUsbtouchscreen::write_int_parameter(const char *param, const int value)
+{
+    char filename[100];
+    sprintf(filename, "%s/%s", module_prefix, param);
+    FILE *fid = fopen(filename, "w");
+    if (fid == NULL) {
+        fprintf(stderr, "Could not save parameter '%s'\n", param);
+        return;
+    }
+
+    fprintf(fid, "%d", value);
+    fclose(fid);
+}
+
+void CalibratorUsbtouchscreen::write_bool_parameter(const char *param, const bool value)
+{
+    char filename[100];
+    sprintf(filename, "%s/%s", module_prefix, param);
+    FILE *fid = fopen(filename, "w");
+    if (fid == NULL) {
+        fprintf(stderr, "Could not save parameter '%s'\n", param);
+        return;
+    }
+
+    fprintf(fid, "%c", yesno (value));
+    fclose(fid);
 }
