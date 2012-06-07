@@ -20,6 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 #include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
@@ -348,7 +349,7 @@ Calibrator* main_common(int argc, char** argv)
             if (strcmp("--fake", argv[i]) == 0) {
                 fake = true;
             }
-            
+
             // unknown option
             else {
                 fprintf(stderr, "Unknown option: %s\n\n", argv[i]);
@@ -357,7 +358,7 @@ Calibrator* main_common(int argc, char** argv)
             }
         }
     }
-    
+
 
     // Choose the device to calibrate
     XID         device_id   = (XID) -1;
