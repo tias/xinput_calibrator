@@ -58,11 +58,7 @@ const std::string help_text[help_lines] = {
     "(To abort, press any key or wait)"
 };
 
-// color management
-enum { BLACK=0, WHITE=1, GRAY=2, DIMGRAY=3, RED=4 };
-const int nr_colors = 5;
-const char* colors[nr_colors] = {"BLACK", "WHITE", "GRAY", "DIMGRAY", "RED"};
-
+const char* GuiCalibratorX11::colors[GuiCalibratorX11::NUM_COLORS] = {"BLACK", "WHITE", "GRAY", "DIMGRAY", "RED"};
 
 void sigalarm_handler(int num);
 
@@ -142,7 +138,7 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
 
     Colormap colormap = DefaultColormap(display, screen_num);
     XColor color;
-    for (int i = 0; i != nr_colors; i++) {
+    for (int i = 0; i != NUM_COLORS; i++) {
         XParseColor(display, colormap, colors[i], &color);
         XAllocColor(display, colormap, &color);
         pixel[i] = color.pixel;

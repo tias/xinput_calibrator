@@ -50,10 +50,11 @@ protected:
     Window win;
     GC gc;
     XFontStruct* font_info;
-    // color mngmt
-    static const int nr_colors = 5;
-    unsigned long pixel[nr_colors];
 
+    // color management
+    enum { BLACK=0, WHITE=1, GRAY=2, DIMGRAY=3, RED=4, NUM_COLORS };
+    static const char* colors[NUM_COLORS];
+    unsigned long pixel[NUM_COLORS];
 
     // Signal handlers
     bool on_timer_signal();
