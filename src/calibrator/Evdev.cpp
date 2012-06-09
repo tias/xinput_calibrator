@@ -329,21 +329,21 @@ Display *display, const char *name, Bool only_extended)
 
     for (loop=0; loop<len; loop++) {
         if (!isdigit(name[loop])) {
-	        is_id = False;
-	        break;
+            is_id = False;
+            break;
         }
     }
 
     if (is_id) {
-	    id = atoi(name);
+        id = atoi(name);
     }
 
     devices = XListInputDevices(display, &num_devices);
 
     for (loop=0; loop<num_devices; loop++) {
         if ((!only_extended || (devices[loop].use >= IsXExtensionDevice)) &&
-	        ((!is_id && strcmp(devices[loop].name, name) == 0) ||
-	         (is_id && devices[loop].id == id))) {
+            ((!is_id && strcmp(devices[loop].name, name) == 0) ||
+             (is_id && devices[loop].id == id))) {
             if (found) {
                 fprintf(stderr,
                         "Warning: There are multiple devices named \"%s\".\n"
