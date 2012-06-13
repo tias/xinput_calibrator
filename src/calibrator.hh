@@ -27,6 +27,7 @@
 
 #include <stdexcept>
 #include <X11/Xlib.h>
+#include <stdio.h>
 #include <vector>
 
 /*
@@ -90,6 +91,11 @@ struct XYinfo {
 
     void do_swap_xy() {
         swap_xy = !swap_xy;
+    }
+
+    void print(const char* xtra="\n") {
+        printf("XYinfo: x.min=%i, x.max=%i, y.min=%i, y.max=%i, swap_xy=%i, invert_x=%i, invert_y=%i%s",
+               x.min, x.max, y.min, y.max, swap_xy, x.invert, y.invert, xtra);
     }
 };
 
