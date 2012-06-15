@@ -32,6 +32,15 @@ int main() {
     old_axes.push_back( XYinfo(1000, 0, 0, 1000, 1, 0, 1) );
     old_axes.push_back( XYinfo(1000, 0, 0, 1000, 1, 1, 0) );
     old_axes.push_back( XYinfo(1000, 0, 0, 1000, 1, 1, 1) );
+    // non device-resolution calibs
+    old_axes.push_back( XYinfo(42, 929, 20, 888) );
+    // xf86ScaleAxis rounds to min/max, this can lead to inaccurate
+    // results! Can we fix that?
+    old_axes.push_back( XYinfo(42, 929, 20, 888) );
+    //old_axes.push_back( XYinfo(-9, 895, 124, 990) ); // this is the true axis
+                                                       // rounding error when raw_coords are swapped???
+    //old_axes.push_back( XYinfo(75, 750, 20, 888) ); // rounding error on X axis
+    //old_axes.push_back( XYinfo(42, 929, 120, 888) ); // rounding error on Y axis
 
     // raw device coordinates to emulate
     std::vector<XYinfo> raw_coords;
@@ -77,6 +86,7 @@ int main() {
                       std::max(abs(target.y.min - result.y.min),
                                abs(target.y.max - result.y.max)))); // no n-ary max in c++??
         if (maxdiff > slack) {
+            printf("-\n");
             printf("Old axis: "); old_axis.print();
             printf("Raw: "); raw.print();
             printf("Clicked: "); clicked.print();
