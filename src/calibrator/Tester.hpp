@@ -44,6 +44,10 @@ public:
 
     // emulate the driver processing the coordinates in 'raw'
     XYinfo emulate_driver(XYinfo& raw, bool useNewAxis, XYinfo screen, XYinfo device);
+
+    void new_axis_print() {
+        new_axis.print();
+    }
 };
 
 #endif
