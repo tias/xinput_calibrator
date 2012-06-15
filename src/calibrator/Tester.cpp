@@ -37,7 +37,36 @@ bool CalibratorTester::finish_data(const XYinfo axis)
     return true;
 }
 
-XYinfo CalibratorTester::emulate_driver(XYinfo raw, bool useNewAxis) {
-    // filler
-    return XYinfo(0,0,0,0);
+XYinfo CalibratorTester::emulate_driver(XYinfo& raw, bool useNewAxis, XYinfo screen, XYinfo device) {
+    XYinfo calibAxis;
+    if (useNewAxis)
+        calibAxis = new_axis;
+    else
+        calibAxis = old_axys;
+
+    /**
+     * The most simple and intuitive calibration implementation
+     * if only all drivers sticked to this...
+     * Note that axis inversion is automatically supported
+     * by the ScaleAxis implementation (swapping max/min on
+     * one axis will result in the inversion being calculated)
+     */
+
+    // placeholder for the new coordinates
+    XYinfo result(raw);
+
+    // swap coordinates if asked
+    if (calibAxis.swap_xy) {
+        result.x.min = raw.y.min;
+        result.x.max = raw.y.max;
+        result.y.min = raw.x.min;
+        result.y.max = raw.x.max;
+    }
+
+    result.do_xf86ScaleAxis(device, calibAxis);
+
+    // the last step is usually done by the X server,
+    // or transparently somewhere on the way
+    result.do_xf86ScaleAxis(screen, device);
+    return result;
 }

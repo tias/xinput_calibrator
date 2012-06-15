@@ -35,15 +35,15 @@ int main() {
     raw_coords.push_back( XYinfo(883, 233, 105, 783) );
     raw_coords.push_back( XYinfo(883, 233, 783, 105) );
 
-    CalibratorTester calib("Tester", old_axis);
-
     for (unsigned c=0; c != raw_coords.size(); c++) {
+        CalibratorTester calib("Tester", old_axis);
+
         XYinfo raw(raw_coords[c]);
         printf("Raw: "); raw.print();
 
         // clicked from raw
-        XYinfo clicked = calib.emulate_driver(raw, false);//false=old_axis, screen_res, dev_res);
-        printf("Clicked: "); clicked.print();
+        XYinfo clicked = calib.emulate_driver(raw, false, screen_res, dev_res);// false=old_axis
+        //printf("\tClicked: "); clicked.print();
 
         // emulate screen clicks
         calib.add_click(clicked.x.min, clicked.y.min);
@@ -53,7 +53,7 @@ int main() {
         calib.finish(width, height);
 
         // test result
-        XYinfo result = calib.emulate_driver(raw, true); // true=new_axis
+        XYinfo result = calib.emulate_driver(raw, true, screen_res, dev_res); // true=new_axis
 
         if (abs(target.x.min - result.x.min) > slack ||
             abs(target.x.max - result.x.max) > slack ||

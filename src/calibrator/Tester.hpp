@@ -43,7 +43,7 @@ public:
     virtual bool finish_data(const XYinfo new_axis);
 
     // emulate the driver processing the coordinates in 'raw'
-    XYinfo emulate_driver(XYinfo raw, bool useNewAxis);
+    XYinfo emulate_driver(XYinfo& raw, bool useNewAxis, XYinfo screen, XYinfo device);
 };
 
 #endif
