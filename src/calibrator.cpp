@@ -251,3 +251,71 @@ bool Calibrator::has_xorgconfd_support(Display* dpy) {
 
     return has_support;
 }
+
+/*
+ * FROM xf86Xinput.c
+ *
+ * Cx     - raw data from touch screen
+ * to_max - scaled highest dimension
+ *          (remember, this is of rows - 1 because of 0 origin)
+ * to_min  - scaled lowest dimension
+ * from_max - highest raw value from touch screen calibration
+ * from_min  - lowest raw value from touch screen calibration
+ *
+ * This function is the same for X or Y coordinates.
+ * You may have to reverse the high and low values to compensate for
+ * different orgins on the touch screen vs X.
+ *
+ * e.g. to scale from device coordinates into screen coordinates, call
+ * xf86ScaleAxis(x, 0, screen_width, dev_min, dev_max);
+ */
+int
+xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min)
+{
+    int X;
+    int64_t to_width = to_max - to_min;
+    int64_t from_width = from_max - from_min;
+
+    if (from_width) {
+        X = (int) (((to_width * (Cx - from_min)) / from_width) + to_min);
+    }
+    else {
+        X = 0;
+        printf("Divide by Zero in xf86ScaleAxis\n");
+        exit(1);
+    }
+
+    if (X > to_max)
+        X = to_max;
+    if (X < to_min)
+        X = to_min;
+
+    return X;
+}
+
+// same but without rounding to min/max
+int
+scaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min)
+{
+    int X;
+    int64_t to_width = to_max - to_min;
+    int64_t from_width = from_max - from_min;
+
+    if (from_width) {
+        X = (int) (((to_width * (Cx - from_min)) / from_width) + to_min);
+    }
+    else {
+        X = 0;
+        printf("Divide by Zero in scaleAxis\n");
+        exit(1);
+    }
+
+    /* no rounding to max/min
+    if (X > to_max)
+        X = to_max;
+    if (X < to_min)
+        X = to_min;
+    */
+
+    return X;
+}

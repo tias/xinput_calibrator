@@ -122,6 +122,9 @@ class WrongCalibratorException : public std::invalid_argument {
             std::invalid_argument(msg) {}
 };
 
+int xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
+int scaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
+
 /// Base class for calculating new calibration parameters
 class Calibrator
 {
