@@ -72,24 +72,24 @@ int main() {
         // test result
         XYinfo result = calib.emulate_driver(raw, true, screen_res, dev_res); // true=new_axis
 
-        if (abs(target.x.min - result.x.min) > slack ||
-            abs(target.x.max - result.x.max) > slack ||
-            abs(target.y.min - result.y.min) > slack ||
-            abs(target.y.max - result.y.max) > slack) {
-
+        int maxdiff = std::max(abs(target.x.min - result.x.min),
+                      std::max(abs(target.x.max - result.x.max),
+                      std::max(abs(target.y.min - result.y.min),
+                               abs(target.y.max - result.y.max)))); // no n-ary max in c++??
+        if (maxdiff > slack) {
             printf("Old axis: "); old_axis.print();
             printf("Raw: "); raw.print();
             printf("Clicked: "); clicked.print();
             printf("New axis: "); calib.new_axis_print();
-            printf("Error: difference between target and result > %i:\n", slack);
+            printf("Error: difference between target and result: %i > %i:\n", maxdiff, slack);
             printf("\tTarget: "); target.print();
             printf("\tResult: "); result.print();
             exit(1);
         }
 
-        printf(".");
+        printf("%i", maxdiff);
     } // loop over raw_coords
 
-        printf(" OK\n");
+        printf(". OK\n");
     } // loop over old_axes
 }
