@@ -27,7 +27,11 @@
 
 #include <stdexcept>
 #include <X11/Xlib.h>
+#include <stdio.h>
 #include <vector>
+
+int xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
+int scaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
 
 /*
  * Number of blocks. We partition the screen into 'num_blocks' x 'num_blocks'
@@ -90,6 +94,18 @@ struct XYinfo {
 
     void do_swap_xy() {
         swap_xy = !swap_xy;
+    }
+
+    void do_xf86ScaleAxis(XYinfo& to, XYinfo& from) {
+        x.min = xf86ScaleAxis(x.min, to.x.max, to.x.min, from.x.max, from.x.min);
+        x.max = xf86ScaleAxis(x.max, to.x.max, to.x.min, from.x.max, from.x.min);
+        y.min = xf86ScaleAxis(y.min, to.y.max, to.y.min, from.y.max, from.y.min);
+        y.max = xf86ScaleAxis(y.max, to.y.max, to.y.min, from.y.max, from.y.min);
+    }
+
+    void print(const char* xtra="\n") {
+        printf("XYinfo: x.min=%i, x.max=%i, y.min=%i, y.max=%i, swap_xy=%i, invert_x=%i, invert_y=%i%s",
+               x.min, x.max, y.min, y.max, swap_xy, x.invert, y.invert, xtra);
     }
 };
 

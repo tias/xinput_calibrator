@@ -30,7 +30,7 @@ SUBDIRS = \
 
 AM_CXXFLAGS = -Wall -ansi -pedantic
 
-bin_PROGRAMS = xinput_calibrator
+bin_PROGRAMS = xinput_calibrator tester
 
 COMMON_SRCS=calibrator.cpp calibrator/XorgPrint.cpp calibrator/Evdev.cpp calibrator/Usbtouchscreen.cpp main_common.cpp
 
@@ -50,6 +50,10 @@ xinput_calibrator_CXXFLAGS = $(XINPUT_CFLAGS) $(GTKMM_CFLAGS) $(AM_CXXFLAGS)
 # lets hope this has no side-effects
 xinput_calibrator_LDFLAGS = -Wl,--as-needed
 endif
+
+tester_SOURCES = tester.cpp calibrator.cpp calibrator/Tester.cpp
+tester_LDADD = $(XINPUT_LIBS) $(XRANDR_LIBS) $(X11_LIBS)
+tester_CXXFLAGS = $(XINPUT_CFLAGS) $(X11_CFLAGS) $(XRANDR_CFLAGS) $(AM_CXXFLAGS)
 
 EXTRA_DIST = \
 	calibrator.cpp \
