@@ -87,10 +87,10 @@ int Calibrator::find_device(const char* pre_device, bool list_devices,
         // check whether the pre_device is an ID (only digits)
         int len = strlen(pre_device);
         for (int loop=0; loop<len; loop++) {
-	        if (!isdigit(pre_device[loop])) {
-	            pre_device_is_id = false;
-	            break;
-	        }
+            if (!isdigit(pre_device[loop])) {
+                pre_device_is_id = false;
+                break;
+            }
         }
     }
 
