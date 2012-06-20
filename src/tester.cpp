@@ -65,21 +65,21 @@ int main() {
         XYinfo raw(raw_coords[c]);
         //printf("Raw: "); raw.print();
 
-        CalibratorTester calib("Tester", old_axis);
+        CalibratorTesterInterface* calib = new CalibratorTester("Tester", old_axis);
 
         // clicked from raw
-        XYinfo clicked = calib.emulate_driver(raw, false, screen_res, dev_res);// false=old_axis
+        XYinfo clicked = calib->emulate_driver(raw, false, screen_res, dev_res);// false=old_axis
         //printf("\tClicked: "); clicked.print();
 
         // emulate screen clicks
-        calib.add_click(clicked.x.min, clicked.y.min);
-        calib.add_click(clicked.x.max, clicked.y.min);
-        calib.add_click(clicked.x.min, clicked.y.max);
-        calib.add_click(clicked.x.max, clicked.y.max);
-        calib.finish(width, height);
+        calib->add_click(clicked.x.min, clicked.y.min);
+        calib->add_click(clicked.x.max, clicked.y.min);
+        calib->add_click(clicked.x.min, clicked.y.max);
+        calib->add_click(clicked.x.max, clicked.y.max);
+        calib->finish(width, height);
 
         // test result
-        XYinfo result = calib.emulate_driver(raw, true, screen_res, dev_res); // true=new_axis
+        XYinfo result = calib->emulate_driver(raw, true, screen_res, dev_res); // true=new_axis
 
         int maxdiff = std::max(abs(target.x.min - result.x.min),
                       std::max(abs(target.x.max - result.x.max),
@@ -90,7 +90,7 @@ int main() {
             printf("Old axis: "); old_axis.print();
             printf("Raw: "); raw.print();
             printf("Clicked: "); clicked.print();
-            printf("New axis: "); calib.new_axis_print();
+            printf("New axis: "); calib->new_axis_print();
             printf("Error: difference between target and result: %i > %i:\n", maxdiff, slack);
             printf("\tTarget: "); target.print();
             printf("\tResult: "); result.print();

@@ -26,10 +26,10 @@
 #include "calibrator.hh"
 
 /***************************************
- * Class for generic Xorg driver,
- * outputs new Xorg.conf and FDI policy, on stdout
+ * Class for testing the generic
+ * calibration routine
  ***************************************/
-class CalibratorTester: public Calibrator
+class CalibratorTester: public CalibratorTesterInterface, public Calibrator
 {
 protected:
     // store the new axis for use in driver emulation
@@ -43,10 +43,21 @@ public:
     virtual bool finish_data(const XYinfo new_axis);
 
     // emulate the driver processing the coordinates in 'raw'
-    XYinfo emulate_driver(XYinfo& raw, bool useNewAxis, XYinfo screen, XYinfo device);
+    virtual XYinfo emulate_driver(const XYinfo& raw,
+                                  bool useNewAxis,
+                                  const XYinfo& screen,
+                                  const XYinfo& device);
 
-    void new_axis_print() {
+    virtual void new_axis_print() {
         new_axis.print();
+    }
+
+    //* From Calibrator
+    virtual bool add_click(int x, int y) {
+        return Calibrator::add_click(x, y);
+    }
+    virtual bool finish(int width, int height) {
+        return Calibrator::finish(width, height);
     }
 };
 

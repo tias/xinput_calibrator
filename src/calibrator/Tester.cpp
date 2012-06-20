@@ -37,7 +37,7 @@ bool CalibratorTester::finish_data(const XYinfo axis)
     return true;
 }
 
-XYinfo CalibratorTester::emulate_driver(XYinfo& raw, bool useNewAxis, XYinfo screen, XYinfo device) {
+XYinfo CalibratorTester::emulate_driver(const XYinfo& raw, bool useNewAxis, const XYinfo& screen, const XYinfo& device) {
     XYinfo calibAxis;
     if (useNewAxis)
         calibAxis = new_axis;
