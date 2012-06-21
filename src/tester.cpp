@@ -4,6 +4,7 @@
 
 #include "calibrator.hh"
 #include "calibrator/Tester.hpp"
+#include "calibrator/EvdevTester.hpp"
 
 int main() {
     // screen dimensions
@@ -65,7 +66,8 @@ int main() {
         XYinfo raw(raw_coords[c]);
         //printf("Raw: "); raw.print();
 
-        CalibratorTesterInterface* calib = new CalibratorTester("Tester", old_axis);
+        // DO NOT COMMIT THIS
+        CalibratorTesterInterface* calib = new CalibratorEvdevTester("Tester", old_axis);
 
         // clicked from raw
         XYinfo clicked = calib->emulate_driver(raw, false, screen_res, dev_res);// false=old_axis

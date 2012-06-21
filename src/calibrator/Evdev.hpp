@@ -38,10 +38,24 @@ private:
     XDeviceInfo *devInfo;
     XDevice     *dev;
 
+protected:
+    // protected constructor: should only be used by subclasses!
+    // (pass-through to Calibrator)
+    CalibratorEvdev(const char* const device_name,
+                    const XYinfo& axys,
+                    const int thr_misclick=0,
+                    const int thr_doubleclick=0,
+                    const OutputType output_type=OUTYPE_AUTO,
+                    const char* geometry=0);
+
 public:
-    CalibratorEvdev(const char* const device_name, const XYinfo& axys,
-        XID device_id=(XID)-1, const int thr_misclick=0, const int thr_doubleclick=0,
-        const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
+    CalibratorEvdev(const char* const device_name,
+                    const XYinfo& axys,
+                    XID device_id=(XID)-1,
+                    const int thr_misclick=0,
+                    const int thr_doubleclick=0,
+                    const OutputType output_type=OUTYPE_AUTO,
+                    const char* geometry=0);
     ~CalibratorEvdev();
 
     virtual bool finish_data(const XYinfo new_axys);
