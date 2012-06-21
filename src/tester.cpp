@@ -58,6 +58,13 @@ int main() {
     raw_coords.push_back( XYinfo(883, 233, 105, 783) );
     raw_coords.push_back( XYinfo(883, 233, 783, 105) );
 
+    CalibratorTesterInterface* calib;
+    for (unsigned t=0; t<=1; t++) {
+        if (t == 0)
+            printf("CalibratorTester\n");
+        else if (t == 1)
+            printf("CalibratorEvdevTester\n");
+
     for (unsigned a=0; a != old_axes.size(); a++) {
         XYinfo old_axis(old_axes[a]);
         printf("Old axis: "); old_axis.print();
@@ -66,8 +73,11 @@ int main() {
         XYinfo raw(raw_coords[c]);
         //printf("Raw: "); raw.print();
 
-        // DO NOT COMMIT THIS
-        CalibratorTesterInterface* calib = new CalibratorEvdevTester("Tester", old_axis);
+        // reset calibrator object
+        if (t == 0)
+            calib = new CalibratorTester("Tester", old_axis);
+        else if (t == 1)
+            calib = new CalibratorEvdevTester("Tester", old_axis);
 
         // clicked from raw
         XYinfo clicked = calib->emulate_driver(raw, false, screen_res, dev_res);// false=old_axis
@@ -104,4 +114,7 @@ int main() {
 
         printf(". OK\n");
     } // loop over old_axes
+
+        printf("\n");
+    } // loop over calibrators
 }
