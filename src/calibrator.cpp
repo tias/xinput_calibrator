@@ -155,35 +155,38 @@ bool Calibrator::finish(int width, int height)
     }
 
     // calculate average of clicks
-    new_axis.x.min = round( (clicked.x[UL] + clicked.x[LL])/2.0 );
-    new_axis.x.max = round( (clicked.x[UR] + clicked.x[LR])/2.0 );
-    new_axis.y.min = round( (clicked.y[UL] + clicked.y[UR])/2.0 );
-    new_axis.y.max = round( (clicked.y[LL] + clicked.y[LR])/2.0 );
+    float x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
+    float x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
+    float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
+    float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
 
     // Add/subtract the offset that comes from not having the points in the
     // corners (using the same coordinate system they are currently in)
-    const int delta_x = (new_axis.x.max - new_axis.x.min) / (float)(num_blocks - 2);
-    new_axis.x.min -= delta_x;
-    new_axis.x.max += delta_x;
-    const int delta_y = (new_axis.y.max - new_axis.y.min) / (float)(num_blocks - 2);
-    new_axis.y.min -= delta_y;
-    new_axis.y.max += delta_y;
+    const float delta_x = (x_max - x_min) / (float)(num_blocks - 2);
+    x_min -= delta_x;
+    x_max += delta_x;
+    const float delta_y = (y_max - y_min) / (float)(num_blocks - 2);
+    y_min -= delta_y;
+    y_max += delta_y;
 
     // Compute min/max coordinates.
     // These are scaled using the values of old_axys
     const float scale_x = (old_axys.x.max - old_axys.x.min)/(float)width;
-    new_axis.x.min = (new_axis.x.min * scale_x) + old_axys.x.min;
-    new_axis.x.max = (new_axis.x.max * scale_x) + old_axys.x.min;
+    x_min = (x_min * scale_x) + old_axys.x.min;
+    x_max = (x_max * scale_x) + old_axys.x.min;
     const float scale_y = (old_axys.y.max - old_axys.y.min)/(float)height;
-    new_axis.y.min = (new_axis.y.min * scale_y) + old_axys.y.min;
-    new_axis.y.max = (new_axis.y.max * scale_y) + old_axys.y.min;
+    y_min = (y_min * scale_y) + old_axys.y.min;
+    y_max = (y_max * scale_y) + old_axys.y.min;
 
 
     // If x and y has to be swapped we also have to swap the parameters
     if (do_swap_xy) {
-        std::swap(new_axis.x.min, new_axis.y.max);
-        std::swap(new_axis.y.min, new_axis.x.max);
+        std::swap(x_min, y_max);
+        std::swap(y_min, x_max);
     }
+
+    new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);
+    new_axis.y.min = round(y_min); new_axis.y.max = round(y_max);
 
     // finish the data, driver/calibrator specific
     return finish_data(new_axis);
