@@ -160,21 +160,26 @@ bool Calibrator::finish(int width, int height)
     float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
     float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
 
-    // Add/subtract the offset that comes from not having the points in the
-    // corners (using the same coordinate system they are currently in)
-    const float delta_x = (x_max - x_min) / (float)(num_blocks - 2);
-    x_min -= delta_x;
-    x_max += delta_x;
-    const float delta_y = (y_max - y_min) / (float)(num_blocks - 2);
-    y_min -= delta_y;
-    y_max += delta_y;
-
+    // the screen was divided in num_blocks blocks, and the touch points were at
+    // one block away from the true edges of the screen.
+    const float block_x = width/(float)num_blocks;
+    const float block_y = height/(float)num_blocks;
+    // rescale these blocks from the range of the drawn touchpoints to the range of the 
+    // actually clicked coordinates, and substract/add from the clicked coordinates
+    // to obtain the coordinates corresponding to the edges of the screen.
+    float scale_x = (x_max - x_min)/(width - 2*block_x);
+    x_min -= block_x * scale_x;
+    x_max += block_x * scale_x;
+    float scale_y = (y_max - y_min)/(height - 2*block_y);
+    y_min -= block_y * scale_y;
+    y_max += block_y * scale_y;
+    
     // Compute min/max coordinates.
     // These are scaled using the values of old_axys
-    const float scale_x = (old_axys.x.max - old_axys.x.min)/(float)width;
+    scale_x = (old_axys.x.max - old_axys.x.min)/(float)width;
     x_min = (x_min * scale_x) + old_axys.x.min;
     x_max = (x_max * scale_x) + old_axys.x.min;
-    const float scale_y = (old_axys.y.max - old_axys.y.min)/(float)height;
+    scale_y = (old_axys.y.max - old_axys.y.min)/(float)height;
     y_min = (y_min * scale_y) + old_axys.y.min;
     y_max = (y_max * scale_y) + old_axys.y.min;
 
