@@ -31,7 +31,7 @@
 #include <vector>
 
 int xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
-int scaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
+float scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min);
 
 /*
  * Number of blocks. We partition the screen into 'num_blocks' x 'num_blocks'

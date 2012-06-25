@@ -309,15 +309,15 @@ xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min)
 }
 
 // same but without rounding to min/max
-int
-scaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min)
+float
+scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min)
 {
-    int X;
+    float X;
     int64_t to_width = to_max - to_min;
     int64_t from_width = from_max - from_min;
 
     if (from_width) {
-        X = (int) (((to_width * (Cx - from_min)) / from_width) + to_min);
+        X = (((to_width * (Cx - from_min)) / from_width) + to_min);
     }
     else {
         X = 0;
