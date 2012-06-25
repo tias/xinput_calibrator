@@ -137,15 +137,15 @@ bool Calibrator::finish(int width, int height)
         return false;
     }
 
-    // new axys origin and scaling
-    // based on old_axys: inversion/swapping is relative to the old axys
-    XYinfo new_axys(old_axys);
+    // new axis origin and scaling
+    // based on old_axys: inversion/swapping is relative to the old axis
+    XYinfo new_axis(old_axys);
 
     // Should x and y be swapped?
     bool do_swap_xy = false;
     if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
         do_swap_xy = true;
-        new_axys.do_swap_xy();
+        new_axis.do_swap_xy();
     }
 
     if (do_swap_xy) {
@@ -156,30 +156,30 @@ bool Calibrator::finish(int width, int height)
     // Compute min/max coordinates.
     // These are scaled using the values of old_axys
     const float scale_x = (old_axys.x.max - old_axys.x.min)/(float)width;
-    new_axys.x.min = ((clicked.x[UL] + clicked.x[LL]) * scale_x/2) + old_axys.x.min;
-    new_axys.x.max = ((clicked.x[UR] + clicked.x[LR]) * scale_x/2) + old_axys.x.min;
+    new_axis.x.min = ((clicked.x[UL] + clicked.x[LL]) * scale_x/2) + old_axys.x.min;
+    new_axis.x.max = ((clicked.x[UR] + clicked.x[LR]) * scale_x/2) + old_axys.x.min;
     const float scale_y = (old_axys.y.max - old_axys.y.min)/(float)height;
-    new_axys.y.min = ((clicked.y[UL] + clicked.y[UR]) * scale_y/2) + old_axys.y.min;
-    new_axys.y.max = ((clicked.y[LL] + clicked.y[LR]) * scale_y/2) + old_axys.y.min;
+    new_axis.y.min = ((clicked.y[UL] + clicked.y[UR]) * scale_y/2) + old_axys.y.min;
+    new_axis.y.max = ((clicked.y[LL] + clicked.y[LR]) * scale_y/2) + old_axys.y.min;
 
     // Add/subtract the offset that comes from not having the points in the
     // corners (using the same coordinate system they are currently in)
-    const int delta_x = (new_axys.x.max - new_axys.x.min) / (float)(num_blocks - 2);
-    new_axys.x.min -= delta_x;
-    new_axys.x.max += delta_x;
-    const int delta_y = (new_axys.y.max - new_axys.y.min) / (float)(num_blocks - 2);
-    new_axys.y.min -= delta_y;
-    new_axys.y.max += delta_y;
+    const int delta_x = (new_axis.x.max - new_axis.x.min) / (float)(num_blocks - 2);
+    new_axis.x.min -= delta_x;
+    new_axis.x.max += delta_x;
+    const int delta_y = (new_axis.y.max - new_axis.y.min) / (float)(num_blocks - 2);
+    new_axis.y.min -= delta_y;
+    new_axis.y.max += delta_y;
 
 
     // If x and y has to be swapped we also have to swap the parameters
     if (do_swap_xy) {
-        std::swap(new_axys.x.min, new_axys.y.max);
-        std::swap(new_axys.y.min, new_axys.x.max);
+        std::swap(new_axis.x.min, new_axis.y.max);
+        std::swap(new_axis.y.min, new_axis.x.max);
     }
 
     // finish the data, driver/calibrator specific
-    return finish_data(new_axys);
+    return finish_data(new_axis);
 }
 
 const char* Calibrator::get_sysfs_name()
