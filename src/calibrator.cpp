@@ -27,6 +27,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <cmath>
 
 #include "calibrator.hh"
 
@@ -153,14 +154,20 @@ bool Calibrator::finish(int width, int height)
         std::swap(clicked.y[LL], clicked.y[UR]);
     }
 
+    // calculate average of clicks
+    new_axis.x.min = round( (clicked.x[UL] + clicked.x[LL])/2.0 );
+    new_axis.x.max = round( (clicked.x[UR] + clicked.x[LR])/2.0 );
+    new_axis.y.min = round( (clicked.y[UL] + clicked.y[UR])/2.0 );
+    new_axis.y.max = round( (clicked.y[LL] + clicked.y[LR])/2.0 );
+
     // Compute min/max coordinates.
     // These are scaled using the values of old_axys
     const float scale_x = (old_axys.x.max - old_axys.x.min)/(float)width;
-    new_axis.x.min = ((clicked.x[UL] + clicked.x[LL]) * scale_x/2) + old_axys.x.min;
-    new_axis.x.max = ((clicked.x[UR] + clicked.x[LR]) * scale_x/2) + old_axys.x.min;
+    new_axis.x.min = (new_axis.x.min * scale_x) + old_axys.x.min;
+    new_axis.x.max = (new_axis.x.max * scale_x) + old_axys.x.min;
     const float scale_y = (old_axys.y.max - old_axys.y.min)/(float)height;
-    new_axis.y.min = ((clicked.y[UL] + clicked.y[UR]) * scale_y/2) + old_axys.y.min;
-    new_axis.y.max = ((clicked.y[LL] + clicked.y[LR]) * scale_y/2) + old_axys.y.min;
+    new_axis.y.min = (new_axis.y.min * scale_y) + old_axys.y.min;
+    new_axis.y.max = (new_axis.y.max * scale_y) + old_axys.y.min;
 
     // Add/subtract the offset that comes from not having the points in the
     // corners (using the same coordinate system they are currently in)
