@@ -160,6 +160,14 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
 #endif // HAVE_XI_PROP
 
 }
+// protected pass-through constructor for subclasses
+CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
+                                 const XYinfo& axys0,
+                                 const int thr_misclick,
+                                 const int thr_doubleclick,
+                                 const OutputType output_type,
+                                 const char* geometry)
+  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry) { }
 
 // Destructor
 CalibratorEvdev::~CalibratorEvdev () {

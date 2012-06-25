@@ -51,7 +51,7 @@ xinput_calibrator_CXXFLAGS = $(XINPUT_CFLAGS) $(GTKMM_CFLAGS) $(AM_CXXFLAGS)
 xinput_calibrator_LDFLAGS = -Wl,--as-needed
 endif
 
-tester_SOURCES = tester.cpp calibrator.cpp calibrator/Tester.cpp
+tester_SOURCES = tester.cpp calibrator.cpp calibrator/Tester.cpp calibrator/Evdev.cpp calibrator/EvdevTester.cpp
 tester_LDADD = $(XINPUT_LIBS) $(XRANDR_LIBS) $(X11_LIBS)
 tester_CXXFLAGS = $(XINPUT_CFLAGS) $(X11_CFLAGS) $(XRANDR_CFLAGS) $(AM_CXXFLAGS)
 

@@ -20,45 +20,46 @@
  * THE SOFTWARE.
  */
 
-#ifndef CALIBRATOR_TESTER_HPP
-#define CALIBRATOR_TESTER_HPP
+#ifndef CALIBRATOR_EVDEV_TESTER_HPP
+#define CALIBRATOR_EVDEV_TESTER_HPP
 
 #include "calibrator.hh"
+#include "calibrator/Evdev.hpp"
 
 /***************************************
- * Class for testing the generic
+ * Class for testing the evdev
  * calibration routine
  ***************************************/
-class CalibratorTester: public CalibratorTesterInterface, public Calibrator
+class CalibratorEvdevTester: public CalibratorTesterInterface, public CalibratorEvdev
 {
 protected:
     // store the new axis for use in driver emulation
     XYinfo new_axis;
 
 public:
-    CalibratorTester(const char* const device_name, const XYinfo& axys,
+    CalibratorEvdevTester(const char* const device_name, const XYinfo& axys,
         const int thr_misclick=0, const int thr_doubleclick=0,
         const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
 
     virtual bool finish_data(const XYinfo new_axis);
 
     // emulate the driver processing the coordinates in 'raw'
-    virtual XYinfo emulate_driver(const XYinfo& raw,
-                                  bool useNewAxis,
-                                  const XYinfo& screen,
-                                  const XYinfo& device);
+    virtual XYinfo emulate_driver(const XYinfo& raw, bool useNewAxis, const XYinfo& screen, const XYinfo& device);
 
     virtual void new_axis_print() {
         new_axis.print();
     }
 
-    //* From Calibrator
+    //* From CalibratorEvdev
     virtual bool add_click(int x, int y) {
-        return Calibrator::add_click(x, y);
+        return CalibratorEvdev::add_click(x, y);
     }
     virtual bool finish(int width, int height) {
-        return Calibrator::finish(width, height);
+        return CalibratorEvdev::finish(width, height);
     }
+    
+    // evdev 2.7.0 EvdevProcessValuators code, modified to fit us
+    void evdev_270_processvaluator(const XYinfo& devAxis, const XYinfo& axis, int* vals);
 };
 
 #endif

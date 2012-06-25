@@ -4,6 +4,7 @@
 
 #include "calibrator.hh"
 #include "calibrator/Tester.hpp"
+#include "calibrator/EvdevTester.hpp"
 
 int main() {
     // screen dimensions
@@ -57,6 +58,13 @@ int main() {
     raw_coords.push_back( XYinfo(883, 233, 105, 783) );
     raw_coords.push_back( XYinfo(883, 233, 783, 105) );
 
+    CalibratorTesterInterface* calib;
+    for (unsigned t=0; t<=1; t++) {
+        if (t == 0)
+            printf("CalibratorTester\n");
+        else if (t == 1)
+            printf("CalibratorEvdevTester\n");
+
     for (unsigned a=0; a != old_axes.size(); a++) {
         XYinfo old_axis(old_axes[a]);
         printf("Old axis: "); old_axis.print();
@@ -65,21 +73,25 @@ int main() {
         XYinfo raw(raw_coords[c]);
         //printf("Raw: "); raw.print();
 
-        CalibratorTester calib("Tester", old_axis);
+        // reset calibrator object
+        if (t == 0)
+            calib = new CalibratorTester("Tester", old_axis);
+        else if (t == 1)
+            calib = new CalibratorEvdevTester("Tester", old_axis);
 
         // clicked from raw
-        XYinfo clicked = calib.emulate_driver(raw, false, screen_res, dev_res);// false=old_axis
+        XYinfo clicked = calib->emulate_driver(raw, false, screen_res, dev_res);// false=old_axis
         //printf("\tClicked: "); clicked.print();
 
         // emulate screen clicks
-        calib.add_click(clicked.x.min, clicked.y.min);
-        calib.add_click(clicked.x.max, clicked.y.min);
-        calib.add_click(clicked.x.min, clicked.y.max);
-        calib.add_click(clicked.x.max, clicked.y.max);
-        calib.finish(width, height);
+        calib->add_click(clicked.x.min, clicked.y.min);
+        calib->add_click(clicked.x.max, clicked.y.min);
+        calib->add_click(clicked.x.min, clicked.y.max);
+        calib->add_click(clicked.x.max, clicked.y.max);
+        calib->finish(width, height);
 
         // test result
-        XYinfo result = calib.emulate_driver(raw, true, screen_res, dev_res); // true=new_axis
+        XYinfo result = calib->emulate_driver(raw, true, screen_res, dev_res); // true=new_axis
 
         int maxdiff = std::max(abs(target.x.min - result.x.min),
                       std::max(abs(target.x.max - result.x.max),
@@ -90,7 +102,7 @@ int main() {
             printf("Old axis: "); old_axis.print();
             printf("Raw: "); raw.print();
             printf("Clicked: "); clicked.print();
-            printf("New axis: "); calib.new_axis_print();
+            printf("New axis: "); calib->new_axis_print();
             printf("Error: difference between target and result: %i > %i:\n", maxdiff, slack);
             printf("\tTarget: "); target.print();
             printf("\tResult: "); result.print();
@@ -102,4 +114,7 @@ int main() {
 
         printf(". OK\n");
     } // loop over old_axes
+
+        printf("\n");
+    } // loop over calibrators
 }

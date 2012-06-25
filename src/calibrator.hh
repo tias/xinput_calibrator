@@ -96,7 +96,7 @@ struct XYinfo {
         swap_xy = !swap_xy;
     }
 
-    void do_xf86ScaleAxis(XYinfo& to, XYinfo& from) {
+    void do_xf86ScaleAxis(const XYinfo& to, const XYinfo& from) {
         x.min = xf86ScaleAxis(x.min, to.x.max, to.x.min, from.x.max, from.x.min);
         x.max = xf86ScaleAxis(x.max, to.x.max, to.x.min, from.x.max, from.x.min);
         y.min = xf86ScaleAxis(y.min, to.y.max, to.y.min, from.y.max, from.y.min);
@@ -231,6 +231,22 @@ protected:
 
     // manually specified geometry string
     const char* geometry;
+};
+
+// Interfance for a CalibratorTester
+class CalibratorTesterInterface
+{
+public:
+    // emulate the driver processing the coordinates in 'raw'
+    virtual XYinfo emulate_driver(const XYinfo& raw, bool useNewAxis, const XYinfo& screen, const XYinfo& device) = 0;
+
+    virtual void new_axis_print() = 0;
+
+    //* From Calibrator
+    /// add a click with the given coordinates
+    virtual bool add_click(int x, int y) = 0;
+    /// calculate and apply the calibration
+    virtual bool finish(int width, int height) = 0;
 };
 
 #endif
