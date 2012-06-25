@@ -174,14 +174,14 @@ bool Calibrator::finish(int width, int height)
     y_min -= block_y * scale_y;
     y_max += block_y * scale_y;
     
-    // Compute min/max coordinates.
-    // These are scaled using the values of old_axys
-    scale_x = (old_axys.x.max - old_axys.x.min)/(float)width;
-    x_min = (x_min * scale_x) + old_axys.x.min;
-    x_max = (x_max * scale_x) + old_axys.x.min;
-    scale_y = (old_axys.y.max - old_axys.y.min)/(float)height;
-    y_min = (y_min * scale_y) + old_axys.y.min;
-    y_max = (y_max * scale_y) + old_axys.y.min;
+    // now, undo the transformations done by the X server, to obtain the true 'raw' value in X.
+    // The raw value was scaled from old_axis to the device min/max, and from the device min/max
+    // to the screen min/max
+    // hence, the reverse transformation is from screen to old_axis
+    x_min = scaleAxis(x_min, old_axys.x.max, old_axys.x.min, width, 0);
+    x_max = scaleAxis(x_max, old_axys.x.max, old_axys.x.min, width, 0);
+    y_min = scaleAxis(y_min, old_axys.y.max, old_axys.y.min, height, 0);
+    y_max = scaleAxis(y_max, old_axys.y.max, old_axys.y.min, height, 0);
 
 
     // If x and y has to be swapped we also have to swap the parameters
