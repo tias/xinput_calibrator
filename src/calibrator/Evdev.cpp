@@ -574,8 +574,6 @@ bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys)
     printf("	Option	\"Calibration\"	\"%d %d %d %d\"\n",
                 new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
     printf("	Option	\"SwapAxes\"	\"%d\"\n", new_axys.swap_xy);
-    printf("	Option	\"InvertX\"	\"%d\"\n", new_axys.x.invert);
-    printf("	Option	\"InvertY\"	\"%d\"\n", new_axys.y.invert);
     printf("EndSection\n");
 
     if (not_sysfs_name)
@@ -597,8 +595,6 @@ bool CalibratorEvdev::output_hal(const XYinfo new_axys)
   <merge key=\"input.x11_options.calibration\" type=\"string\">%d %d %d %d</merge>\n"
      , sysfs_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
     printf("  <merge key=\"input.x11_options.swapaxes\" type=\"string\">%d</merge>\n", new_axys.swap_xy);
-    printf("  <merge key=\"input.x11_options.invertx\" type=\"string\">%d</merge>\n", new_axys.x.invert);
-    printf("  <merge key=\"input.x11_options.inverty\" type=\"string\">%d</merge>\n", new_axys.y.invert);
     printf("</match>\n");
 
     if (not_sysfs_name)
@@ -613,7 +609,6 @@ bool CalibratorEvdev::output_xinput(const XYinfo new_axys)
     printf("  Install the 'xinput' tool and copy the command(s) below in a script that starts with your X session\n");
     printf("    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
     printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_axys.swap_xy);
-    printf("    xinput set-int-prop \"%s\" \"Evdev Axis Inversion\" %d %d\n", device_name, new_axys.x.invert, new_axys.y.invert);
 
     return true;
 }
