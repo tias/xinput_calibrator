@@ -195,6 +195,28 @@ bool CalibratorEvdev::finish(int width, int height)
     float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
     float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
 
+
+    // When evdev detects an invert_X/Y option,
+    // it performs the following *crazy* code just before returning
+    // val = (pEvdev->absinfo[i].maximum - val + pEvdev->absinfo[i].minimum);
+    // undo this crazy step before doing the regular calibration routine
+    if (old_axys.x.invert) {
+        x_min = width - x_min;
+        x_max = width - x_max;
+        // avoid invert_x property from here on,
+        // the calibration code can handle this dynamically!
+        new_axis.x.invert = false;
+    }
+    if (old_axys.y.invert) {
+        y_min = height - y_min;
+        y_max = height - y_max;
+        // avoid invert_y property from here on,
+        // the calibration code can handle this dynamically!
+        new_axis.y.invert = false;
+    }
+    // end of evdev inversion crazyness
+
+
     // Should x and y be swapped?
     if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
         new_axis.swap_xy = !new_axis.swap_xy;
