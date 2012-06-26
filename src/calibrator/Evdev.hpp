@@ -58,6 +58,8 @@ public:
                     const char* geometry=0);
     ~CalibratorEvdev();
 
+    /// calculate and apply the calibration
+    virtual bool finish(int width, int height);
     virtual bool finish_data(const XYinfo new_axys);
 
     bool set_swapxy(const int swap_xy);
