@@ -27,6 +27,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <cmath>
 
 #include "calibrator.hh"
 
@@ -137,49 +138,54 @@ bool Calibrator::finish(int width, int height)
         return false;
     }
 
-    // new axys origin and scaling
-    // based on old_axys: inversion/swapping is relative to the old axys
-    XYinfo new_axys(old_axys);
+    // new axis origin and scaling
+    // based on old_axys: inversion/swapping is relative to the old axis
+    XYinfo new_axis(old_axys);
+
+
+    // calculate average of clicks
+    float x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
+    float x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
+    float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
+    float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
 
     // Should x and y be swapped?
-    bool do_swap_xy = false;
     if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
-        do_swap_xy = true;
-        new_axys.do_swap_xy();
+        new_axis.swap_xy = !new_axis.swap_xy;
+        std::swap(x_min, y_min);
+        std::swap(x_max, y_max);
     }
 
-    if (do_swap_xy) {
-        std::swap(clicked.x[LL], clicked.x[UR]);
-        std::swap(clicked.y[LL], clicked.y[UR]);
-    }
+    // the screen was divided in num_blocks blocks, and the touch points were at
+    // one block away from the true edges of the screen.
+    const float block_x = width/(float)num_blocks;
+    const float block_y = height/(float)num_blocks;
+    // rescale these blocks from the range of the drawn touchpoints to the range of the 
+    // actually clicked coordinates, and substract/add from the clicked coordinates
+    // to obtain the coordinates corresponding to the edges of the screen.
+    float scale_x = (x_max - x_min)/(width - 2*block_x);
+    x_min -= block_x * scale_x;
+    x_max += block_x * scale_x;
+    float scale_y = (y_max - y_min)/(height - 2*block_y);
+    y_min -= block_y * scale_y;
+    y_max += block_y * scale_y;
+    
+    // now, undo the transformations done by the X server, to obtain the true 'raw' value in X.
+    // The raw value was scaled from old_axis to the device min/max, and from the device min/max
+    // to the screen min/max
+    // hence, the reverse transformation is from screen to old_axis
+    x_min = scaleAxis(x_min, old_axys.x.max, old_axys.x.min, width, 0);
+    x_max = scaleAxis(x_max, old_axys.x.max, old_axys.x.min, width, 0);
+    y_min = scaleAxis(y_min, old_axys.y.max, old_axys.y.min, height, 0);
+    y_max = scaleAxis(y_max, old_axys.y.max, old_axys.y.min, height, 0);
 
-    // Compute min/max coordinates.
-    // These are scaled using the values of old_axys
-    const float scale_x = (old_axys.x.max - old_axys.x.min)/(float)width;
-    new_axys.x.min = ((clicked.x[UL] + clicked.x[LL]) * scale_x/2) + old_axys.x.min;
-    new_axys.x.max = ((clicked.x[UR] + clicked.x[LR]) * scale_x/2) + old_axys.x.min;
-    const float scale_y = (old_axys.y.max - old_axys.y.min)/(float)height;
-    new_axys.y.min = ((clicked.y[UL] + clicked.y[UR]) * scale_y/2) + old_axys.y.min;
-    new_axys.y.max = ((clicked.y[LL] + clicked.y[LR]) * scale_y/2) + old_axys.y.min;
 
-    // Add/subtract the offset that comes from not having the points in the
-    // corners (using the same coordinate system they are currently in)
-    const int delta_x = (new_axys.x.max - new_axys.x.min) / (float)(num_blocks - 2);
-    new_axys.x.min -= delta_x;
-    new_axys.x.max += delta_x;
-    const int delta_y = (new_axys.y.max - new_axys.y.min) / (float)(num_blocks - 2);
-    new_axys.y.min -= delta_y;
-    new_axys.y.max += delta_y;
-
-
-    // If x and y has to be swapped we also have to swap the parameters
-    if (do_swap_xy) {
-        std::swap(new_axys.x.min, new_axys.y.max);
-        std::swap(new_axys.y.min, new_axys.x.max);
-    }
+    // round and put in new_axis struct
+    new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);
+    new_axis.y.min = round(y_min); new_axis.y.max = round(y_max);
 
     // finish the data, driver/calibrator specific
-    return finish_data(new_axys);
+    return finish_data(new_axis);
 }
 
 const char* Calibrator::get_sysfs_name()
@@ -294,15 +300,15 @@ xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min)
 }
 
 // same but without rounding to min/max
-int
-scaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min)
+float
+scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min)
 {
-    int X;
+    float X;
     int64_t to_width = to_max - to_min;
     int64_t from_width = from_max - from_min;
 
     if (from_width) {
-        X = (int) (((to_width * (Cx - from_min)) / from_width) + to_min);
+        X = (((to_width * (Cx - from_min)) / from_width) + to_min);
     }
     else {
         X = 0;

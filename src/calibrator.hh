@@ -31,7 +31,7 @@
 #include <vector>
 
 int xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
-int scaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
+float scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min);
 
 /*
  * Number of blocks. We partition the screen into 'num_blocks' x 'num_blocks'
@@ -91,10 +91,6 @@ struct XYinfo {
 
     XYinfo(const XYinfo& old) :
         swap_xy(old.swap_xy), x(old.x), y(old.y) {}
-
-    void do_swap_xy() {
-        swap_xy = !swap_xy;
-    }
 
     void do_xf86ScaleAxis(const XYinfo& to, const XYinfo& from) {
         x.min = xf86ScaleAxis(x.min, to.x.max, to.x.min, from.x.max, from.x.min);
@@ -186,9 +182,6 @@ protected:
 
     /// Apply new calibration, implementation dependent
     virtual bool finish_data(const XYinfo new_axys) =0;
-
-    /// Compute calibration on 1 axis
-    void process_axys( int screen_dim, const AxisInfo &previous, std::vector<int> &clicked, AxisInfo &updated );
 
     /// Check whether the given name is a sysfs device name
     bool is_sysfs_name(const char* name);
