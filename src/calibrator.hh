@@ -171,7 +171,7 @@ public:
     /// add a click with the given coordinates
     bool add_click(int x, int y);
     /// calculate and apply the calibration
-    bool finish(int width, int height);
+    virtual bool finish(int width, int height);
     /// get the sysfs name of the device,
     /// returns NULL if it can not be found
     const char* get_sysfs_name();
