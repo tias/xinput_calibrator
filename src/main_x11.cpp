@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  */
 
+#include <unistd.h>
 #include "calibrator.hh"
 #include "gui/x11.hpp"
 
