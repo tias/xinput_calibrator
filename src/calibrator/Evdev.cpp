@@ -199,20 +199,7 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys)
 {
     bool success = true;
 
-    printf("\nDoing dynamic recalibration:\n");
-    // Evdev Axes Swap
-    if (old_axys.swap_xy != new_axys.swap_xy) {
-        success &= set_swapxy(new_axys.swap_xy);
-    }
-
-    // Evdev Axis Inversion
-    set_invert_xy(false, false);
-
-    // Evdev Axis Calibration
-    success &= set_calibration(new_axys);
-
-    // close
-    XSync(display, False);
+    success &= apply(new_axys);
 
     printf("\t--> Making the calibration permanent <--\n");
     switch (output_type) {
@@ -303,6 +290,28 @@ bool CalibratorEvdev::set_calibration(const XYinfo new_axys)
     }
 
     return ret;
+}
+
+bool CalibratorEvdev::apply(const XYinfo new_axys)
+{
+    bool success = true;
+
+    printf("\nDoing dynamic recalibration:\n");
+    // Evdev Axes Swap
+    if (old_axys.swap_xy != new_axys.swap_xy) {
+        success &= set_swapxy(new_axys.swap_xy);
+    }
+
+    // Evdev Axis Inversion
+    set_invert_xy(false, false);
+
+    // Evdev Axis Calibration
+    success &= set_calibration(new_axys);
+
+    // close
+    XSync(display, False);
+
+    return success;
 }
 
 Atom CalibratorEvdev::xinput_parse_atom(Display *display, const char *name)

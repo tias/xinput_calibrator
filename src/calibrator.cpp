@@ -47,6 +47,12 @@ Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0,
     //clicked.y(NUM_POINTS);
 }
 
+bool Calibrator::apply(XYinfo new_axis)
+{
+    fprintf(stderr, "Dynamic recalibration not supported for this device.\n");
+    return false;
+}
+
 bool Calibrator::add_click(int x, int y)
 {
     // Double-click detection

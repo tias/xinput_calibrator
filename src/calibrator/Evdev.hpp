@@ -66,6 +66,8 @@ public:
     bool set_invert_xy(const int invert_x, const int invert_y);
     bool set_calibration(const XYinfo new_axys);
 
+    virtual bool apply(const XYinfo new_axys);
+
     // xinput_ functions (from the xinput project)
     Atom xinput_parse_atom(Display *display, const char* name);
     XDeviceInfo* xinput_find_device_info(Display *display, const char* name, Bool only_extended);
