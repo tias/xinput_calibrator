@@ -58,6 +58,8 @@ public:
                     const char* geometry=0);
     ~CalibratorEvdev();
 
+    virtual void detect_axys();
+
     virtual bool finish_data(const XYinfo new_axys);
 
     bool set_swapxy(const int swap_xy);

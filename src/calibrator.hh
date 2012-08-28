@@ -167,6 +167,8 @@ public:
     void reset()
     {  clicked.num = 0; clicked.x.clear(); clicked.y.clear();}
 
+    virtual void detect_axys() { return; }
+
     /// add a click with the given coordinates
     bool add_click(int x, int y);
     /// calculate and apply the calibration

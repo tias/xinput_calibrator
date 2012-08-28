@@ -198,6 +198,7 @@ static void usage(char* cmd, unsigned thr_misclick)
 
 Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 {
+    Calibrator *calibrator;
     bool list_devices = false;
     bool fake = false;
     bool precalib = false;
@@ -370,7 +371,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     // Different device/driver, different ways to apply the calibration values
     try {
         // try Usbtouchscreen driver
-        return new CalibratorUsbtouchscreen(device_name, device_axys,
+        calibrator = new CalibratorUsbtouchscreen(device_name, device_axys,
             thr_misclick, thr_doubleclick, output_type, geometry);
 
     } catch(WrongCalibratorException& x) {
@@ -378,17 +379,26 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             printf("DEBUG: Not usbtouchscreen calibrator: %s\n", x.what());
     }
 
-    try {
-        // next, try Evdev driver (with XID)
-        return new CalibratorEvdev(device_name, device_axys, device_id,
-            thr_misclick, thr_doubleclick, output_type, geometry);
-
-    } catch(WrongCalibratorException& x) {
-        if (verbose)
-            printf("DEBUG: Not evdev calibrator: %s\n", x.what());
+    if (calibrator == NULL) {
+        try {
+            // next, try Evdev driver (with XID)
+            calibrator = new CalibratorEvdev(device_name, device_axys, device_id,
+                thr_misclick, thr_doubleclick, output_type, geometry);
+    
+        } catch(WrongCalibratorException& x) {
+            if (verbose)
+                printf("DEBUG: Not evdev calibrator: %s\n", x.what());
+        }
     }
 
     // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
-    return new CalibratorXorgPrint(device_name, device_axys,
-            thr_misclick, thr_doubleclick, output_type, geometry);
+    if (calibrator == NULL) {
+        calibrator = new CalibratorXorgPrint(device_name, device_axys,
+                thr_misclick, thr_doubleclick, output_type, geometry);
+    }
+
+    if (calibrator != NULL)
+        calibrator->detect_axys();
+
+    return calibrator;
 }

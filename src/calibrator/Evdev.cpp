@@ -73,8 +73,48 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
 
 #ifndef HAVE_XI_PROP
     throw WrongCalibratorException("Evdev: you need at least libXi 1.2 and inputproto 1.5 for dynamic recalibration of evdev.");
-#else
+#endif
 
+    // XGetDeviceProperty vars
+    Atom            property;
+    Atom            act_type;
+    int             act_format;
+    unsigned long   nitems, bytes_after;
+    unsigned char   *data;
+
+    // get "Evdev Axis Calibration" property
+    property = xinput_parse_atom(display, "Evdev Axis Calibration");
+    if (XGetDeviceProperty(display, dev, property, 0, 1000, False,
+                           AnyPropertyType, &act_type, &act_format,
+                           &nitems, &bytes_after, &data) != Success)
+    {
+        XCloseDevice(display, dev);
+        XCloseDisplay(display);
+        throw WrongCalibratorException("Evdev: \"Evdev Axis Calibration\" property missing, not a (valid) evdev device");
+    } else {
+        XFree(data);
+    }
+
+    printf("Calibrating EVDEV driver for \"%s\" id=%i\n", device_name, (int)device_id);
+}
+
+// protected pass-through constructor for subclasses
+CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
+                                 const XYinfo& axys0,
+                                 const int thr_misclick,
+                                 const int thr_doubleclick,
+                                 const OutputType output_type,
+                                 const char* geometry)
+  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry) { }
+
+// Destructor
+CalibratorEvdev::~CalibratorEvdev () {
+    XCloseDevice(display, dev);
+    XCloseDisplay(display);
+}
+
+void CalibratorEvdev::detect_axys()
+{
     // XGetDeviceProperty vars
     Atom            property;
     Atom            act_type;
@@ -86,39 +126,32 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
     property = xinput_parse_atom(display, "Evdev Axis Calibration");
     if (XGetDeviceProperty(display, dev, property, 0, 1000, False,
                            AnyPropertyType, &act_type, &act_format,
-                           &nitems, &bytes_after, &data) != Success)
+                           &nitems, &bytes_after, &data) == Success)
     {
-        XCloseDevice(display, dev);
-        XCloseDisplay(display);
-        throw WrongCalibratorException("Evdev: \"Evdev Axis Calibration\" property missing, not a (valid) evdev device");
 
-    } else {
-        if (act_format != 32 || act_type != XA_INTEGER) {
-            XCloseDevice(display, dev);
-            XCloseDisplay(display);
-            throw WrongCalibratorException("Evdev: invalid \"Evdev Axis Calibration\" property format");
+        if (act_format == 32 && act_type == XA_INTEGER) {
+            if (nitems == 0) {
+                if (verbose)
+                    printf("DEBUG: Evdev Axis Calibration not set, setting to axis valuators to be sure.\n");
 
-        } else if (nitems == 0) {
-            if (verbose)
-                printf("DEBUG: Evdev Axis Calibration not set, setting to axis valuators to be sure.\n");
+                // No axis calibration set, set it to the default one
+                // QUIRK: when my machine resumes from a sleep, the calibration
+                // property is no longer exported through xinput, but still
+                // active not setting the values here would result in a wrong
+                // first calibration
+                (void) set_calibration(old_axys);
+            } else {
+                ptr = data;
 
-            // No axis calibration set, set it to the default one
-            // QUIRK: when my machine resumes from a sleep,
-            // the calibration property is no longer exported through xinput, but still active
-            // not setting the values here would result in a wrong first calibration
-            (void) set_calibration(old_axys);
-
-        } else if (nitems > 0) {
-            ptr = data;
-
-            old_axys.x.min = *((long*)ptr);
-            ptr += sizeof(long);
-            old_axys.x.max = *((long*)ptr);
-            ptr += sizeof(long);
-            old_axys.y.min = *((long*)ptr);
-            ptr += sizeof(long);
-            old_axys.y.max = *((long*)ptr);
-            ptr += sizeof(long);
+                old_axys.x.min = *((long*)ptr);
+                ptr += sizeof(long);
+                old_axys.x.max = *((long*)ptr);
+                ptr += sizeof(long);
+                old_axys.y.min = *((long*)ptr);
+                ptr += sizeof(long);
+                old_axys.y.max = *((long*)ptr);
+                ptr += sizeof(long);
+            }
         }
 
         XFree(data);
@@ -157,25 +190,8 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
         }
     }
 
-    printf("Calibrating EVDEV driver for \"%s\" id=%i\n", device_name, (int)device_id);
     printf("\tcurrent calibration values (from XInput): min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
                 old_axys.x.min, old_axys.x.max, old_axys.y.min, old_axys.y.max);
-#endif // HAVE_XI_PROP
-
-}
-// protected pass-through constructor for subclasses
-CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
-                                 const XYinfo& axys0,
-                                 const int thr_misclick,
-                                 const int thr_doubleclick,
-                                 const OutputType output_type,
-                                 const char* geometry)
-  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry) { }
-
-// Destructor
-CalibratorEvdev::~CalibratorEvdev () {
-    XCloseDevice(display, dev);
-    XCloseDisplay(display);
 }
 
 // Activate calibrated data and output it
