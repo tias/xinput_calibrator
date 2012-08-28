@@ -172,6 +172,9 @@ public:
 
     virtual bool apply(const XYinfo new_axys);
 
+    // restore input device state
+    void abort();
+
     /// add a click with the given coordinates
     bool add_click(int x, int y);
     /// calculate and apply the calibration
@@ -201,6 +204,8 @@ protected:
     const char* const device_name;
 
     /// Original values
+    XYinfo orig_axys;
+    /// Values in use during calibration
     XYinfo old_axys;
 
     /// Be verbose or not

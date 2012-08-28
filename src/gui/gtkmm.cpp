@@ -203,6 +203,7 @@ bool CalibrationArea::on_timer_signal()
 {
     time_elapsed += time_step;
     if (time_elapsed > max_time) {
+        calibrator->abort();
         exit(0);
     }
 
@@ -259,5 +260,6 @@ void CalibrationArea::draw_message(const char* msg)
 bool CalibrationArea::on_key_press_event(GdkEventKey *event)
 {
     (void) event;
+    calibrator->abort();
     exit(0);
 }

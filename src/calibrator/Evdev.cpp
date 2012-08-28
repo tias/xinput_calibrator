@@ -192,6 +192,8 @@ void CalibratorEvdev::detect_axys()
 
     printf("\tcurrent calibration values (from XInput): min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
                 old_axys.x.min, old_axys.x.max, old_axys.y.min, old_axys.y.max);
+
+    orig_axys = old_axys;
 }
 
 // Activate calibrated data and output it
