@@ -349,24 +349,6 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
         }
     }
 
-    // override min/max XY from command line ?
-    if (precalib) {
-        if (pre_axys.x.min != -1)
-            device_axys.x.min = pre_axys.x.min;
-        if (pre_axys.x.max != -1)
-            device_axys.x.max = pre_axys.x.max;
-        if (pre_axys.y.min != -1)
-            device_axys.y.min = pre_axys.y.min;
-        if (pre_axys.y.max != -1)
-            device_axys.y.max = pre_axys.y.max;
-
-        if (verbose) {
-            printf("DEBUG: Setting precalibration: %i, %i, %i, %i\n",
-                device_axys.x.min, device_axys.x.max,
-                device_axys.y.min, device_axys.y.max);
-        }
-    }
-
 
     // Different device/driver, different ways to apply the calibration values
     try {
@@ -397,8 +379,19 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
                 thr_misclick, thr_doubleclick, output_type, geometry);
     }
 
-    if (calibrator != NULL)
-        calibrator->detect_axys();
+    if (calibrator != NULL) {
+        // override min/max XY from command line ?
+        if (precalib) {
+            if (verbose) {
+                printf("DEBUG: Setting precalibration: %i, %i, %i, %i\n",
+                    pre_axys.x.min, pre_axys.x.max,
+                    pre_axys.y.min, pre_axys.y.max);
+            }
+            calibrator->set_old_axys(pre_axys);
+        } else {
+            calibrator->detect_axys();
+        }
+    }
 
     return calibrator;
 }

@@ -168,6 +168,7 @@ public:
     {  clicked.num = 0; clicked.x.clear(); clicked.y.clear();}
 
     virtual void detect_axys() { return; }
+    void set_old_axys(XYinfo x) { old_axys = x; }
 
     /// add a click with the given coordinates
     bool add_click(int x, int y);
