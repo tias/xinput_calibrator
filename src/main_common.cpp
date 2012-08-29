@@ -202,6 +202,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     bool list_devices = false;
     bool fake = false;
     bool precalib = false;
+    bool reset = false;
     XYinfo pre_axys;
     const char* pre_device = NULL;
     const char* geometry = NULL;
@@ -253,6 +254,11 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
                     pre_axys.y.min = atoi(argv[++i]);
                 if (argc > i+1)
                     pre_axys.y.max = atoi(argv[++i]);
+            } else
+
+            // Get pre-calibration ?
+            if (strcmp("--reset", argv[i]) == 0) {
+                reset = true;
             } else
 
             // Get mis-click threshold ?
@@ -390,6 +396,15 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             calibrator->set_old_axys(pre_axys);
         } else {
             calibrator->detect_axys();
+        }
+
+        if (reset) {
+            if (verbose)
+                printf("DEBUG: Resetting calibration parameters:\n");
+            if (calibrator->apply(device_axys))
+                calibrator->set_old_axys(device_axys);
+            else
+                fprintf(stderr, "Error: failed to reset calibration parameters.\n");
         }
     }
 
