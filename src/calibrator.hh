@@ -63,17 +63,16 @@ const int num_blocks = 8;
 
 struct AxisInfo {
     int min, max;
-    bool invert;
 
-    AxisInfo() : min(-1), max(-1), invert(false) { }
+    AxisInfo() : min(-1), max(-1) { }
     AxisInfo(int mi, int ma, bool inv = false) :
-        min(mi), max(ma), invert(inv) { }
+        min(mi), max(ma) { }
     AxisInfo(const AxisInfo& old) :
-        min(old.min), max(old.max), invert(old.invert) { }
+        min(old.min), max(old.max) { }
 
-    void do_invert() {
-        invert = !invert;
-    }
+    int real_min() const { return std::min(min, max); }
+    int real_max() const { return std::max(min, max); }
+    bool is_inverted() const { return min > max; }
 };
 
 /// struct to hold min/max info of the X and Y axis
@@ -100,8 +99,8 @@ struct XYinfo {
     }
 
     void print(const char* xtra="\n") {
-        printf("XYinfo: x.min=%i, x.max=%i, y.min=%i, y.max=%i, swap_xy=%i, invert_x=%i, invert_y=%i%s",
-               x.min, x.max, y.min, y.max, swap_xy, x.invert, y.invert, xtra);
+        printf("XYinfo: x.min=%i, x.max=%i, y.min=%i, y.max=%i, swap_xy=%i%s",
+               x.min, x.max, y.min, y.max, swap_xy, xtra);
     }
 };
 

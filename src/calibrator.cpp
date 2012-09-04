@@ -139,7 +139,7 @@ bool Calibrator::finish(int width, int height)
     }
 
     // new axis origin and scaling
-    // based on old_axys: inversion/swapping is relative to the old axis
+    // based on old_axys: swapping is relative to the old axis
     XYinfo new_axis(old_axys);
 
 

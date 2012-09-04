@@ -144,11 +144,16 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
                 AnyPropertyType, &act_type, &act_format,
                 &nitems, &bytes_after, &data) == Success) {
         if (act_format == 8 && act_type == XA_INTEGER && nitems == 2) {
-            old_axys.x.invert = *((char*)data++);
-            old_axys.y.invert = *((char*)data);
+            bool invert_x = *((char*)data++);
+            bool invert_y = *((char*)data);
 
             if (verbose)
-                printf("DEBUG: Read InvertX=%i, InvertY=%i.\n", old_axys.x.invert, old_axys.y.invert);
+                printf("DEBUG: Read InvertX=%i, InvertY=%i.\n", invert_x, invert_y);
+
+            if (invert_x)
+                std::swap(old_axys.x.min, old_axys.x.max);
+            if (invert_y)
+                std::swap(old_axys.y.min, old_axys.y.max);
         }
     }
 
@@ -191,28 +196,6 @@ bool CalibratorEvdev::finish(int width, int height)
     float x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
     float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
     float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
-
-
-    // When evdev detects an invert_X/Y option,
-    // it performs the following *crazy* code just before returning
-    // val = (pEvdev->absinfo[i].maximum - val + pEvdev->absinfo[i].minimum);
-    // undo this crazy step before doing the regular calibration routine
-    if (old_axys.x.invert) {
-        x_min = width - x_min;
-        x_max = width - x_max;
-        // avoid invert_x property from here on,
-        // the calibration code can handle this dynamically!
-        new_axis.x.invert = false;
-    }
-    if (old_axys.y.invert) {
-        y_min = height - y_min;
-        y_max = height - y_max;
-        // avoid invert_y property from here on,
-        // the calibration code can handle this dynamically!
-        new_axis.y.invert = false;
-    }
-    // end of evdev inversion crazyness
-
 
     // Should x and y be swapped?
     if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
@@ -264,11 +247,8 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys)
         success &= set_swapxy(new_axys.swap_xy);
     }
 
-   // Evdev Axis Inversion
-   if (old_axys.x.invert != new_axys.x.invert ||
-       old_axys.y.invert != new_axys.y.invert) {
-        success &= set_invert_xy(new_axys.x.invert, new_axys.y.invert);
-    }
+    // Evdev Axis Inversion
+    set_invert_xy(false, false);
 
     // Evdev Axis Calibration
     success &= set_calibration(new_axys);

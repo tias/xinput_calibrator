@@ -74,13 +74,13 @@ bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys)
     printf("Section \"InputClass\"\n");
     printf("	Identifier	\"calibration\"\n");
     printf("	MatchProduct	\"%s\"\n", sysfs_name);
-    printf("	Option	\"MinX\"	\"%d\"\n", new_axys.x.min);
-    printf("	Option	\"MaxX\"	\"%d\"\n", new_axys.x.max);
-    printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y.min);
-    printf("	Option	\"MaxY\"	\"%d\"\n", new_axys.y.max);
+    printf("	Option	\"MinX\"	\"%d\"\n", new_axys.x.real_min());
+    printf("	Option	\"MaxX\"	\"%d\"\n", new_axys.x.real_max());
+    printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y.real_min());
+    printf("	Option	\"MaxY\"	\"%d\"\n", new_axys.y.real_max());
     printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", new_axys.swap_xy);
-    printf("	Option	\"InvertX\"	\"%d\"  # unless it was already set\n", new_axys.x.invert);
-    printf("	Option	\"InvertY\"	\"%d\"  # unless it was already set\n", new_axys.y.invert);
+    printf("	Option	\"InvertX\"	\"%d\"  # unless it was already set\n", new_axys.x.is_inverted());
+    printf("	Option	\"InvertY\"	\"%d\"  # unless it was already set\n", new_axys.y.is_inverted());
     printf("EndSection\n");
 
     if (not_sysfs_name)
@@ -103,10 +103,10 @@ bool CalibratorXorgPrint::output_hal(const XYinfo new_axys)
   <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
   <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
   <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
-     , sysfs_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
+     , sysfs_name, new_axys.x.real_max(), new_axys.x.real_max(), new_axys.y.real_min(), new_axys.y.real_max());
     printf("  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_axys.swap_xy);
-    printf("  <merge key=\"input.x11_options.invertx\" type=\"string\">%d</merge>\n", new_axys.x.invert);
-    printf("  <merge key=\"input.x11_options.inverty\" type=\"string\">%d</merge>\n", new_axys.y.invert);
+    printf("  <merge key=\"input.x11_options.invertx\" type=\"string\">%d</merge>\n", new_axys.x.is_inverted());
+    printf("  <merge key=\"input.x11_options.inverty\" type=\"string\">%d</merge>\n", new_axys.y.is_inverted());
     printf("</match>\n");
 
     if (not_sysfs_name)
