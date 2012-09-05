@@ -73,8 +73,48 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
 
 #ifndef HAVE_XI_PROP
     throw WrongCalibratorException("Evdev: you need at least libXi 1.2 and inputproto 1.5 for dynamic recalibration of evdev.");
-#else
+#endif
 
+    // XGetDeviceProperty vars
+    Atom            property;
+    Atom            act_type;
+    int             act_format;
+    unsigned long   nitems, bytes_after;
+    unsigned char   *data;
+
+    // get "Evdev Axis Calibration" property
+    property = xinput_parse_atom(display, "Evdev Axis Calibration");
+    if (XGetDeviceProperty(display, dev, property, 0, 1000, False,
+                           AnyPropertyType, &act_type, &act_format,
+                           &nitems, &bytes_after, &data) != Success)
+    {
+        XCloseDevice(display, dev);
+        XCloseDisplay(display);
+        throw WrongCalibratorException("Evdev: \"Evdev Axis Calibration\" property missing, not a (valid) evdev device");
+    } else {
+        XFree(data);
+    }
+
+    printf("Calibrating EVDEV driver for \"%s\" id=%i\n", device_name, (int)device_id);
+}
+
+// protected pass-through constructor for subclasses
+CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
+                                 const XYinfo& axys0,
+                                 const int thr_misclick,
+                                 const int thr_doubleclick,
+                                 const OutputType output_type,
+                                 const char* geometry)
+  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry) { }
+
+// Destructor
+CalibratorEvdev::~CalibratorEvdev () {
+    XCloseDevice(display, dev);
+    XCloseDisplay(display);
+}
+
+void CalibratorEvdev::detect_axys()
+{
     // XGetDeviceProperty vars
     Atom            property;
     Atom            act_type;
@@ -86,39 +126,32 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
     property = xinput_parse_atom(display, "Evdev Axis Calibration");
     if (XGetDeviceProperty(display, dev, property, 0, 1000, False,
                            AnyPropertyType, &act_type, &act_format,
-                           &nitems, &bytes_after, &data) != Success)
+                           &nitems, &bytes_after, &data) == Success)
     {
-        XCloseDevice(display, dev);
-        XCloseDisplay(display);
-        throw WrongCalibratorException("Evdev: \"Evdev Axis Calibration\" property missing, not a (valid) evdev device");
 
-    } else {
-        if (act_format != 32 || act_type != XA_INTEGER) {
-            XCloseDevice(display, dev);
-            XCloseDisplay(display);
-            throw WrongCalibratorException("Evdev: invalid \"Evdev Axis Calibration\" property format");
+        if (act_format == 32 && act_type == XA_INTEGER) {
+            if (nitems == 0) {
+                if (verbose)
+                    printf("DEBUG: Evdev Axis Calibration not set, setting to axis valuators to be sure.\n");
 
-        } else if (nitems == 0) {
-            if (verbose)
-                printf("DEBUG: Evdev Axis Calibration not set, setting to axis valuators to be sure.\n");
+                // No axis calibration set, set it to the default one
+                // QUIRK: when my machine resumes from a sleep, the calibration
+                // property is no longer exported through xinput, but still
+                // active not setting the values here would result in a wrong
+                // first calibration
+                (void) set_calibration(old_axys);
+            } else {
+                ptr = data;
 
-            // No axis calibration set, set it to the default one
-            // QUIRK: when my machine resumes from a sleep,
-            // the calibration property is no longer exported through xinput, but still active
-            // not setting the values here would result in a wrong first calibration
-            (void) set_calibration(old_axys);
-
-        } else if (nitems > 0) {
-            ptr = data;
-
-            old_axys.x.min = *((long*)ptr);
-            ptr += sizeof(long);
-            old_axys.x.max = *((long*)ptr);
-            ptr += sizeof(long);
-            old_axys.y.min = *((long*)ptr);
-            ptr += sizeof(long);
-            old_axys.y.max = *((long*)ptr);
-            ptr += sizeof(long);
+                old_axys.x.min = *((long*)ptr);
+                ptr += sizeof(long);
+                old_axys.x.max = *((long*)ptr);
+                ptr += sizeof(long);
+                old_axys.y.min = *((long*)ptr);
+                ptr += sizeof(long);
+                old_axys.y.max = *((long*)ptr);
+                ptr += sizeof(long);
+            }
         }
 
         XFree(data);
@@ -144,113 +177,23 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
                 AnyPropertyType, &act_type, &act_format,
                 &nitems, &bytes_after, &data) == Success) {
         if (act_format == 8 && act_type == XA_INTEGER && nitems == 2) {
-            old_axys.x.invert = *((char*)data++);
-            old_axys.y.invert = *((char*)data);
+            bool invert_x = *((char*)data++);
+            bool invert_y = *((char*)data);
 
             if (verbose)
-                printf("DEBUG: Read InvertX=%i, InvertY=%i.\n", old_axys.x.invert, old_axys.y.invert);
+                printf("DEBUG: Read InvertX=%i, InvertY=%i.\n", invert_x, invert_y);
+
+            if (invert_x)
+                std::swap(old_axys.x.min, old_axys.x.max);
+            if (invert_y)
+                std::swap(old_axys.y.min, old_axys.y.max);
         }
     }
 
-    printf("Calibrating EVDEV driver for \"%s\" id=%i\n", device_name, (int)device_id);
     printf("\tcurrent calibration values (from XInput): min_x=%d, max_x=%d and min_y=%d, max_y=%d\n",
                 old_axys.x.min, old_axys.x.max, old_axys.y.min, old_axys.y.max);
-#endif // HAVE_XI_PROP
 
-}
-// protected pass-through constructor for subclasses
-CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
-                                 const XYinfo& axys0,
-                                 const int thr_misclick,
-                                 const int thr_doubleclick,
-                                 const OutputType output_type,
-                                 const char* geometry)
-  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry) { }
-
-// Destructor
-CalibratorEvdev::~CalibratorEvdev () {
-    XCloseDevice(display, dev);
-    XCloseDisplay(display);
-}
-
-// From Calibrator but with evdev specific invertion option
-// KEEP IN SYNC with Calibrator::finish() !!
-bool CalibratorEvdev::finish(int width, int height)
-{
-    if (get_numclicks() != NUM_POINTS) {
-        return false;
-    }
-
-    // new axis origin and scaling
-    // based on old_axys: inversion/swapping is relative to the old axis
-    XYinfo new_axis(old_axys);
-
-
-    // calculate average of clicks
-    float x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
-    float x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
-    float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
-    float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
-
-
-    // When evdev detects an invert_X/Y option,
-    // it performs the following *crazy* code just before returning
-    // val = (pEvdev->absinfo[i].maximum - val + pEvdev->absinfo[i].minimum);
-    // undo this crazy step before doing the regular calibration routine
-    if (old_axys.x.invert) {
-        x_min = width - x_min;
-        x_max = width - x_max;
-        // avoid invert_x property from here on,
-        // the calibration code can handle this dynamically!
-        new_axis.x.invert = false;
-    }
-    if (old_axys.y.invert) {
-        y_min = height - y_min;
-        y_max = height - y_max;
-        // avoid invert_y property from here on,
-        // the calibration code can handle this dynamically!
-        new_axis.y.invert = false;
-    }
-    // end of evdev inversion crazyness
-
-
-    // Should x and y be swapped?
-    if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
-        new_axis.swap_xy = !new_axis.swap_xy;
-        std::swap(x_min, y_min);
-        std::swap(x_max, y_max);
-    }
-
-    // the screen was divided in num_blocks blocks, and the touch points were at
-    // one block away from the true edges of the screen.
-    const float block_x = width/(float)num_blocks;
-    const float block_y = height/(float)num_blocks;
-    // rescale these blocks from the range of the drawn touchpoints to the range of the 
-    // actually clicked coordinates, and substract/add from the clicked coordinates
-    // to obtain the coordinates corresponding to the edges of the screen.
-    float scale_x = (x_max - x_min)/(width - 2*block_x);
-    x_min -= block_x * scale_x;
-    x_max += block_x * scale_x;
-    float scale_y = (y_max - y_min)/(height - 2*block_y);
-    y_min -= block_y * scale_y;
-    y_max += block_y * scale_y;
-    
-    // now, undo the transformations done by the X server, to obtain the true 'raw' value in X.
-    // The raw value was scaled from old_axis to the device min/max, and from the device min/max
-    // to the screen min/max
-    // hence, the reverse transformation is from screen to old_axis
-    x_min = scaleAxis(x_min, old_axys.x.max, old_axys.x.min, width, 0);
-    x_max = scaleAxis(x_max, old_axys.x.max, old_axys.x.min, width, 0);
-    y_min = scaleAxis(y_min, old_axys.y.max, old_axys.y.min, height, 0);
-    y_max = scaleAxis(y_max, old_axys.y.max, old_axys.y.min, height, 0);
-
-
-    // round and put in new_axis struct
-    new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);
-    new_axis.y.min = round(y_min); new_axis.y.max = round(y_max);
-
-    // finish the data, driver/calibrator specific
-    return finish_data(new_axis);
+    orig_axys = old_axys;
 }
 
 // Activate calibrated data and output it
@@ -258,23 +201,7 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys)
 {
     bool success = true;
 
-    printf("\nDoing dynamic recalibration:\n");
-    // Evdev Axes Swap
-    if (old_axys.swap_xy != new_axys.swap_xy) {
-        success &= set_swapxy(new_axys.swap_xy);
-    }
-
-   // Evdev Axis Inversion
-   if (old_axys.x.invert != new_axys.x.invert ||
-       old_axys.y.invert != new_axys.y.invert) {
-        success &= set_invert_xy(new_axys.x.invert, new_axys.y.invert);
-    }
-
-    // Evdev Axis Calibration
-    success &= set_calibration(new_axys);
-
-    // close
-    XSync(display, False);
+    success &= apply(new_axys);
 
     printf("\t--> Making the calibration permanent <--\n");
     switch (output_type) {
@@ -365,6 +292,28 @@ bool CalibratorEvdev::set_calibration(const XYinfo new_axys)
     }
 
     return ret;
+}
+
+bool CalibratorEvdev::apply(const XYinfo new_axys)
+{
+    bool success = true;
+
+    printf("\nDoing dynamic recalibration:\n");
+    // Evdev Axes Swap
+    if (old_axys.swap_xy != new_axys.swap_xy) {
+        success &= set_swapxy(new_axys.swap_xy);
+    }
+
+    // Evdev Axis Inversion
+    set_invert_xy(false, false);
+
+    // Evdev Axis Calibration
+    success &= set_calibration(new_axys);
+
+    // close
+    XSync(display, False);
+
+    return success;
 }
 
 Atom CalibratorEvdev::xinput_parse_atom(Display *display, const char *name)

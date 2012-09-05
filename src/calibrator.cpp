@@ -40,11 +40,24 @@ Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0,
     threshold_doubleclick(thr_doubleclick), threshold_misclick(thr_misclick),
     output_type(output_type0), geometry(geometry0)
 {
-    old_axys = axys0;
+    orig_axys = old_axys = axys0;
 
     clicked.num = 0;
     //clicked.x(NUM_POINTS);
     //clicked.y(NUM_POINTS);
+}
+
+bool Calibrator::apply(XYinfo new_axis)
+{
+    fprintf(stderr, "Dynamic recalibration not supported for this device.\n");
+    return false;
+}
+
+void Calibrator::abort()
+{
+    if (verbose)
+        printf("DEBUG: Restoring original calibration parameters:\n");
+    apply(orig_axys);
 }
 
 bool Calibrator::add_click(int x, int y)
@@ -139,7 +152,7 @@ bool Calibrator::finish(int width, int height)
     }
 
     // new axis origin and scaling
-    // based on old_axys: inversion/swapping is relative to the old axis
+    // based on old_axys: swapping is relative to the old axis
     XYinfo new_axis(old_axys);
 
 

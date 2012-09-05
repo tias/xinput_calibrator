@@ -149,11 +149,8 @@ void CalibratorEvdevTester::evdev_270_processvaluator(const XYinfo& devAxis, con
                                     calib_min);
 
             //if ((i == 0 && pEvdev->invert_x) || (i == 1 && pEvdev->invert_y))
-            if ((i == 0 && axis.x.invert) || (i == 1 && axis.y.invert))
                 //val = (pEvdev->absinfo[i].maximum - val +
                 //       pEvdev->absinfo[i].minimum);
-                val = (absinfo_max[i] - val +
-                       absinfo_min[i]);
 
             //valuator_mask_set(pEvdev->vals, i, val);
             vals[i] = val;

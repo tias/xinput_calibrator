@@ -124,31 +124,46 @@ int Calibrator::find_device(const char* pre_device, bool list_devices,
             {
                 XValuatorInfoPtr V = (XValuatorInfoPtr) any;
                 XAxisInfoPtr ax = (XAxisInfoPtr) V->axes;
+                unsigned int axis_count = 0;
 
                 if (V->mode != Absolute) {
                     if (verbose)
                         printf("DEBUG: Skipping device '%s' id=%i, does not report Absolute events.\n",
                             list->name, (int)list->id);
-                } else if (V->num_axes < 2 ||
-                    (ax[0].min_value == -1 && ax[0].max_value == -1) ||
-                    (ax[1].min_value == -1 && ax[1].max_value == -1)) {
-                    if (verbose)
-                        printf("DEBUG: Skipping device '%s' id=%i, does not have two calibratable axes.\n",
-                            list->name, (int)list->id);
                 } else {
-                    /* a calibratable device (has 2 axis valuators) */
-                    found++;
-                    device_id = list->id;
-                    device_name = my_strdup(list->name);
-                    device_axys.x.min = ax[0].min_value;
-                    device_axys.x.max = ax[0].max_value;
-                    device_axys.y.min = ax[1].min_value;
-                    device_axys.y.max = ax[1].max_value;
+                    for (int k=0; k<V->num_axes; k++)
+                        if (! (ax[k].min_value == -1 && ax[k].max_value == -1))
+                            axis_count++;
 
-                    if (list_devices)
-                        printf("Device \"%s\" id=%i\n", device_name, (int)device_id);
+                    if (axis_count < 2) {
+                        if (verbose)
+                            printf("DEBUG: Skipping device '%s' id=%i, does not have two calibratable axes (%u).\n",
+                                list->name, (int)list->id, axis_count);
+                    /* Note that devices with more than eight calibratable axes
+                     * can be calibrated explicitly, but will not be
+                     * automatically selected for calibration.  This heuristic
+                     * causes some devices that are not really pointer devices
+                     * but sometimes appear to be (e.g. some USB keyboards) to
+                     * be skipped.
+                     */
+                    } else if (pre_device == NULL && axis_count > 8) {
+                        if (verbose)
+                            printf("DEBUG: Skipping device '%s' id=%i, has more than eight calibratable axes (%u).\n",
+                                list->name, (int)list->id, axis_count);
+                    } else {
+                        /* a calibratable device */
+                        found++;
+                        device_id = list->id;
+                        device_name = my_strdup(list->name);
+                        device_axys.x.min = ax[0].min_value;
+                        device_axys.x.max = ax[0].max_value;
+                        device_axys.y.min = ax[1].min_value;
+                        device_axys.y.max = ax[1].max_value;
+
+                        if (list_devices)
+                            printf("Device \"%s\" id=%i\n", device_name, (int)device_id);
+                    }
                 }
-
             }
 
             /*
@@ -183,9 +198,11 @@ static void usage(char* cmd, unsigned thr_misclick)
 
 Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 {
+    Calibrator *calibrator;
     bool list_devices = false;
     bool fake = false;
     bool precalib = false;
+    bool reset = false;
     XYinfo pre_axys;
     const char* pre_device = NULL;
     const char* geometry = NULL;
@@ -237,6 +254,11 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
                     pre_axys.y.min = atoi(argv[++i]);
                 if (argc > i+1)
                     pre_axys.y.max = atoi(argv[++i]);
+            } else
+
+            // Get pre-calibration ?
+            if (strcmp("--reset", argv[i]) == 0) {
+                reset = true;
             } else
 
             // Get mis-click threshold ?
@@ -333,29 +355,11 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
         }
     }
 
-    // override min/max XY from command line ?
-    if (precalib) {
-        if (pre_axys.x.min != -1)
-            device_axys.x.min = pre_axys.x.min;
-        if (pre_axys.x.max != -1)
-            device_axys.x.max = pre_axys.x.max;
-        if (pre_axys.y.min != -1)
-            device_axys.y.min = pre_axys.y.min;
-        if (pre_axys.y.max != -1)
-            device_axys.y.max = pre_axys.y.max;
-
-        if (verbose) {
-            printf("DEBUG: Setting precalibration: %i, %i, %i, %i\n",
-                device_axys.x.min, device_axys.x.max,
-                device_axys.y.min, device_axys.y.max);
-        }
-    }
-
 
     // Different device/driver, different ways to apply the calibration values
     try {
         // try Usbtouchscreen driver
-        return new CalibratorUsbtouchscreen(device_name, device_axys,
+        calibrator = new CalibratorUsbtouchscreen(device_name, device_axys,
             thr_misclick, thr_doubleclick, output_type, geometry);
 
     } catch(WrongCalibratorException& x) {
@@ -363,17 +367,46 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             printf("DEBUG: Not usbtouchscreen calibrator: %s\n", x.what());
     }
 
-    try {
-        // next, try Evdev driver (with XID)
-        return new CalibratorEvdev(device_name, device_axys, device_id,
-            thr_misclick, thr_doubleclick, output_type, geometry);
-
-    } catch(WrongCalibratorException& x) {
-        if (verbose)
-            printf("DEBUG: Not evdev calibrator: %s\n", x.what());
+    if (calibrator == NULL) {
+        try {
+            // next, try Evdev driver (with XID)
+            calibrator = new CalibratorEvdev(device_name, device_axys, device_id,
+                thr_misclick, thr_doubleclick, output_type, geometry);
+    
+        } catch(WrongCalibratorException& x) {
+            if (verbose)
+                printf("DEBUG: Not evdev calibrator: %s\n", x.what());
+        }
     }
 
     // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
-    return new CalibratorXorgPrint(device_name, device_axys,
-            thr_misclick, thr_doubleclick, output_type, geometry);
+    if (calibrator == NULL) {
+        calibrator = new CalibratorXorgPrint(device_name, device_axys,
+                thr_misclick, thr_doubleclick, output_type, geometry);
+    }
+
+    if (calibrator != NULL) {
+        // override min/max XY from command line ?
+        if (precalib) {
+            if (verbose) {
+                printf("DEBUG: Setting precalibration: %i, %i, %i, %i\n",
+                    pre_axys.x.min, pre_axys.x.max,
+                    pre_axys.y.min, pre_axys.y.max);
+            }
+            calibrator->set_old_axys(pre_axys);
+        } else {
+            calibrator->detect_axys();
+        }
+
+        if (reset) {
+            if (verbose)
+                printf("DEBUG: Resetting calibration parameters:\n");
+            if (calibrator->apply(device_axys))
+                calibrator->set_old_axys(device_axys);
+            else
+                fprintf(stderr, "Error: failed to reset calibration parameters.\n");
+        }
+    }
+
+    return calibrator;
 }

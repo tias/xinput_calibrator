@@ -273,6 +273,7 @@ bool GuiCalibratorX11::on_timer_signal()
 {
     time_elapsed += time_step;
     if (time_elapsed > max_time) {
+        calibrator->abort();
         exit(0);
     }
 
@@ -322,6 +323,12 @@ bool GuiCalibratorX11::on_button_press_event(XEvent event)
     return true;
 }
 
+bool GuiCalibratorX11::on_key_press_event(XEvent event)
+{
+    calibrator->abort();
+    exit(0);
+}
+
 void GuiCalibratorX11::draw_message(const char* msg)
 {
     int text_height = font_info->ascent + font_info->descent;
@@ -360,7 +367,7 @@ void GuiCalibratorX11::give_timer_signal()
                     break;
 
                 case KeyPress:
-                    exit(0);
+                    instance->on_key_press_event(event);
                     break;
             }
         }
