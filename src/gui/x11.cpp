@@ -32,10 +32,15 @@
 #include <X11/extensions/Xrandr.h>
 #endif
 
+#ifdef HAVE_TIMERFD
+#include <sys/timerfd.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
+#include <stdint.h>
 
 
 // Timeout parameters
@@ -60,7 +65,9 @@ const std::string help_text[help_lines] = {
 
 const char* GuiCalibratorX11::colors[GuiCalibratorX11::NUM_COLORS] = {"BLACK", "WHITE", "GRAY", "DIMGRAY", "RED"};
 
+#ifndef HAVE_TIMERFD
 void sigalarm_handler(int num);
+#endif
 
 /// Create singleton instance associated to calibrator w
 void GuiCalibratorX11::make_instance(Calibrator* w)
@@ -154,12 +161,25 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     XSetFont(display, gc, font_info->fid);
 
     // Setup timer for animation
+#ifdef HAVE_TIMERFD
+    struct itimerspec timer;
+    unsigned int period = time_step * 1000; // microseconds
+    unsigned int sec = period/1000000;
+    unsigned int ns = (period - (sec * 1000000)) * 1000;
+
+    timer.it_value.tv_sec = sec;
+    timer.it_value.tv_nsec = ns;
+    timer.it_interval = timer.it_value;
+    timer_fd = timerfd_create(CLOCK_MONOTONIC, 0);
+    timerfd_settime(timer_fd, 0, &timer, NULL);
+#else
     signal(SIGALRM, sigalarm_handler);
     struct itimerval timer;
     timer.it_value.tv_sec = time_step/1000;
     timer.it_value.tv_usec = (time_step % 1000) * 1000;
     timer.it_interval = timer.it_value;
     setitimer(ITIMER_REAL, &timer, NULL);
+#endif
 }
 
 GuiCalibratorX11::~GuiCalibratorX11()
@@ -341,6 +361,19 @@ void GuiCalibratorX11::give_timer_signal()
 {
     if (instance != NULL) {
         // timer signal
+
+#ifdef HAVE_TIMERFD
+        uint64_t missed;
+        ssize_t ret;
+
+        /* Wait for the next timer event. If we have missed any the
+         * number is written to "missed" */
+        ret = read(instance->timer_fd, &missed, sizeof (missed));
+        if (ret == -1) {
+        	fprintf(stderr, "failed reading timer");
+        }
+#endif
+
         //check timeout
         instance->on_timer_signal();
 
@@ -367,7 +400,7 @@ void GuiCalibratorX11::give_timer_signal()
     }
 }
 
-
+#ifndef HAVE_TIMERFD
 // handle SIGALRM signal, pass to singleton
 void sigalarm_handler(int num)
 {
@@ -375,3 +408,4 @@ void sigalarm_handler(int num)
         GuiCalibratorX11::give_timer_signal();
     }
 }
+#endif
