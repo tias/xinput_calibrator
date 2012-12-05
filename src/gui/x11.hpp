@@ -51,6 +51,10 @@ protected:
     GC gc;
     XFontStruct* font_info;
 
+#ifdef HAVE_TIMERFD
+    int timer_fd;
+#endif
+
     // color management
     enum { BLACK=0, WHITE=1, GRAY=2, DIMGRAY=3, RED=4, NUM_COLORS };
     static const char* colors[NUM_COLORS];

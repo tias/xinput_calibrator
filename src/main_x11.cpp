@@ -30,9 +30,14 @@ int main(int argc, char** argv)
 
     GuiCalibratorX11::make_instance( calibrator );
 
+#ifdef HAVE_TIMERFD
+    while (1)
+    	GuiCalibratorX11::give_timer_signal();
+#else
     // wait for timer signal, processes events
     while(1)
         pause();
+#endif
 
     delete calibrator;
     return 0;
