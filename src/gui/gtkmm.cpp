@@ -66,8 +66,10 @@ CalibrationArea::CalibrationArea(Calibrator* calibrator0)
         set_display_size(get_width(), get_height());
 
     // Setup timer for animation
-    sigc::slot<bool> slot = sigc::mem_fun(*this, &CalibrationArea::on_timer_signal);
-    Glib::signal_timeout().connect(slot, time_step);
+    if(calibrator->get_use_timeout()){
+        sigc::slot<bool> slot = sigc::mem_fun(*this, &CalibrationArea::on_timer_signal);
+        Glib::signal_timeout().connect(slot, time_step);
+    }
 }
 
 void CalibrationArea::set_display_size(int width, int height) {
@@ -149,12 +151,13 @@ bool CalibrationArea::on_expose_event(GdkEventExpose *event)
             cr->arc(X[i], Y[i], cross_circle, 0.0, 2.0 * M_PI);
             cr->stroke();
         }
-
-        // Draw the clock background
-        cr->arc(display_width/2, display_height/2, clock_radius/2, 0.0, 2.0 * M_PI);
-        cr->set_source_rgb(0.5, 0.5, 0.5);
-        cr->fill_preserve();
-        cr->stroke();
+        if(calibrator->get_use_timeout()){
+            // Draw the clock background
+            cr->arc(display_width/2, display_height/2, clock_radius/2, 0.0, 2.0 * M_PI);
+            cr->set_source_rgb(0.5, 0.5, 0.5);
+            cr->fill_preserve();
+            cr->stroke();
+        }
 
         cr->set_line_width(clock_line_width);
         cr->arc(display_width/2, display_height/2, (clock_radius - clock_line_width)/2,
