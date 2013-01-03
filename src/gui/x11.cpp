@@ -276,10 +276,12 @@ void GuiCalibratorX11::redraw()
     }
 
     // Draw the clock background
-    XSetForeground(display, gc, pixel[DIMGRAY]);
-    XSetLineAttributes(display, gc, 0, LineSolid, CapRound, JoinRound);
-    XFillArc(display, win, gc, (display_width-clock_radius)/2, (display_height - clock_radius)/2,
-                clock_radius, clock_radius, 0, 360 * 64);
+    if(calibrator->get_use_timeout()){
+        XSetForeground(display, gc, pixel[DIMGRAY]);
+        XSetLineAttributes(display, gc, 0, LineSolid, CapRound, JoinRound);
+        XFillArc(display, win, gc, (display_width-clock_radius)/2, (display_height - clock_radius)/2,
+                    clock_radius, clock_radius, 0, 360 * 64);
+    }
 }
 
 bool GuiCalibratorX11::on_expose_event()
@@ -297,13 +299,15 @@ bool GuiCalibratorX11::on_timer_signal()
     }
 
     // Update clock
-    XSetForeground(display, gc, pixel[BLACK]);
-    XSetLineAttributes(display, gc, clock_line_width,
-                LineSolid, CapButt, JoinMiter);
-    XDrawArc(display, win, gc, (display_width-clock_radius+clock_line_width)/2,
-                (display_height-clock_radius+clock_line_width)/2,
-                clock_radius-clock_line_width, clock_radius-clock_line_width,
-                90*64, ((double)time_elapsed/(double)max_time) * -360 * 64);
+    if(calibrator->get_use_timeout()){
+        XSetForeground(display, gc, pixel[BLACK]);
+        XSetLineAttributes(display, gc, clock_line_width,
+                    LineSolid, CapButt, JoinMiter);
+        XDrawArc(display, win, gc, (display_width-clock_radius+clock_line_width)/2,
+                    (display_height-clock_radius+clock_line_width)/2,
+                    clock_radius-clock_line_width, clock_radius-clock_line_width,
+                    90*64, ((double)time_elapsed/(double)max_time) * -360 * 64);
+    }
 
     return true;
 }
