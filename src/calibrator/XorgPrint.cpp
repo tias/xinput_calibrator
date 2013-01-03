@@ -70,7 +70,7 @@ bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys)
         sysfs_name = "!!Name_Of_TouchScreen!!";
 
     // xorg.conf.d snippet
-    printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf'\n");
+    printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf' (/usr/share/X11/xorg.conf.d/ in some distro's)\n");
     printf("Section \"InputClass\"\n");
     printf("	Identifier	\"calibration\"\n");
     printf("	MatchProduct	\"%s\"\n", sysfs_name);
