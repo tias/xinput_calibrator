@@ -144,7 +144,8 @@ public:
                const int thr_misclick=0,
                const int thr_doubleclick=0,
                const OutputType output_type=OUTYPE_AUTO,
-               const char* geometry=0);
+               const char* geometry=0,
+               const bool use_timeout=1);
 
     ~Calibrator() {}
 
@@ -175,6 +176,9 @@ public:
     /// get the sysfs name of the device,
     /// returns NULL if it can not be found
     const char* get_sysfs_name();
+
+    const bool get_use_timeout() const
+    { return use_timeout; }
 
 protected:
     /// check whether the coordinates are along the respective axis
@@ -224,6 +228,8 @@ protected:
 
     // manually specified geometry string
     const char* geometry;
+
+    const bool use_timeout;
 };
 
 // Interfance for a CalibratorTester
