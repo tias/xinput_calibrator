@@ -179,7 +179,7 @@ static void usage(char* cmd, unsigned thr_misclick)
     fprintf(stderr, "\t--output-type <auto|xorg.conf.d|hal|xinput>: type of config to ouput (auto=automatically detect, default: auto)\n");
     fprintf(stderr, "\t--fake: emulate a fake device (for testing purposes)\n");
     fprintf(stderr, "\t--geometry: manually provide the geometry (width and height) for the calibration window\n");
-    fprintf(stderr, "\t--no-timeout: turns off the timeout if parameter pressent\n");
+    fprintf(stderr, "\t--no-timeout: turns off the timeout\n");
 }
 
 Calibrator* Calibrator::make_calibrator(int argc, char** argv)
