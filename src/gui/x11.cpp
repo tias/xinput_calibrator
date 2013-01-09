@@ -293,13 +293,14 @@ bool GuiCalibratorX11::on_expose_event()
 
 bool GuiCalibratorX11::on_timer_signal()
 {
-    time_elapsed += time_step;
-    if (time_elapsed > max_time) {
-        exit(0);
-    }
-
     // Update clock
-    if(calibrator->get_use_timeout()){
+    if(calibrator->get_use_timeout()) {
+
+        time_elapsed += time_step;
+        if (time_elapsed > max_time) {
+            exit(0);
+        }
+
         XSetForeground(display, gc, pixel[BLACK]);
         XSetLineAttributes(display, gc, clock_line_width,
                     LineSolid, CapButt, JoinMiter);
