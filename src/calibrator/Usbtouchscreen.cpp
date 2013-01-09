@@ -149,34 +149,43 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys)
 
 void CalibratorUsbtouchscreen::read_int_parameter(const char *param, int &value)
 {
-    int dummy;
     char filename[100];
     sprintf(filename, "%s/%s", module_prefix, param);
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
+        perror( "CalibratorUsbtouchscreen::read_int_parameter" );
         fprintf(stderr, "Could not read parameter '%s'\n", param);
         return;
     }
 
-    dummy = fscanf(fid, "%d", &value);
+    if ( 1 != fscanf(fid, "%d", &value) ) {
+        perror( "CalibratorUsbtouchscreen::read_int_parameter" );
+        fprintf(stderr, "Could not read value of parameter '%s'\n", param);
+    }
+
     fclose(fid);
 }
 
 void CalibratorUsbtouchscreen::read_bool_parameter(const char *param, bool &value)
 {
-    char *dummy;
     char filename[100];
     sprintf(filename, "%s/%s", module_prefix, param);
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
+        perror( "CalibratorUsbtouchscreen::read_bool_parameter" );
         fprintf(stderr, "Could not read parameter '%s'\n", param);
         return;
     }
 
-    char val[3];
-    dummy = fgets(val, 2, fid);
+    char val[3] = { '\0' }; // ensure that val contains nul chars (not 'Y')
+    if ( NULL == fgets(val, 2, fid) ) {
+        perror( "CalibratorUsbtouchscreen::read_bool_parameter" );
+        fprintf(stderr, "Could not read value of boolean parameter '%s'. Using false.\n", param);
+        // Dropping through here simply means that the value of the boolean
+        // is set to false.
+    }
     fclose(fid);
-        value = (val[0] == yesno(true));
+    value = (val[0] == yesno(true));
 }
 
 void CalibratorUsbtouchscreen::write_int_parameter(const char *param, const int value)
