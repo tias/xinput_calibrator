@@ -147,7 +147,7 @@ public:
                const char* geometry=0,
                const bool use_timeout=1);
 
-    ~Calibrator() {}
+    virtual ~Calibrator() {}
 
     /// set the doubleclick treshold
     void set_threshold_doubleclick(int t)
