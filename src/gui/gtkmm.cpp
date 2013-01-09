@@ -204,21 +204,23 @@ void CalibrationArea::redraw()
 
 bool CalibrationArea::on_timer_signal()
 {
-    time_elapsed += time_step;
-    if (time_elapsed > max_time) {
-        exit(0);
+    if (calibrator->get_use_timeout()) {
+        time_elapsed += time_step;
+        if (time_elapsed > max_time) {
+            exit(0);
+        }
+    
+        // Update clock
+        Glib::RefPtr<Gdk::Window> win = get_window();
+        if (win) {
+            const Gdk::Rectangle rect(display_width/2 - clock_radius - clock_line_width,
+                                     display_height/2 - clock_radius - clock_line_width,
+                                     2 * clock_radius + 1 + 2 * clock_line_width,
+                                     2 * clock_radius + 1 + 2 * clock_line_width);
+            win->invalidate_rect(rect, false);
+        }
     }
-
-    // Update clock
-    Glib::RefPtr<Gdk::Window> win = get_window();
-    if (win) {
-        const Gdk::Rectangle rect(display_width/2 - clock_radius - clock_line_width,
-                                 display_height/2 - clock_radius - clock_line_width,
-                                 2 * clock_radius + 1 + 2 * clock_line_width,
-                                 2 * clock_radius + 1 + 2 * clock_line_width);
-        win->invalidate_rect(rect, false);
-    }
-
+    
     return true;
 }
 
