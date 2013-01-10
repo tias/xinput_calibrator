@@ -73,25 +73,25 @@ public:
     //
     // @param x_min
     // The mean minimum x coordinate.  Calculated in Calibrator::finish()
-    // like so: float x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
+    // like so: double x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
     //
     // @param y_min
     // The mean minimum y coordinate.  Calculated in Calibrator::finish()
-    // like so: float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
+    // like so: double y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
     //
     // @param x_max
     // The mean maximum x coordinate.  Calculated in Calibrator::finish()
-    // like so: float x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
+    // like so: double x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
     //
     // @param y_max
     // The mean maximum x coordinate.  Calculated in Calibrator::finish()
-    // like so: float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
+    // like so: double y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
     //
     // @param new_axis
     // The axes calibration data, of type XYinfo, being set by calibrator:finish().
     // This is ultimately passed as an arg to finish_data().
-    virtual void compensateForDevice( int width, int height, float &x_min, float &y_min,
-                                      float &x_max, float &y_max, XYinfo &new_axis );
+    virtual void compensateForDevice( int width, int height, double &x_min, double &y_min,
+                                      double &x_max, double &y_max, XYinfo &new_axis );
  
     /// calculate and apply the calibration
     virtual bool finish_data(const XYinfo new_axys);

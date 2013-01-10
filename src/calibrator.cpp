@@ -152,10 +152,10 @@ bool Calibrator::finish(int width, int height)
     }
 
     // calculate average of clicks
-    float x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
-    float x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
-    float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
-    float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
+    double x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
+    double x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
+    double y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
+    double y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
 
     // This has an empty implementation here, but derived classes
     // may implement it to modify {x,y}_* and new_axis as needed.  
@@ -165,15 +165,15 @@ bool Calibrator::finish(int width, int height)
 
     // the screen was divided in num_blocks blocks, and the touch points were at
     // one block away from the true edges of the screen.
-    const float block_x = width/(float)num_blocks;
-    const float block_y = height/(float)num_blocks;
+    const double block_x = width/(double)num_blocks;
+    const double block_y = height/(double)num_blocks;
     // rescale these blocks from the range of the drawn touchpoints to the range of the 
     // actually clicked coordinates, and substract/add from the clicked coordinates
     // to obtain the coordinates corresponding to the edges of the screen.
-    float scale_x = (x_max - x_min)/(width - 2*block_x);
+    double scale_x = (x_max - x_min)/(width - 2*block_x);
     x_min -= block_x * scale_x;
     x_max += block_x * scale_x;
-    float scale_y = (y_max - y_min)/(height - 2*block_y);
+    double scale_y = (y_max - y_min)/(height - 2*block_y);
     y_min -= block_y * scale_y;
     y_max += block_y * scale_y;
     
@@ -264,6 +264,19 @@ bool Calibrator::has_xorgconfd_support(Display* dpy) {
     return has_support;
 }
 
+int
+xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min)
+{
+    double X = scaleAxis(Cx, to_max, to_min, from_max, from_min);
+
+    if (X > to_max)
+        X = to_max;
+    if (X < to_min)
+        X = to_min;
+
+    return (int)X;
+}
+
 /*
  * FROM xf86Xinput.c
  *
@@ -281,53 +294,21 @@ bool Calibrator::has_xorgconfd_support(Display* dpy) {
  * e.g. to scale from device coordinates into screen coordinates, call
  * xf86ScaleAxis(x, 0, screen_width, dev_min, dev_max);
  */
-int
-xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min)
+double
+scaleAxis(double Cx, int to_max, int to_min, int from_max, int from_min)
 {
-    int X;
-    int64_t to_width = to_max - to_min;
-    int64_t from_width = from_max - from_min;
+    double X;
+    double to_width = to_max - to_min;
+    double from_width = from_max - from_min;
 
-    if (from_width) {
-        X = (int) (((to_width * (Cx - from_min)) / from_width) + to_min);
-    }
-    else {
-        X = 0;
-        printf("Divide by Zero in xf86ScaleAxis\n");
-        exit(1);
-    }
-
-    if (X > to_max)
-        X = to_max;
-    if (X < to_min)
-        X = to_min;
-
-    return X;
-}
-
-// same but without rounding to min/max
-float
-scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min)
-{
-    float X;
-    int64_t to_width = to_max - to_min;
-    int64_t from_width = from_max - from_min;
-
-    if (from_width) {
+    if (from_max - from_min) {
         X = (((to_width * (Cx - from_min)) / from_width) + to_min);
     }
     else {
-        X = 0;
+        X = 0.0;
         printf("Divide by Zero in scaleAxis\n");
         exit(1);
     }
-
-    /* no rounding to max/min
-    if (X > to_max)
-        X = to_max;
-    if (X < to_min)
-        X = to_min;
-    */
 
     return X;
 }

@@ -206,9 +206,9 @@ CalibratorEvdev::~CalibratorEvdev () {
 // @param new_axis
 // The axes calibration data, of type XYinfo, being set by calibrator:finish().
 // This is ultimately passed as an arg to finish_data().
-void CalibratorEvdev::compensateForDevice( int width, int height, float &x_min,
-                                           float &y_min, float &x_max,
-                                           float &y_max, XYinfo &new_axis )
+void CalibratorEvdev::compensateForDevice( int width, int height, double &x_min,
+                                           double &y_min, double &x_max,
+                                           double &y_max, XYinfo &new_axis )
 {
     if ( verbose ) {
         printf( "DEBUG: compensating for evdev \"crazy\" code." );
