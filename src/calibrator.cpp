@@ -144,6 +144,12 @@ bool Calibrator::finish(int width, int height)
     // based on old_axys: inversion/swapping is relative to the old axis
     XYinfo new_axis(old_axys);
 
+    // Should x and y be swapped?
+    if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
+        new_axis.swap_xy = !new_axis.swap_xy;
+        std::swap(clicked.x[LL], clicked.x[UR]);
+        std::swap(clicked.y[LL], clicked.y[UR]);
+    }
 
     // calculate average of clicks
     float x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
@@ -151,12 +157,11 @@ bool Calibrator::finish(int width, int height)
     float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
     float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
 
-    // Should x and y be swapped?
-    if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
-        new_axis.swap_xy = !new_axis.swap_xy;
-        std::swap(x_min, y_min);
-        std::swap(x_max, y_max);
-    }
+    // This has an empty implementation here, but derived classes
+    // may implement it to modify {x,y}_* and new_axis as needed.  
+    // See Evdev.cpp which uses this routine to compensate for 
+    // calculations done within the evdev device.
+    compensateForDevice( width, height, x_min, y_min, x_max, y_max, new_axis );
 
     // the screen was divided in num_blocks blocks, and the touch points were at
     // one block away from the true edges of the screen.
@@ -180,7 +185,6 @@ bool Calibrator::finish(int width, int height)
     x_max = scaleAxis(x_max, old_axys.x.max, old_axys.x.min, width, 0);
     y_min = scaleAxis(y_min, old_axys.y.max, old_axys.y.min, height, 0);
     y_max = scaleAxis(y_max, old_axys.y.max, old_axys.y.min, height, 0);
-
 
     // round and put in new_axis struct
     new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);

@@ -175,25 +175,44 @@ CalibratorEvdev::~CalibratorEvdev () {
     XCloseDisplay(display);
 }
 
-// From Calibrator but with evdev specific invertion option
-// KEEP IN SYNC with Calibrator::finish() !!
-bool CalibratorEvdev::finish(int width, int height)
+
+// Called by base class finish() method.
+// Allows for derived class specific "adjustments" to be made
+// just prior to the scaling and calibration calculations being
+// performed.
+//
+// @param width
+// The screen width, in pixels, as passed to calibrator::finish()
+//
+// @param height
+// The screen height, in pixels, as passed to calibrator::finish()
+//
+// @param x_min
+// The mean minimum x coordinate.  Calculated in Calibrator::finish()
+// like so: float x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
+//
+// @param y_min
+// The mean minimum y coordinate.  Calculated in Calibrator::finish()
+// like so: float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
+//
+// @param x_max
+// The mean maximum x coordinate.  Calculated in Calibrator::finish()
+// like so: float x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
+//
+// @param y_max
+// The mean maximum x coordinate.  Calculated in Calibrator::finish()
+// like so: float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
+//
+// @param new_axis
+// The axes calibration data, of type XYinfo, being set by calibrator:finish().
+// This is ultimately passed as an arg to finish_data().
+void CalibratorEvdev::compensateForDevice( int width, int height, float &x_min,
+                                           float &y_min, float &x_max,
+                                           float &y_max, XYinfo &new_axis )
 {
-    if (get_numclicks() != NUM_POINTS) {
-        return false;
+    if ( verbose ) {
+        printf( "DEBUG: compensating for evdev \"crazy\" code." );
     }
-
-    // new axis origin and scaling
-    // based on old_axys: inversion/swapping is relative to the old axis
-    XYinfo new_axis(old_axys);
-
-
-    // calculate average of clicks
-    float x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
-    float x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
-    float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
-    float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
-
 
     // When evdev detects an invert_X/Y option,
     // it performs the following *crazy* code just before returning
@@ -202,57 +221,20 @@ bool CalibratorEvdev::finish(int width, int height)
     if (old_axys.x.invert) {
         x_min = width - x_min;
         x_max = width - x_max;
+
         // avoid invert_x property from here on,
         // the calibration code can handle this dynamically!
         new_axis.x.invert = false;
     }
+
     if (old_axys.y.invert) {
         y_min = height - y_min;
         y_max = height - y_max;
+
         // avoid invert_y property from here on,
         // the calibration code can handle this dynamically!
         new_axis.y.invert = false;
     }
-    // end of evdev inversion crazyness
-
-
-    // Should x and y be swapped?
-    if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
-        new_axis.swap_xy = !new_axis.swap_xy;
-        std::swap(x_min, y_min);
-        std::swap(x_max, y_max);
-    }
-
-    // the screen was divided in num_blocks blocks, and the touch points were at
-    // one block away from the true edges of the screen.
-    const float block_x = width/(float)num_blocks;
-    const float block_y = height/(float)num_blocks;
-    // rescale these blocks from the range of the drawn touchpoints to the range of the 
-    // actually clicked coordinates, and substract/add from the clicked coordinates
-    // to obtain the coordinates corresponding to the edges of the screen.
-    float scale_x = (x_max - x_min)/(width - 2*block_x);
-    x_min -= block_x * scale_x;
-    x_max += block_x * scale_x;
-    float scale_y = (y_max - y_min)/(height - 2*block_y);
-    y_min -= block_y * scale_y;
-    y_max += block_y * scale_y;
-    
-    // now, undo the transformations done by the X server, to obtain the true 'raw' value in X.
-    // The raw value was scaled from old_axis to the device min/max, and from the device min/max
-    // to the screen min/max
-    // hence, the reverse transformation is from screen to old_axis
-    x_min = scaleAxis(x_min, old_axys.x.max, old_axys.x.min, width, 0);
-    x_max = scaleAxis(x_max, old_axys.x.max, old_axys.x.min, width, 0);
-    y_min = scaleAxis(y_min, old_axys.y.max, old_axys.y.min, height, 0);
-    y_max = scaleAxis(y_max, old_axys.y.max, old_axys.y.min, height, 0);
-
-
-    // round and put in new_axis struct
-    new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);
-    new_axis.y.min = round(y_min); new_axis.y.max = round(y_max);
-
-    // finish the data, driver/calibrator specific
-    return finish_data(new_axis);
 }
 
 // Activate calibrated data and output it
