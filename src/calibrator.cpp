@@ -145,8 +145,12 @@ bool Calibrator::finish(int width, int height)
     XYinfo new_axis(old_axys);
 
     // Should x and y be swapped?
+    bool swap_axes = false;
     if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
+        swap_axes = true;
         new_axis.swap_xy = !new_axis.swap_xy;
+
+        // These swaps result in a reflection of the clicks, about the line x=y.
         std::swap(clicked.x[LL], clicked.x[UR]);
         std::swap(clicked.y[LL], clicked.y[UR]);
     }
@@ -167,12 +171,14 @@ bool Calibrator::finish(int width, int height)
     // one block away from the true edges of the screen.
     const double block_x = width/(double)num_blocks;
     const double block_y = height/(double)num_blocks;
+
     // rescale these blocks from the range of the drawn touchpoints to the range of the 
     // actually clicked coordinates, and substract/add from the clicked coordinates
     // to obtain the coordinates corresponding to the edges of the screen.
     double scale_x = (x_max - x_min)/(width - 2*block_x);
     x_min -= block_x * scale_x;
     x_max += block_x * scale_x;
+
     double scale_y = (y_max - y_min)/(height - 2*block_y);
     y_min -= block_y * scale_y;
     y_max += block_y * scale_y;
@@ -185,6 +191,11 @@ bool Calibrator::finish(int width, int height)
     x_max = scaleAxis(x_max, old_axys.x.max, old_axys.x.min, width, 0);
     y_min = scaleAxis(y_min, old_axys.y.max, old_axys.y.min, height, 0);
     y_max = scaleAxis(y_max, old_axys.y.max, old_axys.y.min, height, 0);
+
+    if ( swap_axes ) {
+        std::swap( x_min, y_min );
+        std::swap( x_max, y_max );
+    }
 
     // round and put in new_axis struct
     new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);
