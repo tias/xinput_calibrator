@@ -31,7 +31,7 @@
 #include <vector>
 
 int xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
-float scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min);
+double scaleAxis(double Cx, int to_max, int to_min, int from_max, int from_min);
 
 /*
  * Number of blocks. We partition the screen into 'num_blocks' x 'num_blocks'
@@ -147,7 +147,7 @@ public:
                const char* geometry=0,
                const bool use_timeout=1);
 
-    ~Calibrator() {}
+    virtual ~Calibrator() {}
 
     /// set the doubleclick treshold
     void set_threshold_doubleclick(int t)
@@ -171,8 +171,43 @@ public:
 
     /// add a click with the given coordinates
     bool add_click(int x, int y);
+
+    // Called by base class finish() method.
+    // Allows for derived class specific "adjustments" to be made
+    // just prior to the scaling and calibration calculations being
+    // performed.
+    //
+    // @param width
+    // The screen width, in pixels, as passed to calibrator::finish()
+    //
+    // @param height
+    // The screen height, in pixels, as passed to calibrator::finish()
+    //
+    // @param x_min
+    // The mean minimum x coordinate.  Calculated in Calibrator::finish()
+    // like so: double x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
+    //
+    // @param y_min
+    // The mean minimum y coordinate.  Calculated in Calibrator::finish()
+    // like so: double y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
+    //
+    // @param x_max
+    // The mean maximum x coordinate.  Calculated in Calibrator::finish()
+    // like so: double x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
+    //
+    // @param y_max
+    // The mean maximum x coordinate.  Calculated in Calibrator::finish()
+    // like so: double y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
+    //
+    // @param new_axis
+    // The axes calibration data, of type XYinfo, being set by calibrator:finish().
+    // This is ultimately passed as an arg to finish_data().
+    virtual void compensateForDevice( int width, int height, double &x_min, double &y_min,
+                                      double &x_max, double &y_max, XYinfo &new_axis ) {}
+
     /// calculate and apply the calibration
-    virtual bool finish(int width, int height);
+    bool finish(int width, int height);
+
     /// get the sysfs name of the device,
     /// returns NULL if it can not be found
     const char* get_sysfs_name();

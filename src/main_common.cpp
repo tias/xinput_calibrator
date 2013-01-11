@@ -287,9 +287,9 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             } else
 
             // Disable timeout
-			if (strcmp("--no-timeout", argv[i]) == 0) {
-				use_timeout = false;
-			}
+            if (strcmp("--no-timeout", argv[i]) == 0) {
+                use_timeout = false;
+            }
 
             // unknown option
             else {
