@@ -24,6 +24,9 @@
 
 #include <cstdio>
 
+// XXX: we currently don't handle lines that are longer than this
+#define MAX_LINE_LEN 1024
+
 CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry, const bool use_timeout, const char* output_filename)
   : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry, use_timeout, output_filename)
 {
@@ -69,22 +72,50 @@ bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys)
     if (not_sysfs_name)
         sysfs_name = "!!Name_Of_TouchScreen!!";
 
-    // xorg.conf.d snippet
-    printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf' (/usr/share/X11/xorg.conf.d/ in some distro's)\n");
-    printf("Section \"InputClass\"\n");
-    printf("	Identifier	\"calibration\"\n");
-    printf("	MatchProduct	\"%s\"\n", sysfs_name);
-    printf("	Option	\"MinX\"	\"%d\"\n", new_axys.x.min);
-    printf("	Option	\"MaxX\"	\"%d\"\n", new_axys.x.max);
-    printf("	Option	\"MinY\"	\"%d\"\n", new_axys.y.min);
-    printf("	Option	\"MaxY\"	\"%d\"\n", new_axys.y.max);
-    printf("	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", new_axys.swap_xy);
-    printf("	Option	\"InvertX\"	\"%d\"  # unless it was already set\n", new_axys.x.invert);
-    printf("	Option	\"InvertY\"	\"%d\"  # unless it was already set\n", new_axys.y.invert);
-    printf("EndSection\n");
+    if(output_filename == NULL || not_sysfs_name)
+        printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf' (/usr/share/X11/xorg.conf.d/ in some distro's)\n");
+    else
+        printf("  writing calibration script to '%s'\n", output_filename);
 
+    // xorg.conf.d snippet
+    char line[MAX_LINE_LEN];
+    std::string outstr;
+
+    outstr += "Section \"InputClass\"\n";
+    outstr += "	Identifier	\"calibration\"\n";
+    sprintf(line, "	MatchProduct	\"%s\"\n", sysfs_name);
+    outstr += line;
+    sprintf(line, "	Option	\"MinX\"	\"%d\"\n", new_axys.x.min);
+    outstr += line;
+    sprintf(line, "	Option	\"MaxX\"	\"%d\"\n", new_axys.x.max);
+    outstr += line;
+    sprintf(line, "	Option	\"MinY\"	\"%d\"\n", new_axys.y.min);
+    outstr += line;
+    sprintf(line, "	Option	\"MaxY\"	\"%d\"\n", new_axys.y.max);
+    outstr += line;
+    sprintf(line, "	Option	\"SwapXY\"	\"%d\" # unless it was already set to 1\n", new_axys.swap_xy);
+    outstr += line;
+    sprintf(line, "	Option	\"InvertX\"	\"%d\"  # unless it was already set\n", new_axys.x.invert);
+    outstr += line;
+    sprintf(line, "	Option	\"InvertY\"	\"%d\"  # unless it was already set\n", new_axys.y.invert);
+    outstr += line;
+    outstr += "EndSection\n";
+
+    // console out
+    printf("%s", outstr.c_str());
     if (not_sysfs_name)
         printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);
+    // file out
+    else if(output_filename != NULL) {
+        FILE* fid = fopen(output_filename, "w");
+        if (fid == NULL) {
+            fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", output_filename);
+            fprintf(stderr, "New calibration data NOT saved\n");
+            return false;
+        }
+        fprintf(fid, "%s", outstr.c_str());
+        fclose(fid);
+    }
 
     return true;
 }
@@ -96,21 +127,48 @@ bool CalibratorXorgPrint::output_hal(const XYinfo new_axys)
     if (not_sysfs_name)
         sysfs_name = "!!Name_Of_TouchScreen!!";
 
-    // HAL policy output
-    printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n\
-<match key=\"info.product\" contains=\"%s\">\n\
-  <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n\
-  <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n\
-  <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n\
-  <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n"
-     , sysfs_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
-    printf("  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_axys.swap_xy);
-    printf("  <merge key=\"input.x11_options.invertx\" type=\"string\">%d</merge>\n", new_axys.x.invert);
-    printf("  <merge key=\"input.x11_options.inverty\" type=\"string\">%d</merge>\n", new_axys.y.invert);
-    printf("</match>\n");
+    if(output_filename == NULL || not_sysfs_name)
+        printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n");
+    else
+        printf("  writing HAL calibration data to '%s'\n", output_filename);
 
+    // HAL policy output
+    char line[MAX_LINE_LEN];
+    std::string outstr;
+
+    sprintf(line, "<match key=\"info.product\" contains=\"%s\">\n", sysfs_name);
+    outstr += line;
+    sprintf(line, "  <merge key=\"input.x11_options.minx\" type=\"string\">%d</merge>\n", new_axys.x.min);
+    outstr += line;
+    sprintf(line, "  <merge key=\"input.x11_options.maxx\" type=\"string\">%d</merge>\n", new_axys.x.max);
+    outstr += line;
+    sprintf(line, "  <merge key=\"input.x11_options.miny\" type=\"string\">%d</merge>\n", new_axys.y.min);
+    outstr += line;
+    sprintf(line, "  <merge key=\"input.x11_options.maxy\" type=\"string\">%d</merge>\n", new_axys.y.max);
+    outstr += line;
+    sprintf(line, "  <merge key=\"input.x11_options.swapxy\" type=\"string\">%d</merge>\n", new_axys.swap_xy);
+    outstr += line;
+    sprintf(line, "  <merge key=\"input.x11_options.invertx\" type=\"string\">%d</merge>\n", new_axys.x.invert);
+    outstr += line;
+    sprintf(line, "  <merge key=\"input.x11_options.inverty\" type=\"string\">%d</merge>\n", new_axys.y.invert);
+    outstr += line;
+    outstr += "</match>\n";
+
+    // console out
+    printf("%s", outstr.c_str());
     if (not_sysfs_name)
         printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);
+    // file out
+    else if(output_filename != NULL) {
+        FILE* fid = fopen(output_filename, "w");
+        if (fid == NULL) {
+            fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", output_filename);
+            fprintf(stderr, "New calibration data NOT saved\n");
+            return false;
+        }
+        fprintf(fid, "%s", outstr.c_str());
+        fclose(fid);
+    }
 
     return true;
 }
