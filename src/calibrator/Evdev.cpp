@@ -47,8 +47,9 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
                                  const int thr_doubleclick,
                                  const OutputType output_type,
                                  const char* geometry,
-                                 const bool use_timeout)
-  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry, use_timeout)
+                                 const bool use_timeout,
+                                 const char* output_filename)
+  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry, use_timeout, output_filename)
 {
     // init
     display = XOpenDisplay(NULL);
@@ -166,8 +167,9 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
                                  const int thr_doubleclick,
                                  const OutputType output_type,
                                  const char* geometry,
-                                 const bool use_timeout)
-  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry) { }
+                                 const bool use_timeout,
+                                 const char* output_filename)
+  : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry, output_filename) { }
 
 // Destructor
 CalibratorEvdev::~CalibratorEvdev () {

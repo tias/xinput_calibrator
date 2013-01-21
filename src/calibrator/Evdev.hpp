@@ -47,7 +47,8 @@ protected:
                     const int thr_doubleclick=0,
                     const OutputType output_type=OUTYPE_AUTO,
                     const char* geometry=0,
-                    const bool use_timeout=false);
+                    const bool use_timeout=false,
+                    const char* output_filename = 0);
 
 public:
     CalibratorEvdev(const char* const device_name,
@@ -57,7 +58,8 @@ public:
                     const int thr_doubleclick=0,
                     const OutputType output_type=OUTYPE_AUTO,
                     const char* geometry=0,
-                    const bool use_timeout=false);
+                    const bool use_timeout=false,
+                    const char* output_filename = 0);
     ~CalibratorEvdev();
 
     /// calculate and apply the calibration
