@@ -104,10 +104,11 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys)
     write_bool_parameter(p_swap_xy, new_axys.swap_xy);
 
     // Read, then write calibration parameters to modprobe_conf_local,
-    // to keep the for the next boot
-    FILE *fid = fopen(modprobe_conf_local, "r");
+    // or the file set by --output-filename to keep the for the next boot
+    const char* filename = output_filename == NULL ? modprobe_conf_local : output_filename;
+    FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
-        fprintf(stderr, "Error: Can't open '%s' for reading. Make sure you have the necessary rights\n", modprobe_conf_local);
+        fprintf(stderr, "Error: Can't open '%s' for reading. Make sure you have the necessary rights\n", filename);
         fprintf(stderr, "New calibration data NOT saved\n");
         return false;
     }
@@ -135,9 +136,9 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys)
          p_flip_y, yesno(flip_y), p_swap_xy, yesno(new_axys.swap_xy));
     new_contents += new_opt;
 
-    fid = fopen(modprobe_conf_local, "w");
+    fid = fopen(filename, "w");
     if (fid == NULL) {
-        fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", modprobe_conf_local);
+        fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", filename);
         fprintf(stderr, "New calibration data NOT saved\n");
         return false;
     }
