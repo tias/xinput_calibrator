@@ -148,7 +148,7 @@ public:
                const bool use_timeout=1,
                const char* output_filename = 0);
 
-    ~Calibrator() {}
+    virtual ~Calibrator() {}
 
     /// set the doubleclick treshold
     void set_threshold_doubleclick(int t)

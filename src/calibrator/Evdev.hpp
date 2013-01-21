@@ -60,7 +60,7 @@ public:
                     const char* geometry=0,
                     const bool use_timeout=false,
                     const char* output_filename = 0);
-    ~CalibratorEvdev();
+    virtual ~CalibratorEvdev();
 
     /// calculate and apply the calibration
     virtual bool finish(int width, int height);
