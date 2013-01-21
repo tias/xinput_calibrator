@@ -39,6 +39,9 @@
 #define EXIT_FAILURE 0
 #endif
 
+// XXX: we currently don't handle lines that are longer than this
+#define MAX_LINE_LEN 1024
+
 // Constructor
 CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
                                  const XYinfo& axys0,
@@ -517,18 +520,41 @@ bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys)
     if (not_sysfs_name)
         sysfs_name = "!!Name_Of_TouchScreen!!";
 
-    // xorg.conf.d snippet
-    printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf' (/usr/share/X11/xorg.conf.d/ in some distro's)\n");
-    printf("Section \"InputClass\"\n");
-    printf("	Identifier	\"calibration\"\n");
-    printf("	MatchProduct	\"%s\"\n", sysfs_name);
-    printf("	Option	\"Calibration\"	\"%d %d %d %d\"\n",
-                new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
-    printf("	Option	\"SwapAxes\"	\"%d\"\n", new_axys.swap_xy);
-    printf("EndSection\n");
+    if(output_filename == NULL || not_sysfs_name)
+        printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf' (/usr/share/X11/xorg.conf.d/ in some distro's)\n");
+    else
+        printf("  writing xorg.conf calibration data to '%s'\n", output_filename);
 
+    // xorg.conf.d snippet
+    char line[MAX_LINE_LEN];
+    std::string outstr;
+
+    outstr += "Section \"InputClass\"\n";
+    outstr += "	Identifier	\"calibration\"\n";
+    sprintf(line, "	MatchProduct	\"%s\"\n", sysfs_name);
+    outstr += line;
+    sprintf(line, "	Option	\"Calibration\"	\"%d %d %d %d\"\n",
+                new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
+    outstr += line;
+    sprintf(line, "	Option	\"SwapAxes\"	\"%d\"\n", new_axys.swap_xy);
+    outstr += line;
+    outstr += "EndSection\n";
+
+    // console out
+    printf("%s", outstr.c_str());
     if (not_sysfs_name)
         printf("\nChange '%s' to your device's name in the snippet above.\n", sysfs_name);
+    // file out
+    else if(output_filename != NULL) {
+        FILE* fid = fopen(output_filename, "w");
+        if (fid == NULL) {
+            fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", output_filename);
+            fprintf(stderr, "New calibration data NOT saved\n");
+            return false;
+        }
+        fprintf(fid, "%s", outstr.c_str());
+        fclose(fid);
+    }
 
     return true;
 }
@@ -540,26 +566,71 @@ bool CalibratorEvdev::output_hal(const XYinfo new_axys)
     if (not_sysfs_name)
         sysfs_name = "!!Name_Of_TouchScreen!!";
 
-    // HAL policy output
-    printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n\
-<match key=\"info.product\" contains=\"%s\">\n\
-  <merge key=\"input.x11_options.calibration\" type=\"string\">%d %d %d %d</merge>\n"
-     , sysfs_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
-    printf("  <merge key=\"input.x11_options.swapaxes\" type=\"string\">%d</merge>\n", new_axys.swap_xy);
-    printf("</match>\n");
+    if(output_filename == NULL || not_sysfs_name)
+        printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n");
+    else
+        printf("  writing HAL calibration data to '%s'\n", output_filename);
 
+    // HAL policy output
+    char line[MAX_LINE_LEN];
+    std::string outstr;
+
+    sprintf(line, "<match key=\"info.product\" contains=\"%s\">\n", sysfs_name);
+    outstr += line;
+    sprintf(line, "  <merge key=\"input.x11_options.calibration\" type=\"string\">%d %d %d %d</merge>\n",
+        new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
+    outstr += line;
+    sprintf(line, "  <merge key=\"input.x11_options.swapaxes\" type=\"string\">%d</merge>\n",
+        new_axys.swap_xy);
+    outstr += "</match>\n";
+    // console out
+    printf("%s", outstr.c_str());
     if (not_sysfs_name)
         printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);
+    // file out
+    else if(output_filename != NULL) {
+        FILE* fid = fopen(output_filename, "w");
+        if (fid == NULL) {
+            fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", output_filename);
+            fprintf(stderr, "New calibration data NOT saved\n");
+            return false;
+        }
+        fprintf(fid, "%s", outstr.c_str());
+        fclose(fid);
+    }
 
     return true;
 }
 
 bool CalibratorEvdev::output_xinput(const XYinfo new_axys)
 {
+    if(output_filename == NULL)
+        printf("  Install the 'xinput' tool and copy the command(s) below in a script that starts with your X session\n");
+    else
+        printf("  writing calibration script to '%s'\n", output_filename);
+
     // create startup script
-    printf("  Install the 'xinput' tool and copy the command(s) below in a script that starts with your X session\n");
-    printf("    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
-    printf("    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_axys.swap_xy);
+    char line[MAX_LINE_LEN];
+    std::string outstr;
+
+    sprintf(line, "    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
+    outstr += line;
+    sprintf(line, "    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_axys.swap_xy);
+    outstr += line;
+
+    // console out
+    printf("%s", outstr.c_str());
+    // file out
+    if(output_filename != NULL) {
+		FILE* fid = fopen(output_filename, "w");
+		if (fid == NULL) {
+			fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", output_filename);
+			fprintf(stderr, "New calibration data NOT saved\n");
+			return false;
+		}
+		fprintf(fid, "%s", outstr.c_str());
+		fclose(fid);
+    }
 
     return true;
 }
