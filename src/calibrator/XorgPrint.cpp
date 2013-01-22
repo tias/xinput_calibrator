@@ -24,9 +24,6 @@
 
 #include <cstdio>
 
-// XXX: we currently don't handle lines that are longer than this
-#define MAX_LINE_LEN 1024
-
 CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const XYinfo& axys0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry, const bool use_timeout, const char* output_filename)
   : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry, use_timeout, output_filename)
 {

@@ -114,7 +114,7 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys)
     }
 
     std::string new_contents;
-    const int len = 1024; // XXX: we currently don't handle lines that are longer than this
+    const int len = MAX_LINE_LEN;
     char line[len];
     const char *opt = "options usbtouchscreen";
     const int opt_len = strlen(opt);

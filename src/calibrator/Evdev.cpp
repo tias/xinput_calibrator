@@ -39,9 +39,6 @@
 #define EXIT_FAILURE 0
 #endif
 
-// XXX: we currently don't handle lines that are longer than this
-#define MAX_LINE_LEN 1024
-
 // Constructor
 CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
                                  const XYinfo& axys0,
