@@ -30,6 +30,9 @@
 #include <stdio.h>
 #include <vector>
 
+// XXX: we currently don't handle lines that are longer than this
+#define MAX_LINE_LEN 1024
+
 int xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
 float scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min);
 
@@ -145,9 +148,10 @@ public:
                const int thr_doubleclick=0,
                const OutputType output_type=OUTYPE_AUTO,
                const char* geometry=0,
-               const bool use_timeout=1);
+               const bool use_timeout=1,
+               const char* output_filename = 0);
 
-    ~Calibrator() {}
+    virtual ~Calibrator() {}
 
     /// set the doubleclick treshold
     void set_threshold_doubleclick(int t)
@@ -179,6 +183,10 @@ public:
 
     const bool get_use_timeout() const
     { return use_timeout; }
+
+    /// get output filename set at cmdline or NULL
+    const char* get_output_filename() const
+    { return output_filename; }
 
 protected:
     /// check whether the coordinates are along the respective axis
@@ -230,6 +238,9 @@ protected:
     const char* geometry;
 
     const bool use_timeout;
+
+    // manually specified output filename
+    const char* output_filename;
 };
 
 // Interfance for a CalibratorTester
