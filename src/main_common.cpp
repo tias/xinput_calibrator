@@ -180,6 +180,7 @@ static void usage(char* cmd, unsigned thr_misclick)
     fprintf(stderr, "\t--fake: emulate a fake device (for testing purposes)\n");
     fprintf(stderr, "\t--geometry: manually provide the geometry (width and height) for the calibration window\n");
     fprintf(stderr, "\t--no-timeout: turns off the timeout\n");
+    fprintf(stderr, "\t--output-filename: write calibration data to file (USB: override default /etc/modprobe.conf.local\n");
 }
 
 Calibrator* Calibrator::make_calibrator(int argc, char** argv)
@@ -191,6 +192,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     XYinfo pre_axys;
     const char* pre_device = NULL;
     const char* geometry = NULL;
+    const char* output_filename = NULL;
     unsigned thr_misclick = 15;
     unsigned thr_doubleclick = 7;
     OutputType output_type = OUTYPE_AUTO;
@@ -289,6 +291,11 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             // Disable timeout
 			if (strcmp("--no-timeout", argv[i]) == 0) {
 				use_timeout = false;
+			} else
+
+			// Output file
+			if (strcmp("--output-filename", argv[i]) == 0) {
+				output_filename = argv[++i];
 			}
 
             // unknown option
@@ -363,7 +370,8 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     try {
         // try Usbtouchscreen driver
         return new CalibratorUsbtouchscreen(device_name, device_axys,
-            thr_misclick, thr_doubleclick, output_type, geometry, use_timeout);
+            thr_misclick, thr_doubleclick, output_type, geometry,
+            use_timeout, output_filename);
 
     } catch(WrongCalibratorException& x) {
         if (verbose)
@@ -373,7 +381,8 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     try {
         // next, try Evdev driver (with XID)
         return new CalibratorEvdev(device_name, device_axys, device_id,
-            thr_misclick, thr_doubleclick, output_type, geometry, use_timeout);
+            thr_misclick, thr_doubleclick, output_type, geometry,
+            use_timeout, output_filename);
 
     } catch(WrongCalibratorException& x) {
         if (verbose)
@@ -382,5 +391,6 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 
     // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
     return new CalibratorXorgPrint(device_name, device_axys,
-            thr_misclick, thr_doubleclick, output_type, geometry, use_timeout);
+            thr_misclick, thr_doubleclick, output_type, geometry,
+            use_timeout, output_filename);
 }
