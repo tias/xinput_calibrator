@@ -21,6 +21,7 @@
  */
 
 #include "gui/x11.hpp"
+#include "gui/gui_common.hpp"
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -43,26 +44,6 @@
 #include <stdint.h>
 
 
-// Timeout parameters
-const int time_step = 100;  // in milliseconds
-const int max_time = 15000; // in milliseconds, 5000 = 5 sec
-
-// Clock appereance
-const int cross_lines = 25;
-const int cross_circle = 4;
-const int clock_radius = 50;
-const int clock_line_width = 10;
-
-// Text printed on screen
-const int font_size = 16;
-const int help_lines = 4;
-const std::string help_text[help_lines] = {
-    "Touchscreen Calibration",
-    "Press the point, use a stylus to increase precision.",
-    "",
-    "(To abort, press any key or wait)"
-};
-
 const char* GuiCalibratorX11::colors[GuiCalibratorX11::NUM_COLORS] = {"BLACK", "WHITE", "GRAY", "DIMGRAY", "RED"};
 
 #ifndef HAVE_TIMERFD
@@ -81,6 +62,9 @@ GuiCalibratorX11* GuiCalibratorX11::instance = NULL;
 GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
   : calibrator(calibrator0), time_elapsed(0)
 {
+    // setup strings
+    get_display_texts(&display_texts, calibrator0);
+
     display = XOpenDisplay(NULL);
     if (display == NULL) {
         throw std::runtime_error("Unable to connect to X server");
@@ -237,24 +221,26 @@ void GuiCalibratorX11::redraw()
     // Print the text
     int text_height = font_info->ascent + font_info->descent;
     int text_width = -1;
-    for (int i = 0; i != help_lines; i++) {
+    for (std::list<std::string>::iterator it = display_texts.begin();
+        it != display_texts.end(); it++) {
         text_width = std::max(text_width, XTextWidth(font_info,
-            help_text[i].c_str(), help_text[i].length()));
+            (*it).c_str(), (*it).length()));
     }
 
     int x = (display_width - text_width) / 2;
     int y = (display_height - text_height) / 2 - 60;
     XSetForeground(display, gc, pixel[BLACK]);
     XSetLineAttributes(display, gc, 2, LineSolid, CapRound, JoinRound);
-    XDrawRectangle(display, win, gc, x - 10, y - (help_lines*text_height) - 10,
-                text_width + 20, (help_lines*text_height) + 20);
+    XDrawRectangle(display, win, gc, x - 10, y - (display_texts.size()*text_height) - 10,
+                text_width + 20, (display_texts.size()*text_height) + 20);
 
     // Print help lines
     y -= 3;
-    for (int i = help_lines-1; i != -1; i--) {
-        int w = XTextWidth(font_info, help_text[i].c_str(), help_text[i].length());
+    for (std::list<std::string>::reverse_iterator rev_it = display_texts.rbegin();
+	     rev_it != display_texts.rend(); rev_it++) {
+        int w = XTextWidth(font_info, (*rev_it).c_str(), (*rev_it).length());
         XDrawString(display, win, gc, x + (text_width-w)/2, y,
-                help_text[i].c_str(), help_text[i].length());
+                (*rev_it).c_str(), (*rev_it).length());
         y -= text_height;
     }
 
