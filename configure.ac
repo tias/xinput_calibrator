@@ -35,7 +35,7 @@ AC_PROG_LIBTOOL
 AC_PROG_INSTALL
 
 AC_PATH_X
-AC_CHECK_HEADERS([stdlib.h string.h])
+AC_CHECK_HEADERS([stdlib.h string.h string list])
 AC_HEADER_STDBOOL
 AC_FUNC_STRTOD
 

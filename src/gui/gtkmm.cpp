@@ -22,30 +22,13 @@
  */
 
 #include "gui/gtkmm.hpp"
-
-// Timeout parameters
-const int time_step = 100;  // in milliseconds
-const int max_time = 15000; // 5000 = 5 sec
-
-// Clock appereance
-const int cross_lines = 25;
-const int cross_circle = 4;
-const int clock_radius = 50;
-const int clock_line_width = 10;
-
-// Text printed on screen
-const int font_size = 16;
-const int help_lines = 4;
-const std::string help_text[help_lines] = {
-    "Touchscreen Calibration",
-    "Press the point, use a stylus to increase precision.",
-    "",
-    "(To abort, press any key or wait)"
-};
+#include "gui/gui_common.hpp"
 
 CalibrationArea::CalibrationArea(Calibrator* calibrator0)
   : calibrator(calibrator0), time_elapsed(0), message(NULL)
 {
+    // setup strings
+    get_display_texts(&display_texts, calibrator0);
     // Listen for mouse events
     add_events(Gdk::KEY_PRESS_MASK | Gdk::BUTTON_PRESS_MASK);
     set_flags(Gtk::CAN_FOCUS);
@@ -110,8 +93,9 @@ bool CalibrationArea::on_expose_event(GdkEventExpose *event)
         double text_height = -1;
         double text_width = -1;
         Cairo::TextExtents extent;
-        for (int i = 0; i != help_lines; i++) {
-            cr->get_text_extents(help_text[i], extent);
+        for (std::list<std::string>::iterator it = display_texts.begin();
+            it != display_texts.end(); it++) {
+            cr->get_text_extents(*it, extent);
             text_width = std::max(text_width, extent.width);
             text_height = std::max(text_height, extent.height);
         }
@@ -120,15 +104,16 @@ bool CalibrationArea::on_expose_event(GdkEventExpose *event)
         double x = (display_width - text_width) / 2;
         double y = (display_height - text_height) / 2 - 60;
         cr->set_line_width(2);
-        cr->rectangle(x - 10, y - (help_lines*text_height) - 10,
-                text_width + 20, (help_lines*text_height) + 20);
+        cr->rectangle(x - 10, y - (display_texts.size()*text_height) - 10,
+                text_width + 20, (display_texts.size()*text_height) + 20);
 
         // Print help lines
         y -= 3;
-        for (int i = help_lines-1; i != -1; i--) {
-            cr->get_text_extents(help_text[i], extent);
+        for (std::list<std::string>::reverse_iterator rev_it = display_texts.rbegin();
+	         rev_it != display_texts.rend(); rev_it++) {
+            cr->get_text_extents(*rev_it, extent);
             cr->move_to(x + (text_width-extent.width)/2, y);
-            cr->show_text(help_text[i]);
+            cr->show_text(*rev_it);
             y -= text_height;
         }
         cr->stroke();
@@ -204,21 +189,23 @@ void CalibrationArea::redraw()
 
 bool CalibrationArea::on_timer_signal()
 {
-    time_elapsed += time_step;
-    if (time_elapsed > max_time) {
-        exit(0);
+    if (calibrator->get_use_timeout()) {
+        time_elapsed += time_step;
+        if (time_elapsed > max_time) {
+            exit(0);
+        }
+    
+        // Update clock
+        Glib::RefPtr<Gdk::Window> win = get_window();
+        if (win) {
+            const Gdk::Rectangle rect(display_width/2 - clock_radius - clock_line_width,
+                                     display_height/2 - clock_radius - clock_line_width,
+                                     2 * clock_radius + 1 + 2 * clock_line_width,
+                                     2 * clock_radius + 1 + 2 * clock_line_width);
+            win->invalidate_rect(rect, false);
+        }
     }
-
-    // Update clock
-    Glib::RefPtr<Gdk::Window> win = get_window();
-    if (win) {
-        const Gdk::Rectangle rect(display_width/2 - clock_radius - clock_line_width,
-                                 display_height/2 - clock_radius - clock_line_width,
-                                 2 * clock_radius + 1 + 2 * clock_line_width,
-                                 2 * clock_radius + 1 + 2 * clock_line_width);
-        win->invalidate_rect(rect, false);
-    }
-
+    
     return true;
 }
 
