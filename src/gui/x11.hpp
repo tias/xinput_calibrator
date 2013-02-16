@@ -24,6 +24,7 @@
 #define GUI_CALIBRATOR_X11
 
 #include "calibrator.hh"
+#include <list>
 
 /*******************************************
  * X11 class for the the calibration GUI
@@ -43,6 +44,7 @@ protected:
     double X[NUM_POINTS], Y[NUM_POINTS];
     int display_width, display_height;
     int time_elapsed;
+    std::list<std::string> display_texts;
 
     // X11 vars
     Display* display;

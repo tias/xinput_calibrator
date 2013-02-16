@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2009 Tias Guns
- * Copyright (c) 2009 Soren Hauberg
+ * Copyright (c) 2013 Andreas Müller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,41 +20,26 @@
  * THE SOFTWARE.
  */
 
-#ifndef GUI_GTKMM_HPP
-#define GUI_GTKMM_HPP
+#ifndef GUI_GUI_COMMON_HPP
+#define GUI_GUI_COMMON_HPP
 
-#include <gtkmm/drawingarea.h>
 #include "calibrator.hh"
 #include <list>
+#include <string>
 
-/*******************************************
- * GTK-mm class for the the calibration GUI
- *******************************************/
-class CalibrationArea : public Gtk::DrawingArea
-{
-public:
-    CalibrationArea(Calibrator* w);
+// Timeout parameters
+const int time_step = 100;  // in milliseconds
+const int max_time = 15000; // in milliseconds, 5000 = 5 sec
 
-protected:
-    // Data
-    Calibrator* calibrator;
-    double X[4], Y[4];
-    int display_width, display_height;
-    int time_elapsed;
-    std::list<std::string> display_texts;
+// Clock appereance
+const int cross_lines = 25;
+const int cross_circle = 4;
+const int clock_radius = 50;
+const int clock_line_width = 10;
 
-    const char* message;
+// Text printed on screen
+const int font_size = 16;
 
-    // Signal handlers
-    bool on_timer_signal();
-    bool on_expose_event(GdkEventExpose *event);
-    bool on_button_press_event(GdkEventButton *event);
-    bool on_key_press_event(GdkEventKey *event);
-
-    // Helper functions
-    void set_display_size(int width, int height);
-    void redraw();
-    void draw_message(const char* msg);
-};
+void get_display_texts(std::list<std::string> *texts, Calibrator *calibrator);
 
 #endif

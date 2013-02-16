@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2009 Tias Guns
- * Copyright (c) 2009 Soren Hauberg
+ * Copyright (c) 2013 Andreas Müller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,41 +20,32 @@
  * THE SOFTWARE.
  */
 
-#ifndef GUI_GTKMM_HPP
-#define GUI_GTKMM_HPP
+#include "gui/gui_common.hpp"
 
-#include <gtkmm/drawingarea.h>
-#include "calibrator.hh"
-#include <list>
 
-/*******************************************
- * GTK-mm class for the the calibration GUI
- *******************************************/
-class CalibrationArea : public Gtk::DrawingArea
+void get_display_texts(std::list<std::string> *texts, Calibrator *calibrator)
 {
-public:
-    CalibrationArea(Calibrator* w);
-
-protected:
-    // Data
-    Calibrator* calibrator;
-    double X[4], Y[4];
-    int display_width, display_height;
-    int time_elapsed;
-    std::list<std::string> display_texts;
-
-    const char* message;
-
-    // Signal handlers
-    bool on_timer_signal();
-    bool on_expose_event(GdkEventExpose *event);
-    bool on_button_press_event(GdkEventButton *event);
-    bool on_key_press_event(GdkEventKey *event);
-
-    // Helper functions
-    void set_display_size(int width, int height);
-    void redraw();
-    void draw_message(const char* msg);
-};
-
-#endif
+    std::string str;
+    /* 1st line */
+    str = "Touchscreen Calibration";
+    const char* sysfs_name = calibrator->get_sysfs_name();
+    if(sysfs_name != NULL) {
+        str += " for '";
+        str += sysfs_name;
+        str += "'";
+	}
+	texts->push_back(str);
+    /* 2nd line */
+    str = "Press the point, use a stylus to increase precision.";
+	texts->push_back(str);
+    /* 3rd line */
+    str = "";
+	texts->push_back(str);
+    /* 4th line */
+    str = "(To abort, press any key";
+    if(calibrator->get_use_timeout())
+        str += " or wait)";
+    else
+        str += ")";
+	texts->push_back(str);
+}
