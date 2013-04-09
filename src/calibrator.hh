@@ -241,6 +241,10 @@ protected:
 
     // manually specified output filename
     const char* output_filename;
+
+    // sysfs path/file
+    static const char* SYSFS_INPUT;
+    static const char* SYSFS_DEVNAME;
 };
 
 // Interfance for a CalibratorTester

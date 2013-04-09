@@ -29,6 +29,7 @@
 #include "calibrator/XorgPrint.hpp"
 
 #include <cstring>
+#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdexcept>
@@ -58,6 +59,7 @@ int Calibrator::find_device(const char* pre_device, bool list_devices,
         XID& device_id, const char*& device_name, XYinfo& device_axys)
 {
     bool pre_device_is_id = true;
+    bool pre_device_is_sysfs = false;
     int found = 0;
 
     Display* display = XOpenDisplay(NULL);
@@ -94,6 +96,25 @@ int Calibrator::find_device(const char* pre_device, bool list_devices,
         }
     }
 
+    std::string pre_device_sysfs;
+    if (pre_device != NULL && !pre_device_is_id) {
+        /* avoid overflow below - 10000 devices should be OK */
+        if ( strlen(pre_device) < strlen("event") + 4 &&
+             strncmp(pre_device, "event", strlen("event")) == 0 ) {
+            // check whether the pre_device is an sysfs-path name
+            char filename[40]; // actually 35, but hey...
+            (void) sprintf(filename, "%s/%s/%s", SYSFS_INPUT, pre_device, SYSFS_DEVNAME);
+
+            std::ifstream ifile(filename);
+            if (ifile.is_open()) {
+                if (!ifile.eof()) {
+                    pre_device_is_sysfs = true;
+                    std::getline(ifile, pre_device_sysfs);
+                    ifile.close();
+                }
+            }
+        }
+    }
 
     if (verbose)
         printf("DEBUG: Skipping virtual master devices and devices without axis valuators.\n");
@@ -108,7 +129,7 @@ int Calibrator::find_device(const char* pre_device, bool list_devices,
         // if we are looking for a specific device
         if (pre_device != NULL) {
             if ((pre_device_is_id && list->id == (XID) atoi(pre_device)) ||
-                (!pre_device_is_id && strcmp(list->name, pre_device) == 0)) {
+                (!pre_device_is_id && strcmp(list->name, pre_device_is_sysfs ? pre_device_sysfs.c_str() : pre_device ) == 0)) {
                 // OK, fall through
             } else {
                 // skip, not this device
@@ -168,11 +189,11 @@ int Calibrator::find_device(const char* pre_device, bool list_devices,
 
 static void usage(char* cmd, unsigned thr_misclick)
 {
-    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--device <device name or id>] [--precalib <minx> <maxx> <miny> <maxy>] [--misclick <nr of pixels>] [--output-type <auto|xorg.conf.d|hal|xinput>] [--fake] [--geometry <w>x<h>] [--no-timeout]\n", cmd);
+    fprintf(stderr, "Usage: %s [-h|--help] [-v|--verbose] [--list] [--device <device name or XID or sysfs path>] [--precalib <minx> <maxx> <miny> <maxy>] [--misclick <nr of pixels>] [--output-type <auto|xorg.conf.d|hal|xinput>] [--fake] [--geometry <w>x<h>] [--no-timeout]\n", cmd);
     fprintf(stderr, "\t-h, --help: print this help message\n");
     fprintf(stderr, "\t-v, --verbose: print debug messages during the process\n");
     fprintf(stderr, "\t--list: list calibratable input devices and quit\n");
-    fprintf(stderr, "\t--device <device name or id>: select a specific device to calibrate\n");
+    fprintf(stderr, "\t--device <device name or XID or sysfs event name (e.g event5)>: select a specific device to calibrate\n");
     fprintf(stderr, "\t--precalib: manually provide the current calibration setting (eg. the values in xorg.conf)\n");
     fprintf(stderr, "\t--misclick: set the misclick threshold (0=off, default: %i pixels)\n",
         thr_misclick);
