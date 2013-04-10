@@ -31,8 +31,11 @@
 
 #include "calibrator.hh"
 
-// static instance
+// static instances
 bool Calibrator::verbose = false;
+const char* Calibrator::SYSFS_INPUT="/sys/class/input";
+const char* Calibrator::SYSFS_DEVNAME="device/name";
+
 
 Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0,
     const int thr_misclick, const int thr_doubleclick,
@@ -202,9 +205,6 @@ const char* Calibrator::get_sysfs_name()
 }
 
 bool Calibrator::is_sysfs_name(const char* name) {
-    const char* SYSFS_INPUT="/sys/class/input";
-    const char* SYSFS_DEVNAME="device/name";
-
     DIR* dp = opendir(SYSFS_INPUT);
     if (dp == NULL)
         return false;
