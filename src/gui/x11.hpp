@@ -68,6 +68,7 @@ protected:
     bool on_button_press_event(XEvent event);
 
     // Helper functions
+    void detect_display_size(int &width, int &height);
     void set_display_size(int width, int height);
     void redraw();
     void draw_message(const char* msg);
