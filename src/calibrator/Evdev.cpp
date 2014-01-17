@@ -280,6 +280,10 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys)
     // close
     XSync(display, False);
 
+    // skip saving if restore
+    if (restore_filename != NULL)
+        return true;
+
     printf("\t--> Making the calibration permanent <--\n");
     switch (output_type) {
         case OUTYPE_AUTO:
@@ -298,6 +302,9 @@ bool CalibratorEvdev::finish_data(const XYinfo new_axys)
             break;
         case OUTYPE_XINPUT:
             success &= output_xinput(new_axys);
+            break;
+        case OUTYPE_CALIBRATOR:
+            // skip saving for this type
             break;
         default:
             fprintf(stderr, "ERROR: Evdev Calibrator does not support the supplied --output-type\n");

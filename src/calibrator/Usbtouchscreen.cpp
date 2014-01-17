@@ -103,6 +103,10 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys)
     write_bool_parameter(p_flip_y, flip_y);
     write_bool_parameter(p_swap_xy, new_axys.swap_xy);
 
+    // skip saving if restore or save to calibrator config
+    if (output_type == OUTYPE_CALIBRATOR || restore_filename != NULL)
+        return true;
+
     // Read, then write calibration parameters to modprobe_conf_local,
     // or the file set by --output-filename to keep the for the next boot
     const char* filename = output_filename == NULL ? modprobe_conf_local : output_filename;
@@ -129,11 +133,11 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys)
 
     char *new_opt = new char[opt_len];
     sprintf(new_opt, "%s %s=%d %s=%d %s=%d %s=%d %s=%d %s=%d %s=%c %s=%c %s=%c %s=%c\n",
-         opt, p_range_x, range_x, p_range_y, range_y,
-         p_min_x, new_axys.x.min, p_min_y, new_axys.y.min,
-         p_max_x, new_axys.x.max, p_max_y, new_axys.y.max,
-         p_transform_xy, yesno(true), p_flip_x, yesno(flip_x),
-         p_flip_y, yesno(flip_y), p_swap_xy, yesno(new_axys.swap_xy));
+            opt, p_range_x, range_x, p_range_y, range_y,
+            p_min_x, new_axys.x.min, p_min_y, new_axys.y.min,
+            p_max_x, new_axys.x.max, p_max_y, new_axys.y.max,
+            p_transform_xy, yesno(true), p_flip_x, yesno(flip_x),
+            p_flip_y, yesno(flip_y), p_swap_xy, yesno(new_axys.swap_xy));
     new_contents += new_opt;
 
     fid = fopen(filename, "w");
