@@ -253,6 +253,10 @@ bool CalibratorEvdev::finish(int width, int height)
     new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);
     new_axis.y.min = round(y_min); new_axis.y.max = round(y_max);
 
+    if (output_type == OUTYPE_CALIBRATOR) {
+        output_restore_file(width, height);
+    }
+
     // finish the data, driver/calibrator specific
     return finish_data(new_axis);
 }
