@@ -35,7 +35,7 @@ public:
     static void make_instance(Calibrator* w);
     static void give_timer_signal();
 
-protected:
+private:
     GuiCalibratorX11(Calibrator* w);
     ~GuiCalibratorX11();
 
@@ -72,7 +72,6 @@ protected:
     void redraw();
     void draw_message(const char* msg);
 
-private:
     static GuiCalibratorX11* instance;
 };
 
