@@ -117,4 +117,6 @@ int main() {
 
         printf("\n");
     } // loop over calibrators
+
+    delete calib;
 }
