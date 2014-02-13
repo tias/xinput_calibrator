@@ -81,25 +81,12 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
         }
     }
 
-#ifdef HAVE_X11_XRANDR
-    // get screensize from xrandr
-    int nsizes;
-    XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
-    if (nsizes != 0) {
-        Rotation current = 0;
-        XRRRotations(display, screen_num, &current);
-        bool rot = current & RR_Rotate_90 || current & RR_Rotate_270;
-        int width = rot ? randrsize->height : randrsize->width;
-        int height = rot ? randrsize->width : randrsize->height;
-        set_display_size(width, height);
-    } else {
-        set_display_size(DisplayWidth(display, screen_num),
-                         DisplayHeight(display, screen_num));
-    }
-# else
-    set_display_size(DisplayWidth(display, screen_num),
-                     DisplayHeight(display, screen_num));
-#endif
+    int width, height;
+    detect_display_size(width, height);
+    set_display_size(width, height);
+
+    fprintf(stderr, "INFO: width=%d, height=%d\n", 
+        display_width, display_height);
 
     // parse geometry string
     const char* geo = calibrator->get_geometry();
@@ -166,6 +153,42 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
 #endif
 }
 
+void  GuiCalibratorX11::detect_display_size( int &width, int &height) {
+
+#ifdef HAVE_X11_XRANDR
+    // check that screensize did not change
+    int nsizes;
+    bool xrandr_ok = false;
+    XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
+    if (nsizes != 0) {
+        Rotation current = 0;
+        XRRScreenConfiguration * sc; 
+
+        sc = XRRGetScreenInfo (display, RootWindow (display, screen_num));
+        int current_size = XRRConfigCurrentConfiguration (sc, &current);
+
+        if (current_size < nsizes) {
+
+            XRRRotations(display, screen_num, &current);
+            randrsize += current_size;
+
+            bool rot = current & RR_Rotate_90 || current & RR_Rotate_270;
+            width = rot ? randrsize->height : randrsize->width;
+            height = rot ? randrsize->width : randrsize->height;
+            xrandr_ok = true;
+        }
+    } 
+    if (!xrandr_ok) {
+        width = DisplayWidth(display, screen_num);
+        height = DisplayHeight(display, screen_num);
+    }
+#else
+    width = DisplayWidth(display, screen_num);
+    height = DisplayHeight(display, screen_num);
+#endif
+
+}
+
 GuiCalibratorX11::~GuiCalibratorX11()
 {
     XUngrabPointer(display, CurrentTime);
@@ -195,24 +218,7 @@ void GuiCalibratorX11::redraw()
     if (calibrator->get_geometry() == NULL) {
         int width;
         int height;
-#ifdef HAVE_X11_XRANDR
-        // check that screensize did not change
-        int nsizes;
-        XRRScreenSize* randrsize = XRRSizes(display, screen_num, &nsizes);
-        if (nsizes != 0) {
-            Rotation current = 0;
-            XRRRotations(display, screen_num, &current);
-            bool rot = current & RR_Rotate_90 || current & RR_Rotate_270;
-            width = rot ? randrsize->height : randrsize->width;
-            height = rot ? randrsize->width : randrsize->height;
-        } else {
-            width = DisplayWidth(display, screen_num);
-            height = DisplayHeight(display, screen_num);
-        }
-#else
-        width = DisplayWidth(display, screen_num);
-        height = DisplayHeight(display, screen_num);
-#endif
+        detect_display_size(width, height);
         if (display_width != width || display_height != height) {
             set_display_size(width, height);
         }
