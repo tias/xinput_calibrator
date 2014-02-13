@@ -77,7 +77,7 @@ CalibratorUsbtouchscreen::~CalibratorUsbtouchscreen()
     write_bool_parameter (p_swap_xy, val_swap_xy);
 }
 
-bool CalibratorUsbtouchscreen::finish_data(const XYinfo new_axys)
+bool CalibratorUsbtouchscreen::finish_data(const XYinfo &new_axys)
 {
     if (output_type != OUTYPE_AUTO) {
         fprintf(stderr, "ERROR: Usbtouchscreen Calibrator does not support the supplied --output-type\n");

@@ -258,7 +258,7 @@ bool CalibratorEvdev::finish(int width, int height)
 }
 
 // Activate calibrated data and output it
-bool CalibratorEvdev::finish_data(const XYinfo new_axys)
+bool CalibratorEvdev::finish_data(const XYinfo &new_axys)
 {
     bool success = true;
 
