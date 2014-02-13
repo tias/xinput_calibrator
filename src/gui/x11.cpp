@@ -270,14 +270,12 @@ void GuiCalibratorX11::redraw()
     }
 }
 
-bool GuiCalibratorX11::on_expose_event()
+void GuiCalibratorX11::on_expose_event()
 {
     redraw();
-
-    return true;
 }
 
-bool GuiCalibratorX11::on_timer_signal()
+void GuiCalibratorX11::on_timer_signal()
 {
     // Update clock
     if(calibrator->get_use_timeout()) {
@@ -295,11 +293,9 @@ bool GuiCalibratorX11::on_timer_signal()
                     clock_radius-clock_line_width, clock_radius-clock_line_width,
                     90*64, ((double)time_elapsed/(double)max_time) * -360 * 64);
     }
-
-    return true;
 }
 
-bool GuiCalibratorX11::on_button_press_event(XEvent event)
+void GuiCalibratorX11::on_button_press_event(XEvent event)
 {
     // Clear window, maybe a bit overdone, but easiest for me atm.
     // (goal is to clear possible message and other clicks)
@@ -329,8 +325,6 @@ bool GuiCalibratorX11::on_button_press_event(XEvent event)
 
     // Force a redraw
     redraw();
-
-    return true;
 }
 
 void GuiCalibratorX11::draw_message(const char* msg)

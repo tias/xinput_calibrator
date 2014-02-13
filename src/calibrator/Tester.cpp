@@ -30,7 +30,7 @@ CalibratorTester::CalibratorTester(const char* const device_name0, const XYinfo&
     //printf("Starting test driver\n");
 }
 
-bool CalibratorTester::finish_data(const XYinfo axis)
+bool CalibratorTester::finish_data(const XYinfo &axis)
 {
     new_axis = axis;
 

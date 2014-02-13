@@ -38,7 +38,7 @@ public:
         const bool use_timeout=false, const char* output_filename = 0);
     virtual ~CalibratorUsbtouchscreen();
 
-    virtual bool finish_data(const XYinfo new_axys);
+    virtual bool finish_data(const XYinfo &new_axys);
 
 protected:
     // Globals for kernel parameters from startup.

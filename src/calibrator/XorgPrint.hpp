@@ -37,7 +37,7 @@ public:
         const OutputType output_type=OUTYPE_AUTO, const char* geometry=0,
         const bool use_timeout=false, const char* output_filename = 0);
 
-    virtual bool finish_data(const XYinfo new_axys);
+    virtual bool finish_data(const XYinfo &new_axys);
 
 protected:
     bool output_xorgconfd(const XYinfo new_axys);

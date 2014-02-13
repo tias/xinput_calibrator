@@ -35,7 +35,7 @@ public:
     static void make_instance(Calibrator* w);
     static void give_timer_signal();
 
-protected:
+private:
     GuiCalibratorX11(Calibrator* w);
     ~GuiCalibratorX11();
 
@@ -63,16 +63,15 @@ protected:
     unsigned long pixel[NUM_COLORS];
 
     // Signal handlers
-    bool on_timer_signal();
-    bool on_expose_event();
-    bool on_button_press_event(XEvent event);
+    void on_timer_signal();
+    void on_expose_event();
+    void on_button_press_event(XEvent event);
 
     // Helper functions
     void set_display_size(int width, int height);
     void redraw();
     void draw_message(const char* msg);
 
-private:
     static GuiCalibratorX11* instance;
 };
 

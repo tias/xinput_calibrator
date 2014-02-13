@@ -193,7 +193,7 @@ protected:
     bool along_axis(int xy, int x0, int y0);
 
     /// Apply new calibration, implementation dependent
-    virtual bool finish_data(const XYinfo new_axys) =0;
+    virtual bool finish_data(const XYinfo &new_axys) =0;
 
     /// Check whether the given name is a sysfs device name
     bool is_sysfs_name(const char* name);

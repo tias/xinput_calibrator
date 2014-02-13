@@ -33,7 +33,7 @@ CalibratorXorgPrint::CalibratorXorgPrint(const char* const device_name0, const X
     printf("\tIf these values are estimated wrong, either supply it manually with the --precalib option, or run the 'get_precalib.sh' script to automatically get it (through HAL).\n");
 }
 
-bool CalibratorXorgPrint::finish_data(const XYinfo new_axys)
+bool CalibratorXorgPrint::finish_data(const XYinfo &new_axys)
 {
     bool success = true;
 

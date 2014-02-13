@@ -36,7 +36,7 @@ class CalibrationArea : public Gtk::DrawingArea
 public:
     CalibrationArea(Calibrator* w);
 
-protected:
+private:
     // Data
     Calibrator* calibrator;
     double X[4], Y[4];

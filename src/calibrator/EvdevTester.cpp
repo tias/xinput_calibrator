@@ -31,7 +31,7 @@ CalibratorEvdevTester::CalibratorEvdevTester(const char* const device_name0, con
     //printf("Starting test driver\n");
 }
 
-bool CalibratorEvdevTester::finish_data(const XYinfo axis)
+bool CalibratorEvdevTester::finish_data(const XYinfo &axis)
 {
     new_axis = axis;
 
