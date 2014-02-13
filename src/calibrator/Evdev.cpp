@@ -336,7 +336,7 @@ bool CalibratorEvdev::set_invert_xy(const int invert_x, const int invert_y)
     arr_cmd[0] = invert_x;
     arr_cmd[1] = invert_y;
 
-    int ret = xinput_do_set_int_prop("Evdev Axis Inversion", display, 8, 2, arr_cmd);
+    bool ret = xinput_do_set_int_prop("Evdev Axis Inversion", display, 8, 2, arr_cmd);
 
     if (verbose) {
         if (ret == true)
@@ -359,7 +359,7 @@ bool CalibratorEvdev::set_calibration(const XYinfo new_axys)
     arr_cmd[2] = new_axys.y.min;
     arr_cmd[3] = new_axys.y.max;
 
-    int ret = xinput_do_set_int_prop("Evdev Axis Calibration", display, 32, 4, arr_cmd);
+    bool ret = xinput_do_set_int_prop("Evdev Axis Calibration", display, 32, 4, arr_cmd);
 
     if (verbose) {
         if (ret == true)
