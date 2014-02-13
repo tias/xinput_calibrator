@@ -63,9 +63,9 @@ private:
     unsigned long pixel[NUM_COLORS];
 
     // Signal handlers
-    bool on_timer_signal();
-    bool on_expose_event();
-    bool on_button_press_event(XEvent event);
+    void on_timer_signal();
+    void on_expose_event();
+    void on_button_press_event(XEvent event);
 
     // Helper functions
     void set_display_size(int width, int height);
