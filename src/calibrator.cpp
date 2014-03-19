@@ -148,18 +148,29 @@ bool Calibrator::finish(int width, int height)
     // based on old_axys: inversion/swapping is relative to the old axis
     XYinfo new_axis(old_axys);
 
+    // Calculate average of clicks.
+    // Set min and max values depending on the sequence of the clicked coordinates.
+    // If first two clicks have different x coordinates, we have a 0 or 180
+    // degrees rotation else we have a 70 or 270 degrees rotation.
+    float x_min;
+    float x_max;
+    float y_min;
+    float y_max;
+    if(abs(clicked.x[UL] - clicked.x[LL]) < abs(clicked.x[UL] - clicked.x[UR])) {
+        // rotation of 0 or 180 degrees
+        x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
+        x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
+        y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
+        y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
+    } else {
+        // rotation of 90 or 270 degreees
+        x_min = (clicked.x[UL] + clicked.x[UR])/2.0;
+        x_max = (clicked.x[LL] + clicked.x[LR])/2.0;
+        y_min = (clicked.y[UL] + clicked.y[LL])/2.0;
+        y_max = (clicked.y[UR] + clicked.y[LR])/2.0;
 
-    // calculate average of clicks
-    float x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
-    float x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
-    float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
-    float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
-
-    // Should x and y be swapped?
-    if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
-        new_axis.swap_xy = !new_axis.swap_xy;
-        std::swap(x_min, y_min);
-        std::swap(x_max, y_max);
+        // axes are swapped on 90 or 270 degrees rotation
+        new_axis.swap_xy = !old_axys.swap_xy;
     }
 
     // the screen was divided in num_blocks blocks, and the touch points were at
@@ -185,6 +196,11 @@ bool Calibrator::finish(int width, int height)
     y_min = scaleAxis(y_min, old_axys.y.max, old_axys.y.min, height, 0);
     y_max = scaleAxis(y_max, old_axys.y.max, old_axys.y.min, height, 0);
 
+    // If we swapped axes also swap x and y values
+    if(new_axis.swap_xy != old_axys.swap_xy) {
+        std::swap(x_min, y_min);
+        std::swap(x_max, y_max);
+    }
 
     // round and put in new_axis struct
     new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);
