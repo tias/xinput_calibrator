@@ -70,6 +70,8 @@ int main() {
         printf("Old axis: "); old_axis.print();
 
     for (unsigned c=0; c != raw_coords.size(); c++) {
+
+    for (unsigned s=0; s<=1; s++) {
         XYinfo raw(raw_coords[c]);
         //printf("Raw: "); raw.print();
 
@@ -84,10 +86,19 @@ int main() {
         //printf("\tClicked: "); clicked.print();
 
         // emulate screen clicks
-        calib->add_click(clicked.x.min, clicked.y.min);
-        calib->add_click(clicked.x.max, clicked.y.min);
-        calib->add_click(clicked.x.min, clicked.y.max);
-        calib->add_click(clicked.x.max, clicked.y.max);
+        // Depending on the sequence of clicks the first changed coordinate can
+        // be either x or y so we emulate both possible sequences
+        if(!s) {
+            calib->add_click(clicked.x.min, clicked.y.min);
+            calib->add_click(clicked.x.max, clicked.y.min);
+            calib->add_click(clicked.x.min, clicked.y.max);
+            calib->add_click(clicked.x.max, clicked.y.max);
+        } else {
+            calib->add_click(clicked.x.min, clicked.y.min);
+            calib->add_click(clicked.x.min, clicked.y.max);
+            calib->add_click(clicked.x.max, clicked.y.min);
+            calib->add_click(clicked.x.max, clicked.y.max);
+        }
         calib->finish(width, height);
 
         // test result
@@ -111,6 +122,8 @@ int main() {
 
         printf("%i", maxdiff);
     } // loop over raw_coords
+
+    } // loop over sequences
 
         printf(". OK\n");
     } // loop over old_axes
