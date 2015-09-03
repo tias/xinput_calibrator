@@ -615,6 +615,13 @@ bool CalibratorEvdev::output_xinput(const XYinfo new_axys)
     sprintf(line, "    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_axys.swap_xy);
     outstr += line;
 
+    /*
+     * Since we alway clear out the inversion flags, make sure the generated
+     * script does so as well.
+     */
+    sprintf(line, "    xinput set-int-prop \"%s\" \"Evdev Axis Inversion\" 8 0 0\n", device_name);
+    outstr += line;
+
     // console out
     printf("%s", outstr.c_str());
     // file out
