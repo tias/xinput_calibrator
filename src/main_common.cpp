@@ -195,6 +195,7 @@ static void usage(char* cmd, unsigned thr_misclick)
     fprintf(stderr, "\t--list: list calibratable input devices and quit\n");
     fprintf(stderr, "\t--device <device name or XID or sysfs event name (e.g event5)>: select a specific device to calibrate\n");
     fprintf(stderr, "\t--precalib: manually provide the current calibration setting (eg. the values in xorg.conf)\n");
+    fprintf(stderr, "\t--valuator: use the detected valuator min/max values (e.g. start as if there was no precalibration)\n");
     fprintf(stderr, "\t--misclick: set the misclick threshold (0=off, default: %i pixels)\n",
         thr_misclick);
     fprintf(stderr, "\t--output-type <auto|xorg.conf.d|hal|xinput>: type of config to ouput (auto=automatically detect, default: auto)\n");
@@ -209,6 +210,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     bool list_devices = false;
     bool fake = false;
     bool precalib = false;
+    bool use_valuator = false;
     bool use_timeout = true;
     XYinfo pre_axys;
     const char* pre_device = NULL;
@@ -262,6 +264,10 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
                     pre_axys.y.min = atoi(argv[++i]);
                 if (argc > i+1)
                     pre_axys.y.max = atoi(argv[++i]);
+            } else
+
+            if (strcmp("--valuator", argv[i]) == 0) {
+                use_valuator = true;
             } else
 
             // Get mis-click threshold ?
@@ -369,7 +375,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     }
 
     // override min/max XY from command line ?
-    if (precalib) {
+    if (precalib && !use_valuator) {
         if (pre_axys.x.min != -1)
             device_axys.x.min = pre_axys.x.min;
         if (pre_axys.x.max != -1)
@@ -403,7 +409,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
         // next, try Evdev driver (with XID)
         return new CalibratorEvdev(device_name, device_axys, device_id,
             thr_misclick, thr_doubleclick, output_type, geometry,
-            use_timeout, output_filename);
+            use_valuator, use_timeout, output_filename);
 
     } catch(WrongCalibratorException& x) {
         if (verbose)

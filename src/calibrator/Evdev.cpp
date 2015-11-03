@@ -26,6 +26,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/extensions/XInput2.h>
 #include <ctype.h>
 #include <cstdio>
 #include <cstring>
@@ -47,6 +48,7 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
                                  const int thr_doubleclick,
                                  const OutputType output_type,
                                  const char* geometry,
+                                 const bool use_valuator,
                                  const bool use_timeout,
                                  const char* output_filename)
   : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry, use_timeout, output_filename)
@@ -99,6 +101,53 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
             XCloseDevice(display, dev);
             XCloseDisplay(display);
             throw WrongCalibratorException("Evdev: invalid \"Evdev Axis Calibration\" property format");
+
+        } else if (use_valuator) {
+            int ndevices = 0, i, j;
+            XIDeviceInfo *info = XIQueryDevice(display, device_id, &ndevices);
+
+            if (ndevices != 1) {
+                XCloseDevice(display, dev);
+                XCloseDisplay(display);
+                throw WrongCalibratorException("Evdev: unknown Xinput device ID???");
+            }
+
+            for (i = 0; i < ndevices; i++) {
+                XIDeviceInfo *dev = &info[i];
+
+                for (j = 0; j < dev->num_classes; j++) {
+                    switch(dev->classes[i]->type) {
+                    case XIValuatorClass:
+                    {
+                        XIValuatorClassInfo *v = (XIValuatorClassInfo*)dev->classes[i];
+
+                        /* Valuator 0 = X, Valuator 1 = Y, others are ignored */
+                        switch (v->number) {
+                        case 0:
+                            old_axys.x.min = v->min;
+                            old_axys.x.max = v->max;
+                            old_axys.x.invert = false;
+                            break;
+                        case 1:
+                            old_axys.y.min = v->min;
+                            old_axys.y.max = v->max;
+                            old_axys.y.invert = false;
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                    }
+                }
+            }
+            XIFreeDeviceInfo(info);
+
+            if (verbose)
+                printf("DEBUG: Evdev Axis Calibration set to axis valuators\n");
+            (void) set_calibration(old_axys);
 
         } else if (nitems == 0) {
             if (verbose)
@@ -167,6 +216,7 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
                                  const int thr_doubleclick,
                                  const OutputType output_type,
                                  const char* geometry,
+                                 const bool use_valuator,
                                  const bool use_timeout,
                                  const char* output_filename)
   : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry, output_filename) { }
@@ -268,14 +318,22 @@ bool CalibratorEvdev::finish_data(const XYinfo &new_axys)
         success &= set_swapxy(new_axys.swap_xy);
     }
 
+#if 0
    // Evdev Axis Inversion
    if (old_axys.x.invert != new_axys.x.invert ||
        old_axys.y.invert != new_axys.y.invert) {
         success &= set_invert_xy(new_axys.x.invert, new_axys.y.invert);
     }
+#endif
 
     // Evdev Axis Calibration
     success &= set_calibration(new_axys);
+
+   // Evdev Axis Inversion
+   if (old_axys.x.invert != new_axys.x.invert ||
+       old_axys.y.invert != new_axys.y.invert) {
+        success &= set_invert_xy(new_axys.x.invert, new_axys.y.invert);
+    }
 
     // close
     XSync(display, False);
