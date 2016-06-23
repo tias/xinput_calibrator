@@ -49,7 +49,7 @@ CalibrationArea::CalibrationArea(Calibrator* calibrator0)
         set_display_size(get_width(), get_height());
 
     // Setup timer for animation
-    if(calibrator->get_use_timeout()){
+    if(calibrator->get_timeout() > 0){
         sigc::slot<bool> slot = sigc::mem_fun(*this, &CalibrationArea::on_timer_signal);
         Glib::signal_timeout().connect(slot, time_step);
     }
@@ -136,7 +136,11 @@ bool CalibrationArea::on_expose_event(GdkEventExpose *event)
             cr->arc(X[i], Y[i], cross_circle, 0.0, 2.0 * M_PI);
             cr->stroke();
         }
-        if(calibrator->get_use_timeout()){
+
+	int max_time = 15000;
+	
+        if(calibrator->get_timeout() > 0) {
+            max_time = calibrator->get_timeout();
             // Draw the clock background
             cr->arc(display_width/2, display_height/2, clock_radius/2, 0.0, 2.0 * M_PI);
             cr->set_source_rgb(0.5, 0.5, 0.5);
@@ -189,7 +193,8 @@ void CalibrationArea::redraw()
 
 bool CalibrationArea::on_timer_signal()
 {
-    if (calibrator->get_use_timeout()) {
+    if (calibrator->get_timeout() > 0) {
+        int max_time = calibrator->get_timeout();
         time_elapsed += time_step;
         if (time_elapsed > max_time) {
             exit(0);
