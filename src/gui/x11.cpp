@@ -20,6 +20,8 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include "gui/x11.hpp"
 #include "gui/gui_common.hpp"
 
@@ -50,6 +52,48 @@ const char* GuiCalibratorX11::colors[GuiCalibratorX11::NUM_COLORS] = {"BLACK", "
 void sigalarm_handler(int num);
 #endif
 
+#if ENABLE_NLS
+/*
+ * This code was copied as is from:
+ * http://xopendisplay.hilltopia.ca/2009/Mar/Xlib-tutorial-part-8----a-different-way-to-reach-wide-characters.html
+ */
+int utf8toXChar2b(XChar2b *output_r, int outsize, const char *input, int inlen) {
+	int j, k;
+	for(j = 0, k = 0; j < inlen && k < outsize; j ++){
+		unsigned char c = input[j];
+		if (c < 128)  {
+			output_r[k].byte1 = 0;
+			output_r[k].byte2 = c;
+			k++;
+		} else if (c < 0xC0) {
+			/* we're inside a character we don't know  */
+			continue;
+		} else switch(c&0xF0){
+		case 0xC0: case 0xD0: /* two bytes 5+6 = 11 bits */
+			if (inlen < j+1){ return k; }
+			output_r[k].byte1 = (c&0x1C) >> 2;
+			j++;
+			output_r[k].byte2 = ((c&0x3) << 6) + (input[j]&0x3F);
+			k++;
+			break;
+		case 0xE0: /* three bytes 4+6+6 = 16 bits */
+			if (inlen < j+2){ return k; }
+			j++;
+			output_r[k].byte1 = ((c&0xF) << 4) + ((input[j]&0x3C) >> 2);
+			c = input[j];
+			j++;
+			output_r[k].byte2 = ((c&0x3) << 6) + (input[j]&0x3F);
+			k++;
+			break;
+		case 0xFF:
+			/* the character uses more than 16 bits */
+			continue;
+		}
+	}
+	return k;
+}
+#endif
+
 /// Create singleton instance associated to calibrator w
 void GuiCalibratorX11::make_instance(Calibrator* w)
 {
@@ -71,6 +115,14 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     }
     screen_num = DefaultScreen(display);
     // Load font and get font information structure
+#if ENABLE_NLS
+    /* We want a font that can display any i18n characters */
+    font_info = XLoadQueryFont(display, "-misc-fixed-*-*-*--*-*-100-100-*-*-iso10646-1");
+    if (font_info)
+        printf("misc-fixed ISO10646 font was successfully loaded\n");
+    else
+    /* Otherwise fall back to fonts with possibly missing characters */
+#endif
     font_info = XLoadQueryFont(display, "9x15");
     if (font_info == NULL) {
         // fall back to native font
@@ -244,9 +296,21 @@ void GuiCalibratorX11::redraw()
     y -= 3;
     for (std::list<std::string>::reverse_iterator rev_it = display_texts.rbegin();
 	     rev_it != display_texts.rend(); rev_it++) {
+#if ENABLE_NLS
+        /* Safe length for our wide string if out UTF-8 string is really ASCII */
+        int wlen = 2 * (*rev_it).length() + 16;
+        XChar2b *wstr = (XChar2b *)malloc(wlen);
+
+        wlen = utf8toXChar2b(wstr, wlen, (*rev_it).c_str(), (*rev_it).length());
+        int w = XTextWidth16(font_info, wstr, wlen);
+        XDrawString16(display, win, gc, x + (text_width-w)/2, y,
+                wstr, wlen);
+        free(wstr);
+#else
         int w = XTextWidth(font_info, (*rev_it).c_str(), (*rev_it).length());
         XDrawString(display, win, gc, x + (text_width-w)/2, y,
                 (*rev_it).c_str(), (*rev_it).length());
+#endif
         y -= text_height;
     }
 
@@ -336,8 +400,15 @@ void GuiCalibratorX11::on_button_press_event(XEvent event)
 void GuiCalibratorX11::draw_message(const char* msg)
 {
     int text_height = font_info->ascent + font_info->descent;
-    int text_width = XTextWidth(font_info, msg, strlen(msg));
-
+    int msglen = strlen(msg);
+#if ENABLE_NLS
+    int wlen = 2 * msglen + 16;
+    XChar2b *wstr = (XChar2b *)malloc(wlen);
+    wlen = utf8toXChar2b(wstr, wlen, msg, msglen);
+    int text_width = XTextWidth16(font_info, wstr, wlen);
+#else
+    int text_width = XTextWidth(font_info, msg, msglen);
+#endif
     int x = (display_width - text_width) / 2;
     int y = (display_height - text_height) / 2 + clock_radius + 60;
     XSetForeground(display, gc, pixel[BLACK]);
@@ -345,7 +416,12 @@ void GuiCalibratorX11::draw_message(const char* msg)
     XDrawRectangle(display, win, gc, x - 10, y - text_height - 10,
                 text_width + 20, text_height + 25);
 
+#if ENABLE_NLS
+    XDrawString16(display, win, gc, x, y, wstr, wlen);
+    free(wstr);
+#else
     XDrawString(display, win, gc, x, y, msg, strlen(msg));
+#endif
 }
 
 void GuiCalibratorX11::give_timer_signal()
