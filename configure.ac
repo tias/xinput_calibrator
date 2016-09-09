@@ -27,7 +27,11 @@
 AC_PREREQ([2.57])
 AC_INIT(xinput_calibrator,[0.7.5], [http://github.com/tias/xinput_calibrator/issues],, [http://www.freedesktop.org/wiki/Software/xinput_calibrator])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AC_CONFIG_MACRO_DIRS([m4])
+AC_CONFIG_HEADERS(src/config.h)
 AM_MAINTAINER_MODE
+
+AM_GNU_GETTEXT([external])
 
 AC_PROG_CC
 AC_PROG_CXX
@@ -69,6 +73,7 @@ AS_IF([test "x$with_gui" = xdefault || test "x$with_gui" = xx11], [
     AC_SUBST(X11_LIBS)
 
     # check for xrandr too
+    AH_TEMPLATE([HAVE_X11_XRANDR],[X11 XRandr found])
     PKG_CHECK_MODULES(XRANDR, [xrandr], AC_DEFINE(HAVE_X11_XRANDR, 1), foo="bar")
     AC_SUBST(XRANDR_CFLAGS)
     AC_SUBST(XRANDR_LIBS)
@@ -95,7 +100,7 @@ AM_CONDITIONAL(HAVE_TIMERFD, [test "$glib_cv_timerfd" = "yes"])
 
 AC_SUBST(VERSION)
 
-AC_OUTPUT([Makefile
+AC_OUTPUT([Makefile po/Makefile.in
            scripts/Makefile
            src/Makefile
            src/calibrator/Makefile

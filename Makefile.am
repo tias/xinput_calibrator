@@ -25,6 +25,8 @@
 #
 
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src man scripts
+SUBDIRS = po src man scripts
 
-EXTRA_DIST = autogen.sh Changelog
+EXTRA_DIST = config.rpath m4/ChangeLog  autogen.sh Changelog
+
+ACLOCAL_AMFLAGS = -I m4
