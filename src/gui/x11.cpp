@@ -117,7 +117,7 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     // Load font and get font information structure
 #if ENABLE_NLS
     /* We want a font that can display any i18n characters */
-    font_info = XLoadQueryFont(display, "-misc-fixed-*-*-*--*-*-100-100-*-*-iso10646-1");
+    font_info = XLoadQueryFont(display, "-misc-fixed-*-*-*--15-*-*-*-*-*-iso10646-1");
     if (font_info)
         printf("misc-fixed ISO10646 font was successfully loaded\n");
     else
