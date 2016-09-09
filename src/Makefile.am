@@ -24,6 +24,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 SUBDIRS = \
 	calibrator \
 	gui
