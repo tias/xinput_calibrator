@@ -27,7 +27,7 @@ msgstr "Érintőképernyő Kalibráció"
 
 #: src/gui/gui_common.cpp:46
 msgid "Press the point, use a stylus to increase precision."
-msgstr "Nyomja meg a pointot, használjon érintőtollat a nagyobb pontossághoz."
+msgstr "Nyomja meg a pontot, használjon érintőtollat a nagyobb pontossághoz."
 
 #: src/gui/gui_common.cpp:53
 msgid "(To abort, press any key or wait)"
