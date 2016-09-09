@@ -21,17 +21,27 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 // Must be before Xlib stuff
 #include <gtkmm/main.h>
 #include <gtkmm/window.h>
 #include <cairomm/context.h>
+
+#include "gettext.h"
 
 #include "calibrator.hh"
 #include "gui/gtkmm.hpp"
 
 int main(int argc, char** argv)
 {
-    Calibrator* calibrator = Calibrator::make_calibrator(argc, argv);
+    Calibrator* calibrator;
+
+    setlocale(LC_ALL, "");
+    bindtextdomain(PACKAGE, LOCALEDIR);
+    textdomain(PACKAGE);
+
+    calibrator = Calibrator::make_calibrator(argc, argv);
 
     // GTK-mm setup
     Gtk::Main kit(argc, argv);

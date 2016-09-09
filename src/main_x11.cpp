@@ -20,13 +20,22 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include <unistd.h> // for pause()
+#include "gettext.h"
 #include "calibrator.hh"
 #include "gui/x11.hpp"
 
 int main(int argc, char** argv)
 {
-    Calibrator* calibrator = Calibrator::make_calibrator(argc, argv);
+    Calibrator* calibrator;
+
+    setlocale(LC_ALL, "");
+    bindtextdomain(PACKAGE, LOCALEDIR);
+    textdomain(PACKAGE);
+
+    calibrator = Calibrator::make_calibrator(argc, argv);
 
     GuiCalibratorX11::make_instance( calibrator );
 

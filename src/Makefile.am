@@ -30,7 +30,7 @@ SUBDIRS = \
 	calibrator \
 	gui
 
-AM_CXXFLAGS = -Wall -ansi -pedantic
+AM_CXXFLAGS = -Wall -ansi -pedantic -DLOCALEDIR=\"$(localedir)\"
 
 bin_PROGRAMS = xinput_calibrator tester
 
