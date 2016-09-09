@@ -27,3 +27,5 @@ src/config.h.in
 tester
 .dirstamp
 stamp-h1
+po/stamp-po
+po/*.gmo
