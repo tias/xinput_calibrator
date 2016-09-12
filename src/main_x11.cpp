@@ -31,7 +31,8 @@ int main(int argc, char** argv)
 {
     Calibrator* calibrator;
 
-    setlocale(LC_ALL, "");
+    setlocale(LC_MESSAGES, "");
+    setlocale(LC_CTYPE, "");
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
 
