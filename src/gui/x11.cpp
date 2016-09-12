@@ -381,6 +381,8 @@ void GuiCalibratorX11::on_button_press_event(XEvent event)
 
     // Are we done yet?
     if (calibrator->get_numclicks() >= 4) {
+        // Make sure everything is applied in the C locale
+        setlocale(LC_ALL, "C");
         // Recalibrate
         success = calibrator->finish(display_width, display_height);
 
