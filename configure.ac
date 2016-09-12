@@ -45,6 +45,9 @@ AC_CHECK_HEADERS([stdlib.h string.h string list])
 AC_HEADER_STDBOOL
 AC_FUNC_STRTOD
 
+AH_TEMPLATE([HAVE_XI_PROP],[Xinput properties available])
+AH_TEMPLATE([HAVE_X11_XRANDR],[X11 XRandr found])
+
 PKG_CHECK_MODULES(XINPUT, x11 xext xi inputproto)
 AC_SUBST(XINPUT_CFLAGS)
 AC_SUBST(XINPUT_LIBS)
@@ -75,7 +78,6 @@ AS_IF([test "x$with_gui" = xdefault || test "x$with_gui" = xx11], [
     AC_SUBST(X11_LIBS)
 
     # check for xrandr too
-    AH_TEMPLATE([HAVE_X11_XRANDR],[X11 XRandr found])
     PKG_CHECK_MODULES(XRANDR, [xrandr], AC_DEFINE(HAVE_X11_XRANDR, 1), foo="bar")
     AC_SUBST(XRANDR_CFLAGS)
     AC_SUBST(XRANDR_LIBS)
