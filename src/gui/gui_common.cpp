@@ -31,6 +31,9 @@
 void get_display_texts(std::list<std::string> *texts, Calibrator *calibrator)
 {
     std::string str;
+
+    setlocale(LC_ALL, "");
+
     /* 1st line */
     str = "Touchscreen Calibration";
     const char* sysfs_name = calibrator->get_sysfs_name();
@@ -54,4 +57,6 @@ void get_display_texts(std::list<std::string> *texts, Calibrator *calibrator)
     else
         str = _("(To abort, press any key)");
     texts->push_back(str);
+
+    setlocale(LC_ALL, "C");
 }
