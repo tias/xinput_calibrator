@@ -3,7 +3,6 @@
 # This file is distributed under the same license as the xinput_calibrator package.
 # Zoltán Böszörményi <zboszormenyi@sicom.com>, 2016.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: xinput_calibrator 0.7.5\n"
