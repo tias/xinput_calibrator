@@ -45,6 +45,9 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "gettext.h"
+
+#define _(String) gettext(String)
 
 const char* GuiCalibratorX11::colors[GuiCalibratorX11::NUM_COLORS] = {"BLACK", "WHITE", "GRAY", "DIMGRAY", "RED"};
 
@@ -376,7 +379,9 @@ void GuiCalibratorX11::on_button_press_event(XEvent event)
     bool success = calibrator->add_click(event.xbutton.x, event.xbutton.y);
 
     if (!success && calibrator->get_numclicks() == 0) {
-        draw_message("Mis-click detected, restarting...");
+        setlocale(LC_ALL, "");
+        draw_message(_("Mis-click detected, restarting..."));
+        setlocale(LC_ALL, "C");
     }
 
     // Are we done yet?

@@ -1,2 +1,4 @@
 # List of source files which contain translatable strings.
 src/gui/gui_common.cpp
+src/gui/gtkmm.cpp
+src/gui/x11.cpp

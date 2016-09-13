@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xinput_calibrator 0.7.5\n"
 "Report-Msgid-Bugs-To: http://github.com/tias/xinput_calibrator/issues\n"
-"POT-Creation-Date: 2016-09-09 13:03+0200\n"
+"POT-Creation-Date: 2016-09-13 15:30+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,23 +17,27 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/gui/gui_common.cpp:38 src/gui/gui_common.cpp:39
+#: src/gui/gui_common.cpp:41 src/gui/gui_common.cpp:42
 #, c-format
 msgid "Touchscreen Calibration for '%s'"
 msgstr ""
 
-#: src/gui/gui_common.cpp:42
+#: src/gui/gui_common.cpp:45
 msgid "Touchscreen Calibration"
 msgstr ""
 
-#: src/gui/gui_common.cpp:46
+#: src/gui/gui_common.cpp:49
 msgid "Press the point, use a stylus to increase precision."
 msgstr ""
 
-#: src/gui/gui_common.cpp:53
+#: src/gui/gui_common.cpp:56
 msgid "(To abort, press any key or wait)"
 msgstr ""
 
-#: src/gui/gui_common.cpp:55
+#: src/gui/gui_common.cpp:58
 msgid "(To abort, press any key)"
+msgstr ""
+
+#: src/gui/gtkmm.cpp:226 src/gui/x11.cpp:383
+msgid "Mis-click detected, restarting..."
 msgstr ""

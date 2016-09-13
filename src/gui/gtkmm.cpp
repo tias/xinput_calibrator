@@ -21,8 +21,14 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include "gui/gtkmm.hpp"
 #include "gui/gui_common.hpp"
+
+#include "gettext.h"
+
+#define _(String) gettext(String)
 
 CalibrationArea::CalibrationArea(Calibrator* calibrator0)
   : calibrator(calibrator0), time_elapsed(0), message(NULL)
@@ -216,7 +222,9 @@ bool CalibrationArea::on_button_press_event(GdkEventButton *event)
     bool success = calibrator->add_click((int)event->x_root, (int)event->y_root);
 
     if (!success && calibrator->get_numclicks() == 0) {
-        draw_message("Mis-click detected, restarting...");
+        setlocale(LC_ALL, "");
+        draw_message(_("Mis-click detected, restarting..."));
+        setlocale(LC_ALL, "C");
     } else {
         draw_message(NULL);
     }
