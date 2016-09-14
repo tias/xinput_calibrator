@@ -1,0 +1,42 @@
+# Hungarian translation of xinput_calibrator
+# Copyright (C) 2016 Sicom Systems Inc.
+# This file is distributed under the same license as the xinput_calibrator package.
+# Zoltán Böszörményi <zboszormenyi@sicom.com>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: xinput_calibrator 0.7.5\n"
+"Report-Msgid-Bugs-To: http://github.com/tias/xinput_calibrator/issues\n"
+"POT-Creation-Date: 2016-09-13 15:30+0200\n"
+"PO-Revision-Date: 2016-09-13 15:15+0200\n"
+"Last-Translator: Zoltán Böszörményi <zboszormenyi@sicom.com>\n"
+"Language-Team: Sicom Translator Team <i18n@sicom.com>\n"
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/gui/gui_common.cpp:41 src/gui/gui_common.cpp:42
+#, c-format
+msgid "Touchscreen Calibration for '%s'"
+msgstr "'%s' Érintőképernyő Kalibrációja"
+
+#: src/gui/gui_common.cpp:45
+msgid "Touchscreen Calibration"
+msgstr "Érintőképernyő Kalibráció"
+
+#: src/gui/gui_common.cpp:49
+msgid "Press the point, use a stylus to increase precision."
+msgstr "Nyomja meg a pontot, használjon érintőtollat a nagyobb pontossághoz."
+
+#: src/gui/gui_common.cpp:56
+msgid "(To abort, press any key or wait)"
+msgstr "(Nyomjon meg egy gombot vagy várjon a megszakításhoz)"
+
+#: src/gui/gui_common.cpp:58
+msgid "(To abort, press any key)"
+msgstr "(Nyomjon meg egy gombot a megszakításhoz)"
+
+#: src/gui/gtkmm.cpp:226 src/gui/x11.cpp:383
+msgid "Mis-click detected, restarting..."
+msgstr "Hibás kattintás történt, újraindulás..."

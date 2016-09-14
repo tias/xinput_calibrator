@@ -21,6 +21,8 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include "calibrator.hh"
 
 // Calibrator implementations

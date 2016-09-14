@@ -24,11 +24,13 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 SUBDIRS = \
 	calibrator \
 	gui
 
-AM_CXXFLAGS = -Wall -ansi -pedantic
+AM_CXXFLAGS = -Wall -ansi -pedantic -DLOCALEDIR=\"$(localedir)\"
 
 bin_PROGRAMS = xinput_calibrator tester
 

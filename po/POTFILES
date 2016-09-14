@@ -1,0 +1,3 @@
+     ../src/gui/gui_common.cpp \
+     ../src/gui/gtkmm.cpp \
+     ../src/gui/x11.cpp

@@ -22,6 +22,8 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include "calibrator/Evdev.hpp"
 
 #include <X11/Xlib.h>

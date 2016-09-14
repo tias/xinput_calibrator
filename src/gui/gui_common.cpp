@@ -20,32 +20,43 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include "gui/gui_common.hpp"
 
+#include "gettext.h"
+
+#define _(String) gettext(String)
 
 void get_display_texts(std::list<std::string> *texts, Calibrator *calibrator)
 {
     std::string str;
+
+    setlocale(LC_ALL, "");
+
     /* 1st line */
     str = "Touchscreen Calibration";
     const char* sysfs_name = calibrator->get_sysfs_name();
-    if(sysfs_name != NULL) {
-        str += " for '";
-        str += sysfs_name;
-        str += "'";
-	}
-	texts->push_back(str);
+    if (sysfs_name != NULL) {
+        char *tmp = (char *)alloca(strlen(_("Touchscreen Calibration for '%s'")) + strlen(sysfs_name) + 16);
+        sprintf(tmp, _("Touchscreen Calibration for '%s'"), sysfs_name);
+        str = tmp;
+    } else {
+        str = _("Touchscreen Calibration");
+    }
+    texts->push_back(str);
     /* 2nd line */
-    str = "Press the point, use a stylus to increase precision.";
-	texts->push_back(str);
+    str = _("Press the point, use a stylus to increase precision.");
+    texts->push_back(str);
     /* 3rd line */
     str = "";
-	texts->push_back(str);
+    texts->push_back(str);
     /* 4th line */
-    str = "(To abort, press any key";
     if(calibrator->get_use_timeout())
-        str += " or wait)";
+        str = _("(To abort, press any key or wait)");
     else
-        str += ")";
-	texts->push_back(str);
+        str = _("(To abort, press any key)");
+    texts->push_back(str);
+
+    setlocale(LC_ALL, "C");
 }

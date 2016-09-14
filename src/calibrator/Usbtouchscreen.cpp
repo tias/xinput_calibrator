@@ -150,7 +150,6 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo &new_axys)
 
 void CalibratorUsbtouchscreen::read_int_parameter(const char *param, int &value)
 {
-    int dummy;
     char filename[100];
     sprintf(filename, "%s/%s", module_prefix, param);
     FILE *fid = fopen(filename, "r");
@@ -159,13 +158,12 @@ void CalibratorUsbtouchscreen::read_int_parameter(const char *param, int &value)
         return;
     }
 
-    dummy = fscanf(fid, "%d", &value);
+    (void)fscanf(fid, "%d", &value);
     fclose(fid);
 }
 
 void CalibratorUsbtouchscreen::read_bool_parameter(const char *param, bool &value)
 {
-    char *dummy;
     char filename[100];
     sprintf(filename, "%s/%s", module_prefix, param);
     FILE *fid = fopen(filename, "r");
@@ -175,9 +173,9 @@ void CalibratorUsbtouchscreen::read_bool_parameter(const char *param, bool &valu
     }
 
     char val[3];
-    dummy = fgets(val, 2, fid);
+    (void)fgets(val, 2, fid);
     fclose(fid);
-        value = (val[0] == yesno(true));
+    value = (val[0] == yesno(true));
 }
 
 void CalibratorUsbtouchscreen::write_int_parameter(const char *param, const int value)
