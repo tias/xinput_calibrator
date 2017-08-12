@@ -32,7 +32,7 @@ AM_CXXFLAGS = -Wall -ansi -pedantic
 
 bin_PROGRAMS = xinput_calibrator tester
 
-COMMON_SRCS=calibrator.cpp calibrator/XorgPrint.cpp calibrator/Evdev.cpp calibrator/Usbtouchscreen.cpp main_common.cpp gui/gui_common.cpp
+COMMON_SRCS=calibrator.cpp calibrator/XorgPrint.cpp calibrator/Evdev.cpp  calibrator/Matrix.cpp calibrator/Usbtouchscreen.cpp main_common.cpp gui/gui_common.cpp
 
 # only one of the BUILD_ flags should be set
 if BUILD_X11
