@@ -40,6 +40,7 @@ private:
     int width;
     int height;
     float old_matrix[9];
+    float final_matrix[9];
 protected:
     // protected constructor: should only be used by subclasses!
     // (pass-through to Calibrator)
