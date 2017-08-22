@@ -26,6 +26,7 @@
 // Calibrator implementations
 #include "calibrator/Usbtouchscreen.hpp"
 #include "calibrator/Evdev.hpp"
+#include "calibrator/Matrix.hpp"
 #include "calibrator/XorgPrint.hpp"
 
 #include <cstring>
@@ -408,6 +409,17 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     } catch(WrongCalibratorException& x) {
         if (verbose)
             printf("DEBUG: Not evdev calibrator: %s\n", x.what());
+    }
+
+    try {
+        // next, try libinput driver (with XID)
+        return new CalibratorMatrix(device_name, device_axys, device_id,
+            thr_misclick, thr_doubleclick, output_type, geometry,
+            use_timeout, output_filename);
+
+    } catch(WrongCalibratorException& x) {
+        if (verbose)
+            printf("DEBUG: Not libinput calibrator: %s\n", x.what());
     }
 
     // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
