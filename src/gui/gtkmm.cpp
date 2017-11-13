@@ -25,7 +25,7 @@
 #include "gui/gui_common.hpp"
 
 CalibrationArea::CalibrationArea(Calibrator* calibrator0)
-  : calibrator(calibrator0), time_elapsed(0), message(NULL)
+  : calibrator(calibrator0), time_elapsed(0), message(nullptr)
 {
     // setup strings
     get_display_texts(&display_texts, calibrator0);
@@ -35,17 +35,17 @@ CalibrationArea::CalibrationArea(Calibrator* calibrator0)
 
     // parse geometry string
     const char* geo = calibrator->get_geometry();
-    if (geo != NULL) {
+    if (geo != nullptr) {
         int gw,gh;
         int res = sscanf(geo,"%dx%d",&gw,&gh);
         if (res != 2) {
             fprintf(stderr,"Warning: error parsing geometry string - using defaults.\n");
-            geo = NULL;
+            geo = nullptr;
         } else {
             set_display_size( gw, gh );
         }
     }
-    if (geo == NULL)
+    if (geo == nullptr)
         set_display_size(get_width(), get_height());
 
     // Setup timer for animation
@@ -74,7 +74,7 @@ void CalibrationArea::set_display_size(int width, int height) {
 bool CalibrationArea::on_expose_event(GdkEventExpose *event)
 {
     // check that screensize did not change (if no manually specified geometry)
-    if (calibrator->get_geometry() == NULL &&
+    if (calibrator->get_geometry() == nullptr &&
          (display_width != get_width() ||
          display_height != get_height()) ) {
         set_display_size(get_width(), get_height());
@@ -152,7 +152,7 @@ bool CalibrationArea::on_expose_event(GdkEventExpose *event)
 
 
         // Draw the message (if any)
-        if (message != NULL) {
+        if (message != nullptr) {
             // Frame the message
             cr->set_font_size(font_size);
             Cairo::TextExtents extent;
@@ -218,7 +218,7 @@ bool CalibrationArea::on_button_press_event(GdkEventButton *event)
     if (!success && calibrator->get_numclicks() == 0) {
         draw_message("Mis-click detected, restarting...");
     } else {
-        draw_message(NULL);
+        draw_message(nullptr);
     }
 
     // Are we done yet?

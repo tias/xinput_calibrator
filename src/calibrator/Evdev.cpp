@@ -52,8 +52,8 @@ CalibratorEvdev::CalibratorEvdev(const char* const device_name0,
   : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry, use_timeout, output_filename)
 {
     // init
-    display = XOpenDisplay(NULL);
-    if (display == NULL) {
+    display = XOpenDisplay(nullptr);
+    if (display == nullptr) {
         throw WrongCalibratorException("Evdev: Unable to connect to X server");
     }
 
@@ -393,7 +393,7 @@ XDeviceInfo* CalibratorEvdev::xinput_find_device_info(
 Display *display, const char *name, Bool only_extended)
 {
     XDeviceInfo	*devices;
-    XDeviceInfo *found = NULL;
+    XDeviceInfo *found = nullptr;
     int		loop;
     int		num_devices;
     int		len = strlen(name);
@@ -422,7 +422,7 @@ Display *display, const char *name, Bool only_extended)
                         "Warning: There are multiple devices named \"%s\".\n"
                         "To ensure the correct one is selected, please use "
                         "the device ID instead.\n\n", name);
-                return NULL;
+                return nullptr;
             } else {
                 found = &devices[loop];
             }
@@ -513,11 +513,11 @@ bool CalibratorEvdev::xinput_do_set_int_prop( const char * name,
 bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys)
 {
     const char* sysfs_name = get_sysfs_name();
-    bool not_sysfs_name = (sysfs_name == NULL);
+    bool not_sysfs_name = (sysfs_name == nullptr);
     if (not_sysfs_name)
         sysfs_name = "!!Name_Of_TouchScreen!!";
 
-    if(output_filename == NULL || not_sysfs_name)
+    if(output_filename == nullptr || not_sysfs_name)
         printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf' (/usr/share/X11/xorg.conf.d/ in some distro's)\n");
     else
         printf("  writing xorg.conf calibration data to '%s'\n", output_filename);
@@ -542,9 +542,9 @@ bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys)
     if (not_sysfs_name)
         printf("\nChange '%s' to your device's name in the snippet above.\n", sysfs_name);
     // file out
-    else if(output_filename != NULL) {
+    else if(output_filename != nullptr) {
         FILE* fid = fopen(output_filename, "w");
-        if (fid == NULL) {
+        if (fid == nullptr) {
             fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", output_filename);
             fprintf(stderr, "New calibration data NOT saved\n");
             return false;
@@ -559,11 +559,11 @@ bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys)
 bool CalibratorEvdev::output_hal(const XYinfo new_axys)
 {
     const char* sysfs_name = get_sysfs_name();
-    bool not_sysfs_name = (sysfs_name == NULL);
+    bool not_sysfs_name = (sysfs_name == nullptr);
     if (not_sysfs_name)
         sysfs_name = "!!Name_Of_TouchScreen!!";
 
-    if(output_filename == NULL || not_sysfs_name)
+    if(output_filename == nullptr || not_sysfs_name)
         printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n");
     else
         printf("  writing HAL calibration data to '%s'\n", output_filename);
@@ -585,9 +585,9 @@ bool CalibratorEvdev::output_hal(const XYinfo new_axys)
     if (not_sysfs_name)
         printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);
     // file out
-    else if(output_filename != NULL) {
+    else if(output_filename != nullptr) {
         FILE* fid = fopen(output_filename, "w");
-        if (fid == NULL) {
+        if (fid == nullptr) {
             fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", output_filename);
             fprintf(stderr, "New calibration data NOT saved\n");
             return false;
@@ -601,7 +601,7 @@ bool CalibratorEvdev::output_hal(const XYinfo new_axys)
 
 bool CalibratorEvdev::output_xinput(const XYinfo new_axys)
 {
-    if(output_filename == NULL)
+    if(output_filename == nullptr)
         printf("  Install the 'xinput' tool and copy the command(s) below in a script that starts with your X session\n");
     else
         printf("  writing calibration script to '%s'\n", output_filename);
@@ -618,9 +618,9 @@ bool CalibratorEvdev::output_xinput(const XYinfo new_axys)
     // console out
     printf("%s", outstr.c_str());
     // file out
-    if(output_filename != NULL) {
+    if(output_filename != nullptr) {
 		FILE* fid = fopen(output_filename, "w");
-		if (fid == NULL) {
+        if (fid == nullptr) {
 			fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", output_filename);
 			fprintf(stderr, "New calibration data NOT saved\n");
 			return false;

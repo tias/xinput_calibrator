@@ -46,9 +46,9 @@ protected:
                     const int thr_misclick=0,
                     const int thr_doubleclick=0,
                     const OutputType output_type=OUTYPE_AUTO,
-                    const char* geometry=0,
+                    const char* geometry=nullptr,
                     const bool use_timeout=false,
-                    const char* output_filename = 0);
+                    const char* output_filename=nullptr);
 
 public:
     CalibratorEvdev(const char* const device_name,
@@ -57,9 +57,9 @@ public:
                     const int thr_misclick=0,
                     const int thr_doubleclick=0,
                     const OutputType output_type=OUTYPE_AUTO,
-                    const char* geometry=0,
+                    const char* geometry=nullptr,
                     const bool use_timeout=false,
-                    const char* output_filename = 0);
+                    const char* output_filename=nullptr);
     virtual ~CalibratorEvdev();
 
     /// calculate and apply the calibration

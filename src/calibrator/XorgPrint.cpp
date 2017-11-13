@@ -65,11 +65,11 @@ bool CalibratorXorgPrint::finish_data(const XYinfo &new_axys)
 bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys)
 {
     const char* sysfs_name = get_sysfs_name();
-    bool not_sysfs_name = (sysfs_name == NULL);
+    bool not_sysfs_name = (sysfs_name == nullptr);
     if (not_sysfs_name)
         sysfs_name = "!!Name_Of_TouchScreen!!";
 
-    if(output_filename == NULL || not_sysfs_name)
+    if(output_filename == nullptr || not_sysfs_name)
         printf("  copy the snippet below into '/etc/X11/xorg.conf.d/99-calibration.conf' (/usr/share/X11/xorg.conf.d/ in some distro's)\n");
     else
         printf("  writing calibration script to '%s'\n", output_filename);
@@ -103,9 +103,9 @@ bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys)
     if (not_sysfs_name)
         printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);
     // file out
-    else if(output_filename != NULL) {
+    else if(output_filename != nullptr) {
         FILE* fid = fopen(output_filename, "w");
-        if (fid == NULL) {
+        if (fid == nullptr) {
             fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", output_filename);
             fprintf(stderr, "New calibration data NOT saved\n");
             return false;
@@ -120,11 +120,11 @@ bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys)
 bool CalibratorXorgPrint::output_hal(const XYinfo new_axys)
 {
     const char* sysfs_name = get_sysfs_name();
-    bool not_sysfs_name = (sysfs_name == NULL);
+    bool not_sysfs_name = (sysfs_name == nullptr);
     if (not_sysfs_name)
         sysfs_name = "!!Name_Of_TouchScreen!!";
 
-    if(output_filename == NULL || not_sysfs_name)
+    if(output_filename == nullptr || not_sysfs_name)
         printf("  copy the policy below into '/etc/hal/fdi/policy/touchscreen.fdi'\n");
     else
         printf("  writing HAL calibration data to '%s'\n", output_filename);
@@ -156,9 +156,9 @@ bool CalibratorXorgPrint::output_hal(const XYinfo new_axys)
     if (not_sysfs_name)
         printf("\nChange '%s' to your device's name in the config above.\n", sysfs_name);
     // file out
-    else if(output_filename != NULL) {
+    else if(output_filename != nullptr) {
         FILE* fid = fopen(output_filename, "w");
-        if (fid == NULL) {
+        if (fid == nullptr) {
             fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", output_filename);
             fprintf(stderr, "New calibration data NOT saved\n");
             return false;

@@ -201,12 +201,12 @@ const char* Calibrator::get_sysfs_name()
 
     // TODO: more mechanisms
 
-    return NULL;
+    return nullptr;
 }
 
 bool Calibrator::is_sysfs_name(const char* name) {
     DIR* dp = opendir(SYSFS_INPUT);
-    if (dp == NULL)
+    if (dp == nullptr)
         return false;
 
     while (dirent* ep = readdir(dp)) {
@@ -242,10 +242,10 @@ bool Calibrator::has_xorgconfd_support(Display* dpy) {
     bool has_support = false;
 
     Display* display = dpy;
-    if (dpy == NULL) // no connection to reuse
-        display = XOpenDisplay(NULL);
+    if (dpy == nullptr) // no connection to reuse
+        display = XOpenDisplay(nullptr);
 
-    if (display == NULL) {
+    if (display == nullptr) {
         fprintf(stderr, "Unable to connect to X server\n");
         exit(1);
     }
@@ -255,7 +255,7 @@ bool Calibrator::has_xorgconfd_support(Display* dpy) {
         has_support = true;
     }
 
-    if (dpy == NULL) // no connection to reuse
+    if (dpy == nullptr) // no connection to reuse
         XCloseDisplay(display);
 
     return has_support;

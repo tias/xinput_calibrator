@@ -105,9 +105,9 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo &new_axys)
 
     // Read, then write calibration parameters to modprobe_conf_local,
     // or the file set by --output-filename to keep the for the next boot
-    const char* filename = output_filename == NULL ? modprobe_conf_local : output_filename;
+    const char* filename = output_filename == nullptr ? modprobe_conf_local : output_filename;
     FILE *fid = fopen(filename, "r");
-    if (fid == NULL) {
+    if (fid == nullptr) {
         fprintf(stderr, "Error: Can't open '%s' for reading. Make sure you have the necessary rights\n", filename);
         fprintf(stderr, "New calibration data NOT saved\n");
         return false;
@@ -137,7 +137,7 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo &new_axys)
     new_contents += new_opt;
 
     fid = fopen(filename, "w");
-    if (fid == NULL) {
+    if (fid == nullptr) {
         fprintf(stderr, "Error: Can't open '%s' for writing. Make sure you have the necessary rights\n", filename);
         fprintf(stderr, "New calibration data NOT saved\n");
         return false;
@@ -154,7 +154,7 @@ void CalibratorUsbtouchscreen::read_int_parameter(const char *param, int &value)
     char filename[100];
     sprintf(filename, "%s/%s", module_prefix, param);
     FILE *fid = fopen(filename, "r");
-    if (fid == NULL) {
+    if (fid == nullptr) {
         fprintf(stderr, "Could not read parameter '%s'\n", param);
         return;
     }
@@ -169,7 +169,7 @@ void CalibratorUsbtouchscreen::read_bool_parameter(const char *param, bool &valu
     char filename[100];
     sprintf(filename, "%s/%s", module_prefix, param);
     FILE *fid = fopen(filename, "r");
-    if (fid == NULL) {
+    if (fid == nullptr) {
         fprintf(stderr, "Could not read parameter '%s'\n", param);
         return;
     }
@@ -185,7 +185,7 @@ void CalibratorUsbtouchscreen::write_int_parameter(const char *param, const int 
     char filename[100];
     sprintf(filename, "%s/%s", module_prefix, param);
     FILE *fid = fopen(filename, "w");
-    if (fid == NULL) {
+    if (fid == nullptr) {
         fprintf(stderr, "Could not save parameter '%s'\n", param);
         return;
     }
@@ -199,7 +199,7 @@ void CalibratorUsbtouchscreen::write_bool_parameter(const char *param, const boo
     char filename[100];
     sprintf(filename, "%s/%s", module_prefix, param);
     FILE *fid = fopen(filename, "w");
-    if (fid == NULL) {
+    if (fid == nullptr) {
         fprintf(stderr, "Could not save parameter '%s'\n", param);
         return;
     }
