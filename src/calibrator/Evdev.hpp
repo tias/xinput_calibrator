@@ -63,8 +63,8 @@ public:
     virtual ~CalibratorEvdev();
 
     /// calculate and apply the calibration
-    virtual bool finish(int width, int height);
-    virtual bool finish_data(const XYinfo &new_axys);
+    bool finish(int width, int height) override;
+    bool finish_data(const XYinfo &new_axys) override;
 
     bool set_swapxy(const int swap_xy);
     bool set_invert_xy(const int invert_x, const int invert_y);
