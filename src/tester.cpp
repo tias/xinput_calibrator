@@ -8,12 +8,12 @@
 
 int main() {
     // screen dimensions
-    int width = 800;
-    int height = 600;
+    constexpr int width = 800;
+    constexpr int height = 600;
     XYinfo screen_res(0, width, 0, height);
 
-    int delta_x = width/(float)num_blocks;
-    int delta_y = height/(float)num_blocks;
+    constexpr int delta_x = static_cast<int>(width/static_cast<float>(num_blocks));
+    constexpr int delta_y = static_cast<int>(height/static_cast<float>(num_blocks));
     XYinfo target(delta_x, width-delta_x, delta_y, height-delta_y);
 
     int slack = 2; // amount of pixels result can be off target

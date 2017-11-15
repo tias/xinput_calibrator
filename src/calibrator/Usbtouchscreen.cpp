@@ -31,22 +31,22 @@
  *************************/
 // The file to which the calibration parameters are saved.
 // (XXX: is this distribution dependend?)
-static const char *modprobe_conf_local = "/etc/modprobe.conf.local";
+static constexpr char modprobe_conf_local[] = "/etc/modprobe.conf.local";
 
 // Prefix to the kernel path where we can set the parameters
-static const char *module_prefix = "/sys/module/usbtouchscreen/parameters";
+static constexpr char module_prefix[] = "/sys/module/usbtouchscreen/parameters";
 
 // Names of kernel parameters
-static const char *p_range_x = "range_x";
-static const char *p_range_y = "range_y";
-static const char *p_min_x = "min_x";
-static const char *p_min_y = "min_y";
-static const char *p_max_x = "max_x";
-static const char *p_max_y = "max_y";
-static const char *p_transform_xy = "transform_xy";
-static const char *p_flip_x = "flip_x";
-static const char *p_flip_y = "flip_y";
-static const char *p_swap_xy = "swap_xy";
+static constexpr char p_range_x[] = "range_x";
+static constexpr char p_range_y[] = "range_y";
+static constexpr char p_min_x[] = "min_x";
+static constexpr char p_min_y[] = "min_y";
+static constexpr char p_max_x[] = "max_x";
+static constexpr char p_max_y[] = "max_y";
+static constexpr char p_transform_xy[] = "transform_xy";
+static constexpr char p_flip_x[] = "flip_x";
+static constexpr char p_flip_y[] = "flip_y";
+static constexpr char p_swap_xy[] = "swap_xy";
 
 CalibratorUsbtouchscreen::CalibratorUsbtouchscreen(const char* const device_name0, const XYinfo& axys0, const int thr_misclick, const int thr_doubleclick, const OutputType output_type, const char* geometry, const bool use_timeout, const char* output_filename)
   : Calibrator(device_name0, axys0, thr_misclick, thr_doubleclick, output_type, geometry, use_timeout, output_filename)
@@ -114,9 +114,9 @@ bool CalibratorUsbtouchscreen::finish_data(const XYinfo &new_axys)
     }
 
     std::string new_contents;
-    const int len = MAX_LINE_LEN;
+    constexpr int len = max_line_len;
     char line[len];
-    const char *opt = "options usbtouchscreen";
+    constexpr char opt[] = "options usbtouchscreen";
     const int opt_len = strlen(opt);
     while (fgets(line, len, fid)) {
         if (strncmp(line, opt, opt_len) == 0) {

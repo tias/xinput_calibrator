@@ -75,7 +75,7 @@ bool CalibratorXorgPrint::output_xorgconfd(const XYinfo new_axys)
         printf("  writing calibration script to '%s'\n", output_filename);
 
     // xorg.conf.d snippet
-    char line[MAX_LINE_LEN];
+    char line[max_line_len];
     std::string outstr;
 
     outstr += "Section \"InputClass\"\n";
@@ -130,7 +130,7 @@ bool CalibratorXorgPrint::output_hal(const XYinfo new_axys)
         printf("  writing HAL calibration data to '%s'\n", output_filename);
 
     // HAL policy output
-    char line[MAX_LINE_LEN];
+    char line[max_line_len];
     std::string outstr;
 
     sprintf(line, "<match key=\"info.product\" contains=\"%s\">\n", sysfs_name);

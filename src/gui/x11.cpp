@@ -134,9 +134,9 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     // Setup timer for animation
 #ifdef HAVE_TIMERFD
     struct itimerspec timer;
-    unsigned int period = time_step * 1000; // microseconds
-    unsigned int sec = period/1000000;
-    unsigned int ns = (period - (sec * 1000000)) * 1000;
+    constexpr unsigned int period = time_step * 1000; // microseconds
+    constexpr unsigned int sec = period/1000000;
+    constexpr unsigned int ns = (period - (sec * 1000000)) * 1000;
 
     timer.it_value.tv_sec = sec;
     timer.it_value.tv_nsec = ns;

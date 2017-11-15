@@ -523,7 +523,7 @@ bool CalibratorEvdev::output_xorgconfd(const XYinfo new_axys)
         printf("  writing xorg.conf calibration data to '%s'\n", output_filename);
 
     // xorg.conf.d snippet
-    char line[MAX_LINE_LEN];
+    char line[max_line_len];
     std::string outstr;
 
     outstr += "Section \"InputClass\"\n";
@@ -569,7 +569,7 @@ bool CalibratorEvdev::output_hal(const XYinfo new_axys)
         printf("  writing HAL calibration data to '%s'\n", output_filename);
 
     // HAL policy output
-    char line[MAX_LINE_LEN];
+    char line[max_line_len];
     std::string outstr;
 
     sprintf(line, "<match key=\"info.product\" contains=\"%s\">\n", sysfs_name);
@@ -607,7 +607,7 @@ bool CalibratorEvdev::output_xinput(const XYinfo new_axys)
         printf("  writing calibration script to '%s'\n", output_filename);
 
     // create startup script
-    char line[MAX_LINE_LEN];
+    char line[max_line_len];
     std::string outstr;
 
     sprintf(line, "    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);

@@ -31,7 +31,7 @@
 #include <vector>
 
 // XXX: we currently don't handle lines that are longer than this
-#define MAX_LINE_LEN 1024
+constexpr int max_line_len = 1024;
 
 int xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
 float scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min);
@@ -62,7 +62,7 @@ float scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min);
  *   |  |  |  |  |  |  |  |  |
  *   +--+--+--+--+--+--+--+--+
  */
-const int num_blocks = 8;
+constexpr int num_blocks = 8;
 
 struct AxisInfo {
     int min, max;
