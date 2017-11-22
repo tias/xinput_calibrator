@@ -25,7 +25,7 @@
 #include "gui/gui_common.hpp"
 
 CalibrationArea::CalibrationArea(Calibrator* calibrator0)
-  : calibrator(calibrator0), time_elapsed(0), message(nullptr)
+  : calibrator(calibrator0)
 {
     // setup strings
     get_display_texts(&display_texts, calibrator0);

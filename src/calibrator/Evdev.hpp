@@ -34,9 +34,9 @@
 class CalibratorEvdev: public Calibrator
 {
 private:
-    Display     *display;
-    XDeviceInfo *devInfo;
-    XDevice     *dev;
+    Display     *display = nullptr;
+    XDeviceInfo *devInfo = nullptr;
+    XDevice     *dev = nullptr;
 
 protected:
     // protected constructor: should only be used by subclasses!

@@ -65,10 +65,10 @@ float scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min);
 constexpr int num_blocks = 8;
 
 struct AxisInfo {
-    int min, max;
-    bool invert;
+    int min = -1, max = -1;
+    bool invert = false;
 
-    AxisInfo() : min(-1), max(-1), invert(false) { }
+    AxisInfo() { }
     AxisInfo(int mi, int ma, bool inv = false) :
         min(mi), max(ma), invert(inv) { }
     AxisInfo(const AxisInfo& old) :
@@ -82,11 +82,11 @@ struct AxisInfo {
 /// struct to hold min/max info of the X and Y axis
 struct XYinfo {
     /// Axis swapped
-    bool swap_xy;
+    bool swap_xy = false;
     /// X, Y axis
     AxisInfo x, y;
 
-    XYinfo() : swap_xy(false) {}
+    XYinfo() {}
 
     XYinfo(int xmi, int xma, int ymi, int yma, bool swap_xy_ = false,
         bool inv_x = false, bool inv_y = false) :
@@ -224,23 +224,23 @@ protected:
 
     // Threshold to keep the same point from being clicked twice.
     // Set to zero if you don't want this check
-    int threshold_doubleclick;
+    int threshold_doubleclick = 0;
 
     // Threshold to detect mis-clicks (clicks not along axes)
     // A lower value forces more precise calibration
     // Set to zero if you don't want this check
-    int threshold_misclick;
+    int threshold_misclick = 0;
 
     // Type of output
-    OutputType output_type;
+    OutputType output_type = OUTYPE_AUTO;
 
     // manually specified geometry string
-    const char* geometry;
+    const char* geometry = nullptr;
 
-    const bool use_timeout;
+    const bool use_timeout = 1;
 
     // manually specified output filename
-    const char* output_filename;
+    const char* output_filename = nullptr;
 
     // sysfs path/file
     static const char* SYSFS_INPUT;
