@@ -69,7 +69,7 @@ struct AxisInfo {
     bool invert = false;
 
     AxisInfo() { }
-    AxisInfo(int mi, int ma, bool inv = false) :
+    constexpr AxisInfo(int mi, int ma, bool inv = false) :
         min(mi), max(ma), invert(inv) { }
     AxisInfo(const AxisInfo& old) :
         min(old.min), max(old.max), invert(old.invert) { }
@@ -88,7 +88,7 @@ struct XYinfo {
 
     XYinfo() {}
 
-    XYinfo(int xmi, int xma, int ymi, int yma, bool swap_xy_ = false,
+    constexpr XYinfo(int xmi, int xma, int ymi, int yma, bool swap_xy_ = false,
         bool inv_x = false, bool inv_y = false) :
         swap_xy(swap_xy_), x(xmi, xma, inv_x), y(ymi, yma, inv_y) {}
 
@@ -102,7 +102,7 @@ struct XYinfo {
         y.max = xf86ScaleAxis(y.max, to.y.max, to.y.min, from.y.max, from.y.min);
     }
 
-    void print(const char* xtra="\n") {
+    void print(const char* xtra="\n") const {
         printf("XYinfo: x.min=%i, x.max=%i, y.min=%i, y.max=%i, swap_xy=%i, invert_x=%i, invert_y=%i%s",
                x.min, x.max, y.min, y.max, swap_xy, x.invert, y.invert, xtra);
     }
