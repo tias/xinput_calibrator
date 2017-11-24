@@ -21,43 +21,39 @@ int main() {
 
     constexpr XYinfo dev_res{0, 1000, 0, 1000};
 
-    std::vector<XYinfo> old_axes;
-    old_axes.emplace_back(0, 1000, 0, 1000);
-    old_axes.emplace_back(1000, 0, 0, 1000);
-    old_axes.emplace_back(0, 1000, 1000, 0);
-    old_axes.emplace_back(1000, 0, 0, 1000);
-    old_axes.emplace_back(0, 1000, 0, 1000, 1, 0, 0);
-    old_axes.emplace_back(0, 1000, 0, 1000, 1, 0, 1);
-    old_axes.emplace_back(0, 1000, 0, 1000, 1, 1, 0);
-    old_axes.emplace_back(0, 1000, 0, 1000, 1, 1, 1);
-    old_axes.emplace_back(1000, 0, 0, 1000, 1, 0, 0);
-    old_axes.emplace_back(1000, 0, 0, 1000, 1, 0, 1);
-    old_axes.emplace_back(1000, 0, 0, 1000, 1, 1, 0);
-    old_axes.emplace_back(1000, 0, 0, 1000, 1, 1, 1);
-    // non device-resolution calibs
-    old_axes.emplace_back(42, 929, 20, 888);
-    // xf86ScaleAxis rounds to min/max, this can lead to inaccurate
-    // results! Can we fix that?
-    old_axes.emplace_back(42, 929, 20, 888);
-    //old_axes.emplace_back(-9, 895, 124, 990); // this is the true axis
-                                                       // rounding error when raw_coords are swapped???
-    //old_axes.emplace_back(75, 750, 20, 888); // rounding error on X axis
-    //old_axes.emplace_back(42, 929, 120, 888); // rounding error on Y axis
+    std::vector<XYinfo> old_axes{
+        {0, 1000, 0, 1000}, {1000, 0, 0, 1000}, {0, 1000, 1000, 0},
+        {1000, 0, 0, 1000}, {0, 1000, 0, 1000, 1, 0, 0},
+        {0, 1000, 0, 1000, 1, 0, 1}, {0, 1000, 0, 1000, 1, 1, 0},
+        {0, 1000, 0, 1000, 1, 1, 1}, {1000, 0, 0, 1000, 1, 0, 0},
+        {1000, 0, 0, 1000, 1, 0, 1}, {1000, 0, 0, 1000, 1, 1, 0},
+        {1000, 0, 0, 1000, 1, 1, 1},
+        // non device-resolution calibs
+        {42, 929, 20, 888},
+        // xf86ScaleAxis rounds to min/max, this can lead to inaccurate
+        // results! Can we fix that?
+        {42, 929, 20, 888}
+        // {-9, 895, 124, 990}, // this is the true axis
+                                // rounding error when raw_coords are swapped???
+        // {75, 750, 20, 888}, // rounding error on X axis
+        // {42, 929, 120, 888} // rounding error on Y axis
+    };
 
     // raw device coordinates to emulate
-    std::vector<XYinfo> raw_coords;
-    // normal
-    raw_coords.emplace_back(105, 783, 233, 883);
-    // invert x, y, x+y
-    raw_coords.emplace_back(783, 105, 233, 883);
-    raw_coords.emplace_back(105, 783, 883, 233);
-    raw_coords.emplace_back(783, 105, 883, 233);
-    // swap
-    raw_coords.emplace_back(233, 883, 105, 783);
-    // swap and inverts
-    raw_coords.emplace_back(233, 883, 783, 105);
-    raw_coords.emplace_back(883, 233, 105, 783);
-    raw_coords.emplace_back(883, 233, 783, 105);
+    std::vector<XYinfo> raw_coords{
+        // normal
+        {105, 783, 233, 883},
+        // invert x, y, x+y
+        {783, 105, 233, 883},
+        {105, 783, 883, 233},
+        {783, 105, 883, 233},
+        // swap
+        {233, 883, 105, 783},
+        // swap and inverts
+        {233, 883, 783, 105},
+        {883, 233, 105, 783},
+        {883, 233, 783, 105}
+    };
 
     std::unique_ptr<CalibratorTesterInterface> calib;
     for (unsigned t=0; t<=1; t++) {
