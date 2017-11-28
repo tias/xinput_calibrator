@@ -27,7 +27,6 @@
 
 #include <stdexcept>
 #include <X11/Xlib.h>
-#include <stdio.h>
 #include <vector>
 
 // XXX: we currently don't handle lines that are longer than this

@@ -1,6 +1,5 @@
-#include <algorithm>
+#include <iostream>
 #include <memory>
-#include <stdio.h>
 #include <vector>
 
 #include "calibrator.hh"
@@ -58,17 +57,17 @@ int main() {
     std::unique_ptr<CalibratorTesterInterface> calib;
     for (unsigned t=0; t<=1; t++) {
         if (t == 0)
-            printf("CalibratorTester\n");
+            std::cout << "CalibratorTester\n";
         else if (t == 1)
-            printf("CalibratorEvdevTester\n");
+            std::cout << "CalibratorEvdevTester\n";
 
-    for (std::vector<XYinfo>::size_type a=0; a != old_axes.size(); a++) {
-        XYinfo old_axis{old_axes[a]};
-        printf("Old axis: ");
+    for (const XYinfo &oldAxis: old_axes) {
+        XYinfo old_axis{oldAxis};
+        std::cout << "Old axis: ";
         old_axis.print();
 
-    for (std::vector<XYinfo>::size_type c=0; c != raw_coords.size(); c++) {
-        const XYinfo raw{raw_coords[c]};
+    for (const XYinfo &rawCoords: raw_coords) {
+        const XYinfo raw{rawCoords};
         //printf("Raw: "); raw.print();
 
         // reset calibrator object
@@ -96,23 +95,24 @@ int main() {
                             std::max(abs(target.y.min - result.y.min),
                                      abs(target.y.max - result.y.max)))); // no n-ary max in c++??
         if (maxdiff > slack) {
-            printf("-\n");
-            printf("Old axis: "); old_axis.print();
-            printf("Raw: "); raw.print();
-            printf("Clicked: "); clicked.print();
-            printf("New axis: "); calib->new_axis_print();
-            printf("Error: difference between target and result: %i > %i:\n", maxdiff, slack);
-            printf("\tTarget: "); target.print();
-            printf("\tResult: "); result.print();
+            std::cout << "-\n";
+            std::cout << "Old axis: "; old_axis.print();
+            std::cout << "Raw: "; raw.print();
+            std::cout << "Clicked: "; clicked.print();
+            std::cout << "New axis: "; calib->new_axis_print();
+            std::cout << "Error: difference between target and result: "
+                      << maxdiff << " > " << slack << ":\n";
+            std::cout << "\tTarget: "; target.print();
+            std::cout << "\tResult: "; result.print();
             exit(1);
         }
 
-        printf("%i", maxdiff);
+        std::cout << maxdiff;
     } // loop over raw_coords
 
-        printf(". OK\n");
+        std::cout << ". OK\n";
     } // loop over old_axes
 
-        printf("\n");
+        std::cout << "\n";
     } // loop over calibrators
 }
