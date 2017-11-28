@@ -34,11 +34,11 @@ class CalibratorUsbtouchscreen: public Calibrator
 public:
     CalibratorUsbtouchscreen(const char* const device_name, const XYinfo& axys,
          const int thr_misclick=0, const int thr_doubleclick=0,
-        const OutputType output_type=OUTYPE_AUTO, const char* geometry=0,
-        const bool use_timeout=false, const char* output_filename = 0);
+        const OutputType output_type=OUTYPE_AUTO, const char* geometry=nullptr,
+        const bool use_timeout=false, const char* output_filename=nullptr);
     virtual ~CalibratorUsbtouchscreen();
 
-    virtual bool finish_data(const XYinfo &new_axys);
+    bool finish_data(const XYinfo &new_axys) override final;
 
 protected:
     // Globals for kernel parameters from startup.

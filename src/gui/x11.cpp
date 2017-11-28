@@ -57,7 +57,7 @@ void GuiCalibratorX11::make_instance(Calibrator* w)
 }
 
 // Singleton instance
-GuiCalibratorX11* GuiCalibratorX11::instance = NULL;
+GuiCalibratorX11* GuiCalibratorX11::instance = nullptr;
 
 GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
   : calibrator(calibrator0), time_elapsed(0)
@@ -65,17 +65,17 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     // setup strings
     get_display_texts(&display_texts, calibrator0);
 
-    display = XOpenDisplay(NULL);
-    if (display == NULL) {
+    display = XOpenDisplay(nullptr);
+    if (display == nullptr) {
         throw std::runtime_error("Unable to connect to X server");
     }
     screen_num = DefaultScreen(display);
     // Load font and get font information structure
     font_info = XLoadQueryFont(display, "9x15");
-    if (font_info == NULL) {
+    if (font_info == nullptr) {
         // fall back to native font
         font_info = XLoadQueryFont(display, "fixed");
-        if (font_info == NULL) {
+        if (font_info == nullptr) {
             XCloseDisplay(display);
             throw std::runtime_error("Unable to open neither '9x15' nor 'fixed' font");
         }
@@ -90,7 +90,7 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
 
     // parse geometry string
     const char* geo = calibrator->get_geometry();
-    if (geo != NULL) {
+    if (geo != nullptr) {
         int gw,gh;
         int res = sscanf(geo,"%dx%d",&gw,&gh);
         if (res != 2) {
@@ -128,28 +128,28 @@ GuiCalibratorX11::GuiCalibratorX11(Calibrator* calibrator0)
     XSetWindowBackground(display, win, pixel[GRAY]);
     XClearWindow(display, win);
 
-    gc = XCreateGC(display, win, 0, NULL);
+    gc = XCreateGC(display, win, 0, nullptr);
     XSetFont(display, gc, font_info->fid);
 
     // Setup timer for animation
 #ifdef HAVE_TIMERFD
     struct itimerspec timer;
-    unsigned int period = time_step * 1000; // microseconds
-    unsigned int sec = period/1000000;
-    unsigned int ns = (period - (sec * 1000000)) * 1000;
+    constexpr unsigned int period = time_step * 1000; // microseconds
+    constexpr unsigned int sec = period/1000000;
+    constexpr unsigned int ns = (period - (sec * 1000000)) * 1000;
 
     timer.it_value.tv_sec = sec;
     timer.it_value.tv_nsec = ns;
     timer.it_interval = timer.it_value;
     timer_fd = timerfd_create(CLOCK_MONOTONIC, 0);
-    timerfd_settime(timer_fd, 0, &timer, NULL);
+    timerfd_settime(timer_fd, 0, &timer, nullptr);
 #else
     signal(SIGALRM, sigalarm_handler);
     struct itimerval timer;
     timer.it_value.tv_sec = time_step/1000;
     timer.it_value.tv_usec = (time_step % 1000) * 1000;
     timer.it_interval = timer.it_value;
-    setitimer(ITIMER_REAL, &timer, NULL);
+    setitimer(ITIMER_REAL, &timer, nullptr);
 #endif
 }
 
@@ -215,7 +215,7 @@ void GuiCalibratorX11::set_display_size(int width, int height) {
 
 void GuiCalibratorX11::redraw()
 {
-    if (calibrator->get_geometry() == NULL) {
+    if (calibrator->get_geometry() == nullptr) {
         int width;
         int height;
         detect_display_size(width, height);
@@ -350,7 +350,7 @@ void GuiCalibratorX11::draw_message(const char* msg)
 
 void GuiCalibratorX11::give_timer_signal()
 {
-    if (instance != NULL) {
+    if (instance != nullptr) {
         // timer signal
 
 #ifdef HAVE_TIMERFD
