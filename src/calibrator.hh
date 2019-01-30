@@ -29,6 +29,7 @@
 #include <X11/Xlib.h>
 #include <stdio.h>
 #include <vector>
+#include <string>
 
 // XXX: we currently don't handle lines that are longer than this
 #define MAX_LINE_LEN 1024
