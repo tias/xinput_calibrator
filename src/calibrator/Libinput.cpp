@@ -43,12 +43,76 @@
 #define EXIT_FAILURE 0
 #endif
 
-void CalibratorLibinput::setIdentity(float coeff[9]) {
-    static const float id[] = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
-    memcpy(coeff, id, sizeof(float) * 9);
+static void mat9_invert(const Mat9 &m, Mat9 &minv) {
+    /*
+     * from https://stackoverflow.com/questions/983999/simple-3x3-matrix-inverse-code-c
+     * with some simplification
+     */
+    const float m4857 = m[4] * m[8] - m[5] * m[7];
+    const float m3746 = m[3] * m[7] - m[4] * m[6];
+    const float m5638 = m[5] * m[6] - m[3] * m[8];
+    const float det = m[0] * (m4857) +
+                 m[1] * (m5638) +
+                 m[2] * (m3746);
+
+    const float invdet = 1 / det;
+
+    //Matrix33d minv; // inverse of matrix m
+    minv[0] = (m4857) * invdet;
+    minv[1] = (m[2] * m[7] - m[1] * m[8]) * invdet;
+    minv[2] = (m[1] * m[5] - m[2] * m[4]) * invdet;
+    minv[3] = (m5638) * invdet;
+    minv[4] = (m[0] * m[8] - m[2] * m[6]) * invdet;
+    minv[5] = (m[2] * m[3] - m[0] * m[5]) * invdet;
+    minv[6] = (m3746) * invdet;
+    minv[7] = (m[1] * m[6] - m[0] * m[7]) * invdet;
+    minv[8] = (m[0] * m[4] - m[1] * m[3]) * invdet;
 }
 
-void CalibratorLibinput::getMatrix(const char *name, float coeff[9]) {
+static void mat9_product(const Mat9 &m1, const Mat9 &m2, Mat9 &m3){
+    int i,j, k;
+    for (i = 0 ; i < 3 ; i++) {
+        for (j = 0 ; j < 3 ; j++) {
+            float sum = 0;
+            for (k = 0 ; k < 3 ; k++)
+                sum += m1[i*3+k]*m2[j+k*3];
+            m3[i*3+j] = sum;
+        }
+    }
+}
+
+static void mat9_sum(const Mat9 &m1, Mat9 &m2){
+    int i;
+    for (i = 0 ; i < 9 ; i++)
+        m2[i] += m1[i];
+}
+
+static void mat9_product(const float c, Mat9 &m1){
+    int i;
+    for (i = 0 ; i < 9 ; i++)
+        m1[i] *= c;
+}
+
+
+static void mat9_print(const Mat9 &m) {
+    int i,j;
+    for (i = 0 ; i < 3 ; i++ ) {
+        printf("\t[");
+        for (j = 0 ; j < 3 ; j++) {
+            if (j != 0)
+                printf(", ");
+            printf("%f", m[i*3+j]);
+        }
+        printf("]\n");
+    }
+}
+
+static void mat9_set_identity(Mat9 &m) {
+    static const float id[] = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+    memcpy(m.coeff, id, sizeof(float) * 9);
+}
+
+void CalibratorLibinput::getMatrix(const char *name, Mat9 &coeff) {
 
     Atom float_atom = XInternAtom(display, "FLOAT", false);
 
@@ -58,66 +122,55 @@ void CalibratorLibinput::getMatrix(const char *name, float coeff[9]) {
     Atom            act_type;
     int             act_format;
     unsigned long   nitems, bytes_after;
-    unsigned char   *data;
+    unsigned char   *data, *data_ptr;
+
     if (XGetDeviceProperty(display, dev, property, 0, 1000, False,
                            AnyPropertyType, &act_type, &act_format,
                            &nitems, &bytes_after, &data) != Success) {
         throw WrongCalibratorException("Libinput: \"libinput Calibration Matrix\" property missing, not a (valid) libinput device");
     }
 
-    if (act_type != float_atom || act_format == 32) {
+    if (act_type != float_atom || act_format != 32) {
         XFree(data);
         throw WrongCalibratorException("Libinput: \"libinput Calibration Matrix\" property format");
 
     }
 
     int size = sizeof(long);
-
-    setIdentity(coeff);
+    data_ptr = data;
+    mat9_set_identity(coeff);
     for (unsigned int i = 0 ; i < nitems ; i++) {
-        coeff[i] = *((float *)data);
-        data += size;
+        coeff[i] = *((float *)data_ptr);
+        data_ptr += size;
     }
 
     XFree(data);
 }
 
-void CalibratorLibinput::setMatrix(const char *name, const float coeff[9]) {
+void CalibratorLibinput::setMatrix(const char *name, const Mat9 &coeff) {
+
     Atom          prop;
-    Atom          old_type;
-    int           old_format;
-    unsigned long act_nitems, bytes_after;
-    float         *ptr;
-
-
+    int           format;
+    long         *ptr;
 
     prop = xinput_parse_atom(name);
-    Atom float_atom = XInternAtom(display, "FLOAT", false);
-
     if (prop == None) {
         fprintf(stderr, "invalid property '%s'\n", name);
         throw WrongCalibratorException("Libinput: \"libinput Calibration Matrix\" property missing, not a (valid) libinput device");
     }
 
-    if (XGetDeviceProperty(display, dev, prop, 0, 0, False,
-                           AnyPropertyType,
-                           &old_type, &old_format, &act_nitems,
-                           &bytes_after, (unsigned char **)&ptr) != Success)
-        throw WrongCalibratorException("Libinput: \"libinput Calibration Matrix\" property missing, not a (valid) libinput device");
-
-    XFree(ptr);
-    if (old_type != float_atom || old_format != 32)
-        throw WrongCalibratorException("Libinput: \"libinput Calibration Matrix\" property format");
-
-
+    Atom float_atom = XInternAtom(display, "FLOAT", false);
+    format = 32;
     int nelements = 9;
-    ptr = (float*)calloc(nelements, sizeof(long));
+    ptr = (long*)calloc(nelements+20, sizeof(long));
     assert(ptr);
-    for (int i = 0; i < nelements; i++)
-         ptr[i] = coeff[i];
 
-    XChangeDeviceProperty(display, dev, prop, old_type, old_format,
+    for (int i = 0; i < nelements; i++)
+         *((float*)(ptr+i)) = coeff[i];
+
+    XChangeDeviceProperty(display, dev, prop, float_atom, format,
                             PropModeReplace, (unsigned char *)ptr, nelements);
+
     free(ptr);
 
 }
@@ -160,27 +213,23 @@ CalibratorLibinput::CalibratorLibinput(const char* const device_name0,
     }
 
 #ifndef HAVE_XI_PROP
-    throw WrongCalibratorException("Evdev: you need at least libXi 1.2 and inputproto 1.5 for dynamic recalibration of evdev.");
+    throw WrongCalibratorException("Libinput: you need at least libXi 1.2 and inputproto 1.5 for dynamic recalibration of evdev.");
 #else
 
     getMatrix(LIBINPUTCALIBRATIONMATRIXPRO, old_coeff);
     reset_data = true;
 
     /* FIXME, allow to override initial coeff */
-    float coeff[9];
-    setIdentity(coeff);
+    Mat9 coeff;
+    mat9_set_identity(coeff);
     setMatrix(LIBINPUTCALIBRATIONMATRIXPRO, coeff);
 
     getMatrix(LIBINPUTCALIBRATIONMATRIXPRO, coeff);
 
-    printf("Calibrating Libinput driver for \"%s\" id=%i\n", device_name, (int)device_id);
-    printf("\tcurrent calibration values (from XInput): {");
-    for (int i = 0 ; i < 9 ; i++) {
-        printf("%f", coeff[i]);
-        if (i < 8 )
-            printf(", ");
-    }
-    printf("}\n");
+    printf("Calibrating Libinput driver for \"%s\" id=%i\n",
+            device_name, (int)device_id);
+    printf("\tcurrent calibration values (from XInput):\n");
+    mat9_print(coeff);
 
 #endif // HAVE_XI_PROP
 
@@ -200,13 +249,14 @@ CalibratorLibinput::CalibratorLibinput(const char* const device_name0,
 CalibratorLibinput::~CalibratorLibinput () {
     if (dev && display) {
         if (reset_data) {
-            setMatrix(LIBINPUTCALIBRATIONMATRIXPRO, old_coeff);
+            //setMatrix(LIBINPUTCALIBRATIONMATRIXPRO, old_coeff);
         }
         XCloseDevice(display, dev);
     }
     if (display)
         XCloseDisplay(display);
 }
+
 
 // From Calibrator but with evdev specific invertion option
 // KEEP IN SYNC with Calibrator::finish() !!
@@ -219,98 +269,108 @@ bool CalibratorLibinput::finish(int width, int height)
     // new axis origin and scaling
     // based on old_axys: inversion/swapping is relative to the old axis
     //XYinfo new_axis(old_axys);
-    float coeff[9];
-    setIdentity(coeff);
 /*
+    [a  b  c]     [tx]     [sx]
+    [d  e  f]  x  [ty]  =  [sy]
+    [0  0  1]     [1 ]     [ 1]
 
-    // calculate average of clicks
-    float x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
-    float x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
-    float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
-    float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
+        ^          ^        ^
+        C          T        S
 
-
-    // When evdev detects an invert_X/Y option,
-    // it performs the following *crazy* code just before returning
-    // val = (pEvdev->absinfo[i].maximum - val + pEvdev->absinfo[i].minimum);
-    // undo this crazy step before doing the regular calibration routine
-    if (old_axys.x.invert) {
-        x_min = width - x_min;
-        x_max = width - x_max;
-        // avoid invert_x property from here on,
-        // the calibration code can handle this dynamically!
-        new_axis.x.invert = false;
-    }
-    if (old_axys.y.invert) {
-        y_min = height - y_min;
-        y_max = height - y_max;
-        // avoid invert_y property from here on,
-        // the calibration code can handle this dynamically!
-        new_axis.y.invert = false;
-    }
-    // end of evdev inversion crazyness
+    Where:
+        - a,b ...f -> conversion matrix
+        - tx,ty    -> touch x,y
+        - sx, sy   -> screen x,y
 
 
-    // Should x and y be swapped?
-    if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
-        new_axis.swap_xy = !new_axis.swap_xy;
-        std::swap(x_min, y_min);
-        std::swap(x_max, y_max);
-    }
+    C*[T1, T2, T3] = [S1, S2, S3]
 
-    // the screen was divided in num_blocks blocks, and the touch points were at
-    // one block away from the true edges of the screen.
-    const float block_x = width/(float)num_blocks;
-    const float block_y = height/(float)num_blocks;
-    // rescale these blocks from the range of the drawn touchpoints to the range of the
-    // actually clicked coordinates, and substract/add from the clicked coordinates
-    // to obtain the coordinates corresponding to the edges of the screen.
-    float scale_x = (x_max - x_min)/(width - 2*block_x);
-    x_min -= block_x * scale_x;
-    x_max += block_x * scale_x;
-    float scale_y = (y_max - y_min)/(height - 2*block_y);
-    y_min -= block_y * scale_y;
-    y_max += block_y * scale_y;
+*/
 
-    // now, undo the transformations done by the X server, to obtain the true 'raw' value in X.
-    // The raw value was scaled from old_axis to the device min/max, and from the device min/max
-    // to the screen min/max
-    // hence, the reverse transformation is from screen to old_axis
-    x_min = scaleAxis(x_min, old_axys.x.max, old_axys.x.min, width, 0);
-    x_max = scaleAxis(x_max, old_axys.x.max, old_axys.x.min, width, 0);
-    y_min = scaleAxis(y_min, old_axys.y.max, old_axys.y.min, height, 0);
-    y_max = scaleAxis(y_max, old_axys.y.max, old_axys.y.min, height, 0);
+    Mat9 coeff_tmp, tmi, tm, ts, coeff;
 
+    const float xl = width /  (float)num_blocks;
+    const float xr = width /  (float)num_blocks * (num_blocks - 1);
+    const float yu = height / (float)num_blocks;
+    const float yl = height / (float)num_blocks * (num_blocks - 1);
 
-    // round and put in new_axis struct
-    new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);
-    new_axis.y.min = round(y_min); new_axis.y.max = round(y_max);
+    /* skip LR */
+    tm[0] = clicked.x[UL]; tm[1] = clicked.x[UR]; tm[2] = clicked.x[LL];
+    tm[3] = clicked.y[UL]; tm[4] = clicked.y[UR]; tm[5] = clicked.y[LL];
+    tm[6] = 1;             tm[7] = 1;             tm[8] = 1;
 
-    // finish the data, driver/calibrator specific*/
+    ts[0] = xl;            ts[1] = xr;            ts[2] = xl;
+    ts[3] = yu;            ts[4] = yu;            ts[5] = yl;
+    ts[6] = 1;             ts[7] = 1;             ts[8] = 1;
+
+    mat9_invert(tm, tmi);
+    mat9_product(ts, tmi, coeff);
+
+    /* skip UL */
+    tm[0] = clicked.x[LR]; tm[1] = clicked.x[UR]; tm[2] = clicked.x[LL];
+    tm[3] = clicked.y[LR]; tm[4] = clicked.y[UR]; tm[5] = clicked.y[LL];
+    tm[6] = 1;             tm[7] = 1;             tm[8] = 1;
+
+    ts[0] = xr;            ts[1] = xr;            ts[2] = xl;
+    ts[3] = yl;            ts[4] = yu;            ts[5] = yl;
+    ts[6] = 1;             ts[7] = 1;             ts[8] = 1;
+
+    mat9_invert(tm, tmi);
+    mat9_product(ts, tmi, coeff_tmp);
+    mat9_sum(coeff_tmp, coeff);
+
+    /* skip UR */
+    tm[0] = clicked.x[LR]; tm[1] = clicked.x[UL]; tm[2] = clicked.x[LL];
+    tm[3] = clicked.y[LR]; tm[4] = clicked.y[UL]; tm[5] = clicked.y[LL];
+    tm[6] = 1;             tm[7] = 1;             tm[8] = 1;
+
+    ts[0] = xr;            ts[1] = xl;            ts[2] = xl;
+    ts[3] = yl;            ts[4] = yu;            ts[5] = yl;
+    ts[6] = 1;             ts[7] = 1;             ts[8] = 1;
+
+    mat9_invert(tm, tmi);
+    mat9_product(ts, tmi, coeff_tmp);
+    mat9_sum(coeff_tmp, coeff);
+
+    /* skip LL */
+    tm[0] = clicked.x[LR]; tm[1] = clicked.x[UL]; tm[2] = clicked.x[UR];
+    tm[3] = clicked.y[LR]; tm[4] = clicked.y[UL]; tm[5] = clicked.y[UR];
+    tm[6] = 1;             tm[7] = 1;             tm[8] = 1;
+
+    ts[0] = xr;            ts[1] = xl;            ts[2] = xr;
+    ts[3] = yl;            ts[4] = yu;            ts[5] = yu;
+    ts[6] = 1;             ts[7] = 1;             ts[8] = 1;
+
+    mat9_invert(tm, tmi);
+    mat9_product(ts, tmi, coeff_tmp);
+    mat9_sum(coeff_tmp, coeff);
+
+    mat9_product(1.0/4.0, coeff);
+
+    /*
+     * Sometimes, the last row values -0.0, -0.0, 1
+     * update to the right values !
+     */
+    coeff[6] = coeff[7] = 0.0; coeff[8] = 1;
+
     return finish_data(coeff);
 }
 
-bool CalibratorLibinput::finish_data(const XYinfo &new_axys) { assert(0); return false;}
+/*
+ * this function assumes that the calibration must be performed via XYinfo;
+ * however this is not true for libinput. Implement it to make the compiler
+ * happy; however we must be sure that this is never called
+ */
+bool CalibratorLibinput::finish_data(const XYinfo &new_axys) {
+    assert(0);
+    return false;
+}
 
 // Activate calibrated data and output it
-bool CalibratorLibinput::finish_data(const float coeff[9])
+bool CalibratorLibinput::finish_data(const Mat9 &coeff)
 {
     bool success = true;
-/*
-    printf("\nDoing dynamic recalibration:\n");
-    // Evdev Axes Swap
-    if (old_axys.swap_xy != new_axys.swap_xy) {
-        success &= set_swapxy(new_axys.swap_xy);
-    }
 
-   // Evdev Axis Inversion
-   if (old_axys.x.invert != new_axys.x.invert ||
-       old_axys.y.invert != new_axys.y.invert) {
-        success &= set_invert_xy(new_axys.x.invert, new_axys.y.invert);
-    }
-
-    // Evdev Axis Calibration
-*/
     success = set_calibration(coeff);
 
     // close
@@ -343,7 +403,7 @@ bool CalibratorLibinput::finish_data(const float coeff[9])
     return success;
 }
 
-bool CalibratorLibinput::set_calibration(const float coeff[9]) {
+bool CalibratorLibinput::set_calibration(const Mat9 &coeff) {
     printf("\tSetting calibration data: {");
     for (int i = 0 ; i < 9 ; i++) {
         printf("%f", coeff[i]);
@@ -360,7 +420,6 @@ bool CalibratorLibinput::set_calibration(const float coeff[9]) {
             printf("DEBUG: Failed to apply axis calibration.\n");
         return false;;
     }
-
 
     if (verbose)
             printf("DEBUG: Successfully applied axis calibration.\n");
@@ -429,6 +488,7 @@ Display *display, const char *name, Bool only_extended)
     return found;
 }
 
+#if 0
 // Set Integer property on  X
 bool CalibratorLibinput::xinput_do_set_int_prop( const char * name,
                                          Display *display,
@@ -506,10 +566,11 @@ bool CalibratorLibinput::xinput_do_set_int_prop( const char * name,
 #endif // HAVE_XI_PROP
 
 }
+#endif
 
-bool CalibratorLibinput::output_xorgconfd(const float coeff[9])
+bool CalibratorLibinput::output_xorgconfd(const Mat9 &coeff)
 {
-/*
+
     const char* sysfs_name = get_sysfs_name();
     bool not_sysfs_name = (sysfs_name == NULL);
     if (not_sysfs_name)
@@ -528,10 +589,9 @@ bool CalibratorLibinput::output_xorgconfd(const float coeff[9])
     outstr += "	Identifier	\"calibration\"\n";
     sprintf(line, "	MatchProduct	\"%s\"\n", sysfs_name);
     outstr += line;
-    sprintf(line, "	Option	\"Calibration\"	\"%d %d %d %d\"\n",
-                new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
-    outstr += line;
-    sprintf(line, "	Option	\"SwapAxes\"	\"%d\"\n", new_axys.swap_xy);
+    sprintf(line, "	Option	\"CalibrationMatrix\"	\"%f %f %f %f %f %f %f %f %f \"\n",
+                coeff[0], coeff[1], coeff[2], coeff[3], coeff[4], coeff[5],
+                coeff[6], coeff[7], coeff[8]);
     outstr += line;
     outstr += "EndSection\n";
 
@@ -550,18 +610,18 @@ bool CalibratorLibinput::output_xorgconfd(const float coeff[9])
         fprintf(fid, "%s", outstr.c_str());
         fclose(fid);
     }
-*/
+
     return true;
 }
 
-bool CalibratorLibinput::output_hal(const float coeff[9])
+bool CalibratorLibinput::output_hal(const Mat9 &coeff)
 {
     return false;
 }
 
-bool CalibratorLibinput::output_xinput(const float coeff[9])
+bool CalibratorLibinput::output_xinput(const Mat9 &coeff)
 {
-    /*
+
     if(output_filename == NULL)
         printf("  Install the 'xinput' tool and copy the command(s) below in a script that starts with your X session\n");
     else
@@ -571,9 +631,12 @@ bool CalibratorLibinput::output_xinput(const float coeff[9])
     char line[MAX_LINE_LEN];
     std::string outstr;
 
-    sprintf(line, "    xinput set-int-prop \"%s\" \"Evdev Axis Calibration\" 32 %d %d %d %d\n", device_name, new_axys.x.min, new_axys.x.max, new_axys.y.min, new_axys.y.max);
-    outstr += line;
-    sprintf(line, "    xinput set-int-prop \"%s\" \"Evdev Axes Swap\" 8 %d\n", device_name, new_axys.swap_xy);
+    sprintf(line, "    xinput set-float-prop \"%s\" \""
+                LIBINPUTCALIBRATIONMATRIXPRO
+                "\" %f %f %f %f %f %f %f %f %f\n", device_name,
+                coeff[0], coeff[1], coeff[2], coeff[3], coeff[4], coeff[5],
+                coeff[6], coeff[7], coeff[8]
+                           );
     outstr += line;
 
     // console out
@@ -589,7 +652,7 @@ bool CalibratorLibinput::output_xinput(const float coeff[9])
 		fprintf(fid, "%s", outstr.c_str());
 		fclose(fid);
     }
-*/
+
     return true;
 }
 

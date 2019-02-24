@@ -26,6 +26,19 @@
 
 #include "calibrator.hh"
 #include <X11/extensions/XInput.h>
+#include <cassert>
+
+struct Mat9 {
+    float coeff[9];
+    float & operator[](int idx) {
+        assert(idx >= 0 && idx < 9);
+        return coeff[idx];
+    }
+    float operator[](int idx) const {
+        assert(idx >= 0 && idx < 9);
+        return coeff[idx];
+    }
+};
 
 /***************************************
  * Class for dynamic evdev calibration
@@ -37,7 +50,7 @@ private:
     Display     *display;
     XDeviceInfo *devInfo;
     XDevice     *dev;
-    float       old_coeff[9];
+    Mat9        old_coeff;
     bool        reset_data;
 
 protected:
@@ -67,9 +80,9 @@ public:
     /// calculate and apply the calibration
     virtual bool finish(int width, int height);
     virtual bool finish_data(const XYinfo &new_axys);
-    bool finish_data(const float coeff[9]);
+    bool finish_data(const Mat9 &coeff);
 
-    bool set_calibration(const float coeff[9]);
+    bool set_calibration(const Mat9 &coeff);
 
     // xinput_ functions (from the xinput project)
     Atom xinput_parse_atom(const char* name);
@@ -81,14 +94,15 @@ public:
                                  const int* argv);
 
 protected:
-    bool output_xorgconfd(const float coeff[9]);
-    bool output_hal(const float coeff[9]);
-    bool output_xinput(const float coeff[9]);
+    bool output_xorgconfd(const Mat9 &coeff);
+    bool output_hal(const Mat9 &coeff);
+    bool output_xinput(const Mat9 &coeff);
 
 private:
-    void setMatrix(const char *name, const float coeff[9]);
-    void getMatrix(const char *name, float coeff[9]);
-    void setIdentity(float coeff[9]) ;
+    void setMatrix(const char *name, const Mat9 &coeff);
+    void getMatrix(const char *name, Mat9 &coeff);
+    int set_prop(Display *display, XDevice *dev, const char *name,
+                        const float values[9]);
 };
 
 #endif
