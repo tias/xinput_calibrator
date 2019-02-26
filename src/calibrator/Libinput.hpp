@@ -38,6 +38,17 @@ struct Mat9 {
         assert(idx >= 0 && idx < 9);
         return coeff[idx];
     }
+    void set (float x0, float x1, float x2, float x3, float x4, float x5,
+        float x6, float x7, float x8) {
+            coeff[0] = x0; coeff[1] = x1; coeff[2] = x2; coeff[3] = x3;
+            coeff[4] = x4; coeff[5] = x5; coeff[6] = x6; coeff[7] = x7;
+            coeff[8] = x8;
+    }
+    Mat9(float x0, float x1, float x2, float x3, float x4, float x5, float x6,
+        float x7, float x8) {
+            set(x0, x1, x2, x3, x4, x5, x6, x7, x8);
+    }
+    Mat9() {}
 };
 
 /***************************************

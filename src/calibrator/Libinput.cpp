@@ -283,7 +283,7 @@ bool CalibratorLibinput::finish(int width, int height)
         - sx, sy   -> screen x,y
 
 
-    C*[T1, T2, T3] = [S1, S2, S3]
+    C x [T1, T2, T3] = [S1, S2, S3]
 
 */
 
@@ -295,51 +295,47 @@ bool CalibratorLibinput::finish(int width, int height)
     const float yl = height / (float)num_blocks * (num_blocks - 1);
 
     /* skip LR */
-    tm[0] = clicked.x[UL]; tm[1] = clicked.x[UR]; tm[2] = clicked.x[LL];
-    tm[3] = clicked.y[UL]; tm[4] = clicked.y[UR]; tm[5] = clicked.y[LL];
-    tm[6] = 1;             tm[7] = 1;             tm[8] = 1;
-
-    ts[0] = xl;            ts[1] = xr;            ts[2] = xl;
-    ts[3] = yu;            ts[4] = yu;            ts[5] = yl;
-    ts[6] = 1;             ts[7] = 1;             ts[8] = 1;
+    tm.set(clicked.x[UL],   clicked.x[UR],  clicked.x[LL],
+           clicked.y[UL],   clicked.y[UR],  clicked.y[LL],
+           1,               1,              1);
+    ts.set(xl,              xr,             xl,
+           yu,              yu,             yl,
+           1,               1,              1);
 
     mat9_invert(tm, tmi);
     mat9_product(ts, tmi, coeff);
 
     /* skip UL */
-    tm[0] = clicked.x[LR]; tm[1] = clicked.x[UR]; tm[2] = clicked.x[LL];
-    tm[3] = clicked.y[LR]; tm[4] = clicked.y[UR]; tm[5] = clicked.y[LL];
-    tm[6] = 1;             tm[7] = 1;             tm[8] = 1;
-
-    ts[0] = xr;            ts[1] = xr;            ts[2] = xl;
-    ts[3] = yl;            ts[4] = yu;            ts[5] = yl;
-    ts[6] = 1;             ts[7] = 1;             ts[8] = 1;
+    tm.set(clicked.x[LR],   clicked.x[UR],  clicked.x[LL],
+           clicked.y[LR],   clicked.y[UR],  clicked.y[LL],
+           1,               1,              1);
+    ts.set(xr,              xr,             xl,
+           yl,              yu,             yl,
+           1,               1,              1);
 
     mat9_invert(tm, tmi);
     mat9_product(ts, tmi, coeff_tmp);
     mat9_sum(coeff_tmp, coeff);
 
     /* skip UR */
-    tm[0] = clicked.x[LR]; tm[1] = clicked.x[UL]; tm[2] = clicked.x[LL];
-    tm[3] = clicked.y[LR]; tm[4] = clicked.y[UL]; tm[5] = clicked.y[LL];
-    tm[6] = 1;             tm[7] = 1;             tm[8] = 1;
-
-    ts[0] = xr;            ts[1] = xl;            ts[2] = xl;
-    ts[3] = yl;            ts[4] = yu;            ts[5] = yl;
-    ts[6] = 1;             ts[7] = 1;             ts[8] = 1;
+    tm.set(clicked.x[LR],   clicked.x[UL],  clicked.x[LL],
+           clicked.y[LR],   clicked.y[UL],  clicked.y[LL],
+           1,               1,              1);
+    ts.set(xr,              xl,             xl,
+           yl,              yu,             yl,
+           1,               1,              1);
 
     mat9_invert(tm, tmi);
     mat9_product(ts, tmi, coeff_tmp);
     mat9_sum(coeff_tmp, coeff);
 
     /* skip LL */
-    tm[0] = clicked.x[LR]; tm[1] = clicked.x[UL]; tm[2] = clicked.x[UR];
-    tm[3] = clicked.y[LR]; tm[4] = clicked.y[UL]; tm[5] = clicked.y[UR];
-    tm[6] = 1;             tm[7] = 1;             tm[8] = 1;
-
-    ts[0] = xr;            ts[1] = xl;            ts[2] = xr;
-    ts[3] = yl;            ts[4] = yu;            ts[5] = yu;
-    ts[6] = 1;             ts[7] = 1;             ts[8] = 1;
+    tm.set(clicked.x[LR],   clicked.x[UL],  clicked.x[UR],
+           clicked.y[LR],   clicked.y[UL],  clicked.y[UR],
+           1,               1,              1);
+    ts.set(xr,              xl,             xr,
+           yl,              yu,             yu,
+           1,               1,              1);
 
     mat9_invert(tm, tmi);
     mat9_product(ts, tmi, coeff_tmp);
@@ -348,10 +344,22 @@ bool CalibratorLibinput::finish(int width, int height)
     mat9_product(1.0/4.0, coeff);
 
     /*
+     * Normlize the coefficients
+     */
+    /* coeff[0] *= (float)width/width; */
+    coeff[1] *= (float)height/width;
+    coeff[2] *= 1.0/width;
+
+    coeff[3] *= (float)width/height;
+    /* coeff[4] *= (float)height/height; */
+    coeff[5] *= 1.0/height;
+    /*
      * Sometimes, the last row values -0.0, -0.0, 1
      * update to the right values !
      */
-    coeff[6] = coeff[7] = 0.0; coeff[8] = 1;
+    coeff[6] = 0.0;
+    coeff[7] = 0.0;
+    coeff[8] = 1.0;
 
     return finish_data(coeff);
 }
@@ -413,7 +421,7 @@ bool CalibratorLibinput::set_calibration(const Mat9 &coeff) {
     printf("}\n");
 
     try {
-        setMatrix(LIBINPUTCALIBRATIONMATRIXPRO, coeff);
+        //setMatrix(LIBINPUTCALIBRATIONMATRIXPRO, coeff);
         reset_data = false;
     } catch(...) {
         if (verbose)
