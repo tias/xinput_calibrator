@@ -344,8 +344,81 @@ bool CalibratorLibinput::finish(int width, int height)
     mat9_product(1.0/4.0, coeff);
 
     /*
-     * Normlize the coefficients
+     *             Coefficient normalization
+     *
+     * The matrix to pass to libinput has to be normalized; we need to
+     * translate and scale the coeffiecient so the matrix can operate in
+     * a space where the coordinates x and y are in the range 0..1
+     *
+     * To do that, assume:
+     *
+     * a "translation" matrix is
+     *      [ 1 0 dx ]
+     * T =  [ 0 1 dy ]
+     *      [ 0 0  1 ]
+     *
+     * a "scale" matrix is
+     *      [ sx 0  0 ]
+     * S =  [ 0  sy 0 ]
+     *      [ 0  0  1 ]
+     *
+     * To change the coordinate from the normalizate space to the screen space
+     * - First we need to scale from (0..1 x 0..1) to (width x height); so
+     * sx = maxx - minx + 1 = width, sy = maxy - miny + 1 = height
+     * - Second we need to translate
+     * from (0..width-1 x 0..hight-1) to (minx..maxx x miny..maxy)
+     * so dx = minx, dy = miny
+     *
+     * So
+     *    'coeff' = T x S x C x S^-1 x T^-1
+     *  this means that
+     *     C = S^-1 x T^-1 x 'coeff' x T x S
+     * where
+     *      'coeff' is the transformation matrix in the "screen" spaces
+     *      C is the normalization matrix that can be passed to libinput
+     *
+     * Because in the screen space usually minx=miny=0, this means
+     * that T == T^-1 == identity. So we can write
+     *      C = S^-1 x 'coeff' x S
+     *
+     *
+     * and if
+     *
+     *                ⎡a  b  c⎤
+     *                ⎢       ⎥
+     *    'coeff' =   ⎢d  e  f⎥
+     *                ⎢       ⎥
+     *                ⎣0  0  1⎦
+     *
+     * then
+     *              ⎡      b⋅sy  c ⎤
+     *              ⎢ a    ────  ──⎥
+     *              ⎢       sx   sx⎥
+     *              ⎢              ⎥
+     *       C =    ⎢d⋅sx        f ⎥
+     *              ⎢────   e    ──⎥
+     *              ⎢ sy         sy⎥
+     *              ⎢              ⎥
+     *              ⎣ 0     0    1 ⎦
+     *
+     *
+     *
+     * See libinput function evdev_device_calibrate() (in src/evdev.c)
+     *
+     * As further reference, if dx/dy are not zero:
+
+     *              ⎡      b⋅sy         b⋅dy⋅sy   c      ⎤
+     *              ⎢ a    ────  a⋅dx + ─────── + ── - dx⎥
+     *              ⎢       sx             sx     sx     ⎥
+     *              ⎢                                    ⎥
+     *              ⎢d⋅sx        d⋅dx⋅sx               f ⎥
+     *       C =    ⎢────   e    ─────── + dy⋅e - dy + ──⎥
+     *              ⎢ sy            sy                 sy⎥
+     *              ⎢                                    ⎥
+     *              ⎣ 0     0               1            ⎦
      */
+
+
     /* coeff[0] *= (float)width/width; */
     coeff[1] *= (float)height/width;
     coeff[2] *= 1.0/width;
@@ -354,8 +427,8 @@ bool CalibratorLibinput::finish(int width, int height)
     /* coeff[4] *= (float)height/height; */
     coeff[5] *= 1.0/height;
     /*
-     * Sometimes, the last row values -0.0, -0.0, 1
-     * update to the right values !
+     * Sometimes, the last row values area like -0.0, -0.0, 1
+     * update to the right values, otherwise libinput complaints !
      */
     coeff[6] = 0.0;
     coeff[7] = 0.0;
