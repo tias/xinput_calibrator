@@ -494,7 +494,7 @@ bool CalibratorLibinput::set_calibration(const Mat9 &coeff) {
     printf("}\n");
 
     try {
-        //setMatrix(LIBINPUTCALIBRATIONMATRIXPRO, coeff);
+        setMatrix(LIBINPUTCALIBRATIONMATRIXPRO, coeff);
         reset_data = false;
     } catch(...) {
         if (verbose)
