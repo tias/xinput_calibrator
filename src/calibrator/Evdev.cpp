@@ -189,13 +189,23 @@ bool CalibratorEvdev::finish(int width, int height)
     // based on old_axys: inversion/swapping is relative to the old axis
     XYinfo new_axis(old_axys);
 
-
     // calculate average of clicks
     float x_min = (clicked.x[UL] + clicked.x[LL])/2.0;
     float x_max = (clicked.x[UR] + clicked.x[LR])/2.0;
     float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
     float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
 
+    // if axes are swaped we get the wrong min/max values
+    // so we calculate those values with swaped axes
+    if (abs(x_min - x_max) < 20 && abs(y_min - y_max) < 20) {
+        if(verbose)
+            printf("DEBUG: axes seem to be swaped\n");
+
+        x_min = (clicked.y[UL] + clicked.y[LL])/2.0;
+        x_max = (clicked.y[UR] + clicked.y[LR])/2.0;
+        y_min = (clicked.x[UL] + clicked.x[UR])/2.0;
+        y_max = (clicked.x[LL] + clicked.x[LR])/2.0;        
+    }
 
     // When evdev detects an invert_X/Y option,
     // it performs the following *crazy* code just before returning
@@ -247,7 +257,6 @@ bool CalibratorEvdev::finish(int width, int height)
     x_max = scaleAxis(x_max, old_axys.x.max, old_axys.x.min, width, 0);
     y_min = scaleAxis(y_min, old_axys.y.max, old_axys.y.min, height, 0);
     y_max = scaleAxis(y_max, old_axys.y.max, old_axys.y.min, height, 0);
-
 
     // round and put in new_axis struct
     new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);
