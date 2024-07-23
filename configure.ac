@@ -95,6 +95,13 @@ AM_CONDITIONAL(HAVE_TIMERFD, [test "$glib_cv_timerfd" = "yes"])
 
 AC_SUBST(VERSION)
 
+AC_MSG_WARN([
+    ***************************************************************************
+    This repository has been moved to
+    https://gitlab.freedesktop.org/xorg/app/xinput-calibrator
+    Please update your URLs, this repository will not see any further changes.
+    ***************************************************************************])
+
 AC_OUTPUT([Makefile
            scripts/Makefile
            src/Makefile
