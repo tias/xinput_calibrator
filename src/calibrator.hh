@@ -122,7 +122,8 @@ enum OutputType {
     OUTYPE_AUTO,
     OUTYPE_XORGCONFD,
     OUTYPE_HAL,
-    OUTYPE_XINPUT
+    OUTYPE_XINPUT,
+    OUTYPE_CALIBRATOR
 };
 
 class WrongCalibratorException : public std::invalid_argument {
@@ -177,6 +178,11 @@ public:
     bool add_click(int x, int y);
     /// calculate and apply the calibration
     virtual bool finish(int width, int height);
+
+    /// restores configuration from restore_filename
+    /// returns true if successful
+    bool try_restore();
+
     /// get the sysfs name of the device,
     /// returns NULL if it can not be found
     const char* get_sysfs_name();
@@ -187,6 +193,10 @@ public:
     /// get output filename set at cmdline or NULL
     const char* get_output_filename() const
     { return output_filename; }
+
+    /// get restore filename
+    const char* get_restore_filename() const
+    { return restore_filename; }
 
 protected:
     /// check whether the coordinates are along the respective axis
@@ -242,9 +252,15 @@ protected:
     // manually specified output filename
     const char* output_filename;
 
+    // manually specified restore filename
+    const char* restore_filename;
+
     // sysfs path/file
     static const char* SYSFS_INPUT;
     static const char* SYSFS_DEVNAME;
+
+    // saves restore file with specified output filename
+    bool output_restore_file(int width, int height);
 };
 
 // Interfance for a CalibratorTester

@@ -253,6 +253,10 @@ bool CalibratorEvdev::finish(int width, int height)
     new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);
     new_axis.y.min = round(y_min); new_axis.y.max = round(y_max);
 
+    if (output_type == OUTYPE_CALIBRATOR) {
+        output_restore_file(width, height);
+    }
+
     // finish the data, driver/calibrator specific
     return finish_data(new_axis);
 }
@@ -280,6 +284,10 @@ bool CalibratorEvdev::finish_data(const XYinfo &new_axys)
     // close
     XSync(display, False);
 
+    // skip saving if restore
+    if (restore_filename != NULL)
+        return true;
+
     printf("\t--> Making the calibration permanent <--\n");
     switch (output_type) {
         case OUTYPE_AUTO:
@@ -298,6 +306,9 @@ bool CalibratorEvdev::finish_data(const XYinfo &new_axys)
             break;
         case OUTYPE_XINPUT:
             success &= output_xinput(new_axys);
+            break;
+        case OUTYPE_CALIBRATOR:
+            // skip saving for this type
             break;
         default:
             fprintf(stderr, "ERROR: Evdev Calibrator does not support the supplied --output-type\n");

@@ -32,6 +32,8 @@
 int main(int argc, char** argv)
 {
     Calibrator* calibrator = Calibrator::make_calibrator(argc, argv);
+    if (calibrator->try_restore())
+        return 0;
 
     // GTK-mm setup
     Gtk::Main kit(argc, argv);

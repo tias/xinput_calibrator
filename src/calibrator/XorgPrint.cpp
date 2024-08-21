@@ -37,6 +37,9 @@ bool CalibratorXorgPrint::finish_data(const XYinfo &new_axys)
 {
     bool success = true;
 
+    // skip saving if restore
+    if (restore_filename != NULL)
+        return true;
 
     printf("\t--> Making the calibration permanent <--\n");
     switch (output_type) {
@@ -53,6 +56,9 @@ bool CalibratorXorgPrint::finish_data(const XYinfo &new_axys)
             break;
         case OUTYPE_HAL:
             success &= output_hal(new_axys);
+            break;
+        case OUTYPE_CALIBRATOR:
+            // skip saving for this type
             break;
         default:
             fprintf(stderr, "ERROR: XorgPrint Calibrator does not support the supplied --output-type\n");

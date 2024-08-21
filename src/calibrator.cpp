@@ -190,9 +190,70 @@ bool Calibrator::finish(int width, int height)
     new_axis.x.min = round(x_min); new_axis.x.max = round(x_max);
     new_axis.y.min = round(y_min); new_axis.y.max = round(y_max);
 
+    if (output_type == OUTYPE_CALIBRATOR) {
+        output_restore_file(width, height);
+    }
+
     // finish the data, driver/calibrator specific
     return finish_data(new_axis);
 }
+
+bool Calibrator::try_restore() {
+    if (!restore_filename)
+        return false;
+
+    std::ifstream fs;
+    try {
+        fs.open(restore_filename);
+
+        reset();
+
+        int width, height;
+        fs >> width >> height;
+
+        for (int i = 0; i < 4; ++i) {
+            int x, y;
+            fs >> x >> y;
+            add_click(x, y);
+        }
+        fs.close();
+
+        finish(width, height);
+
+        if (verbose)
+            printf("DEBUG: Configuration restored from file: %s\n", restore_filename);
+
+        return true;
+    }
+    catch (std::exception& e) {
+        fprintf(stderr, "ERROR: Can't read restore file. %s\n", e.what());
+        return false;
+    }
+}
+
+bool Calibrator::output_restore_file(int width, int height) {
+    if (!output_filename) {
+        fprintf(stderr, "ERROR: Cant' save restore filename, check output filename\n");
+        return false;
+    }
+
+    try {
+        std::ofstream fs;
+        fs.open(output_filename);
+        fs << width << " " << height << "\n";
+        for (int i = 0; i < clicked.num; ++i) {
+            fs << clicked.x[i] << " " << clicked.y[i] << "\n";
+        }
+        fs.close();
+    }
+    catch (std::exception& e) {
+        fprintf(stderr, "ERROR: Can't save restore file. %s\n", e.what());
+        return false;
+    }
+
+    return true;
+}
+
 
 const char* Calibrator::get_sysfs_name()
 {

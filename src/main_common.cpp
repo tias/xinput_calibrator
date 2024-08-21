@@ -197,11 +197,12 @@ static void usage(char* cmd, unsigned thr_misclick)
     fprintf(stderr, "\t--precalib: manually provide the current calibration setting (eg. the values in xorg.conf)\n");
     fprintf(stderr, "\t--misclick: set the misclick threshold (0=off, default: %i pixels)\n",
         thr_misclick);
-    fprintf(stderr, "\t--output-type <auto|xorg.conf.d|hal|xinput>: type of config to ouput (auto=automatically detect, default: auto)\n");
+    fprintf(stderr, "\t--output-type <auto|xorg.conf.d|hal|xinput|calibrator>: type of config to ouput (auto=automatically detect, default: auto)\n");
     fprintf(stderr, "\t--fake: emulate a fake device (for testing purposes)\n");
     fprintf(stderr, "\t--geometry: manually provide the geometry (width and height) for the calibration window\n");
     fprintf(stderr, "\t--no-timeout: turns off the timeout\n");
     fprintf(stderr, "\t--output-filename: write calibration data to file (USB: override default /etc/modprobe.conf.local\n");
+    fprintf(stderr, "\t--restore: restore calibration at runtime from config file in calibrator format\n");
 }
 
 Calibrator* Calibrator::make_calibrator(int argc, char** argv)
@@ -214,6 +215,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     const char* pre_device = NULL;
     const char* geometry = NULL;
     const char* output_filename = NULL;
+    const char* restore_filename = NULL;
     unsigned thr_misclick = 15;
     unsigned thr_doubleclick = 7;
     OutputType output_type = OUTYPE_AUTO;
@@ -287,6 +289,8 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
                         output_type = OUTYPE_HAL;
                     else if (strcmp("xinput", argv[i]) == 0)
                         output_type = OUTYPE_XINPUT;
+                    else if (strcmp("calibrator", argv[i]) == 0)
+                        output_type = OUTYPE_CALIBRATOR;
                     else {
                         fprintf(stderr, "Error: --output-type needs one of auto|xorg.conf.d|hal|xinput.\n\n");
                         usage(argv[0], thr_misclick);
@@ -317,7 +321,18 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 			// Output file
 			if (strcmp("--output-filename", argv[i]) == 0) {
 				output_filename = argv[++i];
-			}
+            } else
+
+            // Get restore file
+            if (strcmp("--restore", argv[i]) == 0) {
+                if (argc > i+1) {
+                    restore_filename = argv[++i];
+                } else {
+                    fprintf(stderr, "Error: --restore needs one argument.\n\n");
+                    usage(argv[0], thr_misclick);
+                    exit(1);
+                }
+            }
 
             // unknown option
             else {
@@ -388,9 +403,10 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 
 
     // Different device/driver, different ways to apply the calibration values
+    Calibrator* calibrator = NULL;
     try {
         // try Usbtouchscreen driver
-        return new CalibratorUsbtouchscreen(device_name, device_axys,
+        calibrator = new CalibratorUsbtouchscreen(device_name, device_axys,
             thr_misclick, thr_doubleclick, output_type, geometry,
             use_timeout, output_filename);
 
@@ -399,19 +415,27 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
             printf("DEBUG: Not usbtouchscreen calibrator: %s\n", x.what());
     }
 
-    try {
-        // next, try Evdev driver (with XID)
-        return new CalibratorEvdev(device_name, device_axys, device_id,
-            thr_misclick, thr_doubleclick, output_type, geometry,
-            use_timeout, output_filename);
+    if (!calibrator) {
+        try {
+            // next, try Evdev driver (with XID)
+            calibrator = new CalibratorEvdev(device_name, device_axys, device_id,
+                                             thr_misclick, thr_doubleclick, output_type, geometry,
+                                             use_timeout, output_filename);
 
-    } catch(WrongCalibratorException& x) {
-        if (verbose)
-            printf("DEBUG: Not evdev calibrator: %s\n", x.what());
+        } catch(WrongCalibratorException& x) {
+            if (verbose)
+                printf("DEBUG: Not evdev calibrator: %s\n", x.what());
+        }
     }
 
     // lastly, presume a standard Xorg driver (evtouch, mutouch, ...)
-    return new CalibratorXorgPrint(device_name, device_axys,
-            thr_misclick, thr_doubleclick, output_type, geometry,
-            use_timeout, output_filename);
+    if (!calibrator) {
+        calibrator = new CalibratorXorgPrint(device_name, device_axys,
+                                             thr_misclick, thr_doubleclick, output_type, geometry,
+                                             use_timeout, output_filename);
+    }
+
+    calibrator->restore_filename = restore_filename;
+
+    return calibrator;
 }
