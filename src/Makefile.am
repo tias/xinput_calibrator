@@ -10,10 +10,10 @@
 # copies of the Software, and to permit persons to whom the
 # Software is furnished to do so, subject to the following
 # conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 # OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -32,7 +32,9 @@ AM_CXXFLAGS = -Wall -ansi -pedantic
 
 bin_PROGRAMS = xinput_calibrator tester
 
-COMMON_SRCS=calibrator.cpp calibrator/XorgPrint.cpp calibrator/Evdev.cpp calibrator/Usbtouchscreen.cpp main_common.cpp gui/gui_common.cpp
+COMMON_SRCS=calibrator.cpp calibrator/XorgPrint.cpp calibrator/Evdev.cpp \
+	calibrator/Usbtouchscreen.cpp main_common.cpp gui/gui_common.cpp \
+	calibrator/Libinput.cpp
 
 # only one of the BUILD_ flags should be set
 if BUILD_X11

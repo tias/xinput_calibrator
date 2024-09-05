@@ -3,4 +3,5 @@ EXTRA_DIST = \
 	Usbtouchscreen.cpp \
 	XorgPrint.cpp \
 	Tester.cpp \
+	Libinput.cpp \
 	EvdevTester.cpp
