@@ -2,7 +2,9 @@
 Name=Calibrate Touchscreen
 Name[de]=Touchscreen Kalibrieren
 Name[nl]=Touchscreen Kalibreren
+Name[ru]=Калибровка тачскрина
 Comment=Run the calibration tool for touchscreens
+Comment[ru]=Запуск утилиты калибровки сенсорного экрана
 Exec=/bin/sh -c "xinput_calibrator; cat"
 Terminal=true
 Type=Application
