@@ -155,11 +155,21 @@ bool Calibrator::finish(int width, int height)
     float y_min = (clicked.y[UL] + clicked.y[UR])/2.0;
     float y_max = (clicked.y[LL] + clicked.y[LR])/2.0;
 
-    // Should x and y be swapped?
-    if (abs(clicked.x[UL] - clicked.x[UR]) < abs(clicked.y[UL] - clicked.y[UR])) {
+    // if axes are swaped we get the wrong min/max values
+    // so we calculate those values with swaped axes
+    if (abs(x_min - x_max) < 20 && abs(y_min - y_max) < 20) {
+        if(verbose)
+            printf("DEBUG: axes seem to be swaped\n");
+        
         new_axis.swap_xy = !new_axis.swap_xy;
         std::swap(x_min, y_min);
         std::swap(x_max, y_max);
+        std::swap(width, height);
+
+        x_min = (clicked.y[UL] + clicked.y[LL])/2.0;
+        x_max = (clicked.y[UR] + clicked.y[LR])/2.0;
+        y_min = (clicked.x[UL] + clicked.x[UR])/2.0;
+        y_max = (clicked.x[LL] + clicked.x[LR])/2.0;        
     }
 
     // the screen was divided in num_blocks blocks, and the touch points were at
