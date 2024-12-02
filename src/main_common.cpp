@@ -42,8 +42,8 @@ static char* my_strdup(const char* s) {
     size_t len = strlen(s) + 1;
     void* p = malloc(len);
 
-    if (p == NULL)
-        return NULL;
+    if (p == nullptr)
+        return nullptr;
 
     return (char*) memcpy(p, s, len);
 }
@@ -62,8 +62,8 @@ int Calibrator::find_device(const char* pre_device, bool list_devices,
     bool pre_device_is_sysfs = false;
     int found = 0;
 
-    Display* display = XOpenDisplay(NULL);
-    if (display == NULL) {
+    Display* display = XOpenDisplay(nullptr);
+    if (display == nullptr) {
         fprintf(stderr, "Unable to connect to X server\n");
         exit(1);
     }
@@ -85,7 +85,7 @@ int Calibrator::find_device(const char* pre_device, bool list_devices,
         }
     }
 
-    if (pre_device != NULL) {
+    if (pre_device != nullptr) {
         // check whether the pre_device is an ID (only digits)
         int len = strlen(pre_device);
         for (int loop=0; loop<len; loop++) {
@@ -97,7 +97,7 @@ int Calibrator::find_device(const char* pre_device, bool list_devices,
     }
 
     std::string pre_device_sysfs;
-    if (pre_device != NULL && !pre_device_is_id) {
+    if (pre_device != nullptr && !pre_device_is_id) {
         /* avoid overflow below - 10000 devices should be OK */
         if ( strlen(pre_device) < strlen("event") + 4 &&
              strncmp(pre_device, "event", strlen("event")) == 0 ) {
@@ -127,7 +127,7 @@ int Calibrator::find_device(const char* pre_device, bool list_devices,
             continue;
 
         // if we are looking for a specific device
-        if (pre_device != NULL) {
+        if (pre_device != nullptr) {
             if ((pre_device_is_id && list->id == (XID) atoi(pre_device)) ||
                 (!pre_device_is_id && strcmp(list->name, pre_device_is_sysfs ? pre_device_sysfs.c_str() : pre_device ) == 0)) {
                 // OK, fall through
@@ -211,9 +211,9 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
     bool precalib = false;
     bool use_timeout = true;
     XYinfo pre_axys;
-    const char* pre_device = NULL;
-    const char* geometry = NULL;
-    const char* output_filename = NULL;
+    const char* pre_device = nullptr;
+    const char* geometry = nullptr;
+    const char* output_filename = nullptr;
     unsigned thr_misclick = 15;
     unsigned thr_doubleclick = 7;
     OutputType output_type = OUTYPE_AUTO;
@@ -331,7 +331,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
 
     /// Choose the device to calibrate
     XID         device_id   = (XID) -1;
-    const char* device_name = NULL;
+    const char* device_name = nullptr;
     XYinfo      device_axys;
     if (fake) {
         // Fake a calibratable device
@@ -353,7 +353,7 @@ Calibrator* Calibrator::make_calibrator(int argc, char** argv)
         }
 
         if (nr_found == 0) {
-            if (pre_device == NULL)
+            if (pre_device == nullptr)
                 fprintf (stderr, "Error: No calibratable devices found.\n");
             else
                 fprintf (stderr, "Error: Device \"%s\" not found; use --list to list the calibratable input devices.\n", pre_device);

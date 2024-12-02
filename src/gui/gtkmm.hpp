@@ -41,10 +41,10 @@ private:
     Calibrator* calibrator;
     double X[4], Y[4];
     int display_width, display_height;
-    int time_elapsed;
+    int time_elapsed = 0;
     std::list<std::string> display_texts;
 
-    const char* message;
+    const char* message = nullptr;
 
     // Signal handlers
     bool on_timer_signal();

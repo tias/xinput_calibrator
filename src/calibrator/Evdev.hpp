@@ -34,9 +34,9 @@
 class CalibratorEvdev: public Calibrator
 {
 private:
-    Display     *display;
-    XDeviceInfo *devInfo;
-    XDevice     *dev;
+    Display     *display = nullptr;
+    XDeviceInfo *devInfo = nullptr;
+    XDevice     *dev = nullptr;
 
 protected:
     // protected constructor: should only be used by subclasses!
@@ -46,9 +46,9 @@ protected:
                     const int thr_misclick=0,
                     const int thr_doubleclick=0,
                     const OutputType output_type=OUTYPE_AUTO,
-                    const char* geometry=0,
+                    const char* geometry=nullptr,
                     const bool use_timeout=false,
-                    const char* output_filename = 0);
+                    const char* output_filename=nullptr);
 
 public:
     CalibratorEvdev(const char* const device_name,
@@ -57,14 +57,14 @@ public:
                     const int thr_misclick=0,
                     const int thr_doubleclick=0,
                     const OutputType output_type=OUTYPE_AUTO,
-                    const char* geometry=0,
+                    const char* geometry=nullptr,
                     const bool use_timeout=false,
-                    const char* output_filename = 0);
+                    const char* output_filename=nullptr);
     virtual ~CalibratorEvdev();
 
     /// calculate and apply the calibration
-    virtual bool finish(int width, int height);
-    virtual bool finish_data(const XYinfo &new_axys);
+    bool finish(int width, int height) override;
+    bool finish_data(const XYinfo &new_axys) override;
 
     bool set_swapxy(const int swap_xy);
     bool set_invert_xy(const int invert_x, const int invert_y);

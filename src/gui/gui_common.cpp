@@ -29,7 +29,7 @@ void get_display_texts(std::list<std::string> *texts, Calibrator *calibrator)
     /* 1st line */
     str = "Touchscreen Calibration";
     const char* sysfs_name = calibrator->get_sysfs_name();
-    if(sysfs_name != NULL) {
+    if(sysfs_name != nullptr) {
         str += " for '";
         str += sysfs_name;
         str += "'";

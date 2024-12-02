@@ -28,7 +28,7 @@ SUBDIRS = \
 	calibrator \
 	gui
 
-AM_CXXFLAGS = -Wall -ansi -pedantic
+AM_CXXFLAGS = -Wall -std=c++11 -pedantic
 
 bin_PROGRAMS = xinput_calibrator tester
 

@@ -27,11 +27,10 @@
 
 #include <stdexcept>
 #include <X11/Xlib.h>
-#include <stdio.h>
 #include <vector>
 
 // XXX: we currently don't handle lines that are longer than this
-#define MAX_LINE_LEN 1024
+constexpr int max_line_len = 1024;
 
 int xf86ScaleAxis(int Cx, int to_max, int to_min, int from_max, int from_min);
 float scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min);
@@ -62,14 +61,14 @@ float scaleAxis(float Cx, int to_max, int to_min, int from_max, int from_min);
  *   |  |  |  |  |  |  |  |  |
  *   +--+--+--+--+--+--+--+--+
  */
-const int num_blocks = 8;
+constexpr int num_blocks = 8;
 
 struct AxisInfo {
-    int min, max;
-    bool invert;
+    int min = -1, max = -1;
+    bool invert = false;
 
-    AxisInfo() : min(-1), max(-1), invert(false) { }
-    AxisInfo(int mi, int ma, bool inv = false) :
+    AxisInfo() { }
+    constexpr AxisInfo(int mi, int ma, bool inv = false) :
         min(mi), max(ma), invert(inv) { }
     AxisInfo(const AxisInfo& old) :
         min(old.min), max(old.max), invert(old.invert) { }
@@ -82,13 +81,13 @@ struct AxisInfo {
 /// struct to hold min/max info of the X and Y axis
 struct XYinfo {
     /// Axis swapped
-    bool swap_xy;
+    bool swap_xy = false;
     /// X, Y axis
     AxisInfo x, y;
 
-    XYinfo() : swap_xy(false) {}
+    XYinfo() {}
 
-    XYinfo(int xmi, int xma, int ymi, int yma, bool swap_xy_ = false,
+    constexpr XYinfo(int xmi, int xma, int ymi, int yma, bool swap_xy_ = false,
         bool inv_x = false, bool inv_y = false) :
         swap_xy(swap_xy_), x(xmi, xma, inv_x), y(ymi, yma, inv_y) {}
 
@@ -102,7 +101,7 @@ struct XYinfo {
         y.max = xf86ScaleAxis(y.max, to.y.max, to.y.min, from.y.max, from.y.min);
     }
 
-    void print(const char* xtra="\n") {
+    void print(const char* xtra="\n") const {
         printf("XYinfo: x.min=%i, x.max=%i, y.min=%i, y.max=%i, swap_xy=%i, invert_x=%i, invert_y=%i%s",
                x.min, x.max, y.min, y.max, swap_xy, x.invert, y.invert, xtra);
     }
@@ -147,9 +146,9 @@ public:
                const int thr_misclick=0,
                const int thr_doubleclick=0,
                const OutputType output_type=OUTYPE_AUTO,
-               const char* geometry=0,
+               const char* geometry=nullptr,
                const bool use_timeout=1,
-               const char* output_filename = 0);
+               const char* output_filename=nullptr);
 
     virtual ~Calibrator() {}
 
@@ -199,7 +198,7 @@ protected:
     bool is_sysfs_name(const char* name);
 
     /// Check whether the X server has xorg.conf.d support
-    bool has_xorgconfd_support(Display* display=NULL);
+    bool has_xorgconfd_support(Display* display=nullptr);
 
     static int find_device(const char* pre_device, bool list_devices,
             XID& device_id, const char*& device_name, XYinfo& device_axys);
@@ -224,23 +223,23 @@ protected:
 
     // Threshold to keep the same point from being clicked twice.
     // Set to zero if you don't want this check
-    int threshold_doubleclick;
+    int threshold_doubleclick = 0;
 
     // Threshold to detect mis-clicks (clicks not along axes)
     // A lower value forces more precise calibration
     // Set to zero if you don't want this check
-    int threshold_misclick;
+    int threshold_misclick = 0;
 
     // Type of output
-    OutputType output_type;
+    OutputType output_type = OUTYPE_AUTO;
 
     // manually specified geometry string
-    const char* geometry;
+    const char* geometry = nullptr;
 
-    const bool use_timeout;
+    const bool use_timeout = 1;
 
     // manually specified output filename
-    const char* output_filename;
+    const char* output_filename = nullptr;
 
     // sysfs path/file
     static const char* SYSFS_INPUT;

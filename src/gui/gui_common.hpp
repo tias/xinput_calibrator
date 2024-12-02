@@ -28,17 +28,17 @@
 #include <string>
 
 // Timeout parameters
-const int time_step = 100;  // in milliseconds
-const int max_time = 15000; // in milliseconds, 5000 = 5 sec
+constexpr int time_step = 100;  // in milliseconds
+constexpr int max_time = 15000; // in milliseconds, 5000 = 5 sec
 
 // Clock appereance
-const int cross_lines = 25;
-const int cross_circle = 4;
-const int clock_radius = 50;
-const int clock_line_width = 10;
+constexpr int cross_lines = 25;
+constexpr int cross_circle = 4;
+constexpr int clock_radius = 50;
+constexpr int clock_line_width = 10;
 
 // Text printed on screen
-const int font_size = 16;
+constexpr int font_size = 16;
 
 void get_display_texts(std::list<std::string> *texts, Calibrator *calibrator);
 

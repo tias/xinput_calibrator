@@ -39,22 +39,23 @@ protected:
 public:
     CalibratorEvdevTester(const char* const device_name, const XYinfo& axys,
         const int thr_misclick=0, const int thr_doubleclick=0,
-        const OutputType output_type=OUTYPE_AUTO, const char* geometry=0);
+        const OutputType output_type=OUTYPE_AUTO, const char* geometry=nullptr);
 
-    virtual bool finish_data(const XYinfo &new_axis);
+    bool finish_data(const XYinfo &new_axis) override final;
 
     // emulate the driver processing the coordinates in 'raw'
-    virtual XYinfo emulate_driver(const XYinfo& raw, bool useNewAxis, const XYinfo& screen, const XYinfo& device);
+    XYinfo emulate_driver(const XYinfo& raw, bool useNewAxis,
+                          const XYinfo& screen, const XYinfo& device) override final;
 
-    virtual void new_axis_print() {
+    void new_axis_print() override final {
         new_axis.print();
     }
 
     //* From CalibratorEvdev
-    virtual bool add_click(int x, int y) {
+    bool add_click(int x, int y) override final {
         return CalibratorEvdev::add_click(x, y);
     }
-    virtual bool finish(int width, int height) {
+    bool finish(int width, int height) override final {
         return CalibratorEvdev::finish(width, height);
     }
     
