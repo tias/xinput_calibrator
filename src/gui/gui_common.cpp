@@ -43,7 +43,7 @@ void get_display_texts(std::list<std::string> *texts, Calibrator *calibrator)
 	texts->push_back(str);
     /* 4th line */
     str = "(To abort, press any key";
-    if(calibrator->get_use_timeout())
+    if(calibrator->get_timeout()>0)
         str += " or wait)";
     else
         str += ")";

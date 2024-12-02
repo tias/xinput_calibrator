@@ -148,7 +148,7 @@ public:
                const int thr_doubleclick=0,
                const OutputType output_type=OUTYPE_AUTO,
                const char* geometry=0,
-               const bool use_timeout=1,
+               const int timeout=0,
                const char* output_filename = 0);
 
     virtual ~Calibrator() {}
@@ -181,8 +181,8 @@ public:
     /// returns NULL if it can not be found
     const char* get_sysfs_name();
 
-    const bool get_use_timeout() const
-    { return use_timeout; }
+    const int get_timeout() const
+    { return timeout; }
 
     /// get output filename set at cmdline or NULL
     const char* get_output_filename() const
@@ -237,7 +237,7 @@ protected:
     // manually specified geometry string
     const char* geometry;
 
-    const bool use_timeout;
+    const int timeout;
 
     // manually specified output filename
     const char* output_filename;

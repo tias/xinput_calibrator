@@ -40,10 +40,10 @@ const char* Calibrator::SYSFS_DEVNAME="device/name";
 Calibrator::Calibrator(const char* const device_name0, const XYinfo& axys0,
     const int thr_misclick, const int thr_doubleclick,
     const OutputType output_type0, const char* geometry0,
-    const bool use_timeout0, const char* output_filename0)
+    const int timeout0, const char* output_filename0)
 : device_name(device_name0),
     threshold_doubleclick(thr_doubleclick), threshold_misclick(thr_misclick),
-    output_type(output_type0), geometry(geometry0), use_timeout(use_timeout0),
+    output_type(output_type0), geometry(geometry0), timeout(timeout0),
     output_filename(output_filename0)
 {
     old_axys = axys0;

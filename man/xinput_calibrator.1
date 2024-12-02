@@ -51,8 +51,12 @@ This is useful if the calibration values are stored in your xorg.conf, but the d
 set the misclick threshold (0=off, default: 15 pixels)
 .PP 
 .TP 8
-.B \-\-no-timeout
-turns off the timeout
+.B \-\-no\-timeout
+turns off the timeout; same as --timeout 0
+.PP 
+.TP 8
+.B \-\-timeout \fIsec\fP
+sets the timeout, in seconds (0=no timeout, default: 15 sec)
 .PP 
 .TP 8
 .B \-\-output\-type \fIauto|xorg.conf.d|hal|xinput\fP

@@ -29,7 +29,6 @@
 
 // Timeout parameters
 const int time_step = 100;  // in milliseconds
-const int max_time = 15000; // in milliseconds, 5000 = 5 sec
 
 // Clock appereance
 const int cross_lines = 25;

@@ -268,7 +268,7 @@ void GuiCalibratorX11::redraw()
     }
 
     // Draw the clock background
-    if(calibrator->get_use_timeout()){
+    if(calibrator->get_timeout() > 0) {
         XSetForeground(display, gc, pixel[DIMGRAY]);
         XSetLineAttributes(display, gc, 0, LineSolid, CapRound, JoinRound);
         XFillArc(display, win, gc, (display_width-clock_radius)/2, (display_height - clock_radius)/2,
@@ -284,8 +284,9 @@ void GuiCalibratorX11::on_expose_event()
 void GuiCalibratorX11::on_timer_signal()
 {
     // Update clock
-    if(calibrator->get_use_timeout()) {
-
+    if(calibrator->get_timeout() > 0) {
+        int max_time = calibrator->get_timeout();
+	
         time_elapsed += time_step;
         if (time_elapsed > max_time) {
             exit(0);
