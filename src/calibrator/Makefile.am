@@ -3,4 +3,5 @@ EXTRA_DIST = \
 	Usbtouchscreen.cpp \
 	XorgPrint.cpp \
 	Tester.cpp \
-	EvdevTester.cpp
+	EvdevTester.cpp \
+	Matrix.cpp
